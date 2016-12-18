@@ -31,6 +31,7 @@ public class StackOpITCase {
 		assertEquals(4, c);
 		c = a ^ b;
 		assertEquals(3, c);
+		Symbolicator.dumpConstraints();
 	}
 public static void main(String[] args) {
 	System.out.println(5d/6d);

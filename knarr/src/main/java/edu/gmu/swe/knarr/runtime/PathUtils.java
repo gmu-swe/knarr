@@ -226,7 +226,7 @@ public class PathUtils {
 	}
 	private static Expression getExpression(Taint<Expression> t, long v) {
 		if(t == null)
-			return new RealConstant(v);
+			return new IntegerConstant((int) v);
 		return t.lbl;
 	}
 	private static Expression getExpression(Taint<Expression> t, double v) {
@@ -279,7 +279,9 @@ public class PathUtils {
 			ret.taint = null;
 			return ret;
 		}
-		ret.taint = registerBinaryOp(getExpression(lVal, v2), getExpression(rVal, v1), Opcodes.IREM);
+		//TODO figure out how to support this
+		ret.taint = null;
+//		ret.taint = registerBinaryOp(getExpression(lVal, v2), getExpression(rVal, v1), Opcodes.IREM);
 		return ret;
 	}
 	
@@ -398,7 +400,8 @@ public class PathUtils {
 			ret.taint = null;
 			return ret;
 		}
-		ret.taint = registerBinaryOp(getExpression(lVal, v2), getExpression(rVal, v1), Opcodes.FREM);
+		ret.taint = null; //TODO not impl by JPF
+//		ret.taint = registerBinaryOp(getExpression(lVal, v2), getExpression(rVal, v1), Opcodes.FREM);
 		return ret;
 	}
 	public static TaintedFloatWithObjTag FDIV(Taint<Expression> lVal, float v2, Taint<Expression> rVal, float v1, TaintedFloatWithObjTag ret)
@@ -468,7 +471,8 @@ public class PathUtils {
 			ret.taint = null;
 			return ret;
 		}
-		ret.taint = registerBinaryOp(getExpression(lVal, v2), getExpression(rVal, v1), Opcodes.DREM);
+		ret.taint = null; //TODO...
+//		ret.taint = registerBinaryOp(getExpression(lVal, v2), getExpression(rVal, v1), Opcodes.DREM);
 		return ret;
 	}
 	
@@ -514,7 +518,9 @@ public class PathUtils {
 			ret.taint = null;
 			return ret;
 		}
-		ret.taint = registerBinaryOp(getExpression(lVal, v2), getExpression(rVal, v1), Opcodes.LREM);
+		//TODO figure out how to support this
+		ret.taint = null;
+//		ret.taint = registerBinaryOp(getExpression(lVal, v2), getExpression(rVal, v1), Opcodes.LREM);
 		return ret;
 	}
 	public static TaintedLongWithObjTag LDIV(Taint<Expression> lVal, long v2, Taint<Expression> rVal, long v1, TaintedLongWithObjTag ret)
@@ -626,15 +632,8 @@ public class PathUtils {
 		if(lVal == null && rVal== null)
 			ret.taint = null;
 		else {
-			Expression l, r;
-			if (lVal == null)
-				l = new RealConstant(v2);
-			else
-				l = lVal.lbl;
-			if (rVal == null)
-				r = new RealConstant(v1);
-			else
-				r = rVal.lbl;
+			Expression l = getExpression(lVal, v2);
+			Expression r = getExpression(rVal, v1);
 			ret.taint = null;
 			if(v1 == v2)
 				getCurPC()._addDet(Comparator.EQ, l, r);
@@ -1454,7 +1453,7 @@ public class PathUtils {
 			return null;
 		if(t.lbl instanceof IntegerConstant)
 		{
-			return new Taint<Expression>(new RealConstant(((IntegerConstant)t.lbl).value));	
+			return new ExpressionTaint(new RealConstant(((IntegerConstant)t.lbl).value));	
 		}
 		else if(t.lbl instanceof SymbolicInteger)
 		{
