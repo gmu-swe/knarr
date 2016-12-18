@@ -443,7 +443,7 @@ public class Symbolicator {
 		PathUtils.checkLabelAndInitJPF(label);
 		ret.val = in;
 		if (mySoln != null && !mySoln.isUnconstrained)
-			ret.val = ((Double) mySoln.varMapping.get(label)).longValue();
+			ret.val = ((Long) mySoln.varMapping.get(label)).longValue();
 		ret.taint = new ExpressionTaint(new SymbolicInteger((String) label));
 		symbolicLabels.put((ExpressionTaint) ret.taint, label);
 		return ret;
@@ -453,7 +453,7 @@ public class Symbolicator {
 		PathUtils.checkLabelAndInitJPF(label);
 		ret.val = in;
 		if (mySoln != null && !mySoln.isUnconstrained)
-			ret.val = ((Integer) mySoln.varMapping.get(label)).shortValue();
+			ret.val = ((Short) mySoln.varMapping.get(label)).shortValue();
 		ret.taint = new ExpressionTaint(new SymbolicInteger((String) label));
 		symbolicLabels.put((ExpressionTaint) ret.taint, label);
 		return ret;

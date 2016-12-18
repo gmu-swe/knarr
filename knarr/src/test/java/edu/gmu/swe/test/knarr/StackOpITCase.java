@@ -37,8 +37,8 @@ public static void main(String[] args) {
 }
 	@Test
 	public void testLong() {
-		long a = Symbolicator.symbolic(5);
-		long b = Symbolicator.symbolic(6);
+		long a = Symbolicator.symbolic(5L);
+		long b = Symbolicator.symbolic(6L);
 		long c = a + b;
 		assertEquals(11, c);
 		c = a - b;
@@ -65,8 +65,8 @@ public static void main(String[] args) {
 
 	@Test
 	public void testFloat() {
-		float a = Symbolicator.symbolic(5);
-		float b = Symbolicator.symbolic(6);
+		float a = Symbolicator.symbolic(5f);
+		float b = Symbolicator.symbolic(6f);
 		float c = a + b;
 		assertEquals(11, c, 0);
 		c = a - b;
@@ -81,8 +81,8 @@ public static void main(String[] args) {
 
 	@Test
 	public void testDouble() {
-		double a = Symbolicator.symbolic(5);
-		double b = Symbolicator.symbolic(6);
+		double a = Symbolicator.symbolic(5d);
+		double b = Symbolicator.symbolic(6d);
 		double c = a + b;
 		assertEquals(11, c, 0);
 		c = a - b;

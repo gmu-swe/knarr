@@ -154,6 +154,14 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes {
 		case Opcodes.I2L:
 		case Opcodes.I2F:
 		case Opcodes.I2D:
+//			if(ta.topCarriesTaint())
+//			{
+//				mv.visitInsn(SWAP);
+//				mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "toReal", "(" + Configuration.TAINT_TAG_DESC + ")"+Configuration.TAINT_TAG_DESC, false);
+//				mv.visitInsn(SWAP);
+//			}
+//			mv.visitInsn(opcode);
+//			break;
 		case Opcodes.L2I:
 		case Opcodes.L2F:
 		case Opcodes.L2D:

@@ -597,6 +597,18 @@ public class PathUtils {
 		return ret;
 	}
 	
+	public static TaintedLongWithObjTag LUSHR(Taint<Expression> lVal, long v2, Taint<Expression> rVal, int v1, TaintedLongWithObjTag ret)
+	{
+		ret.val = v2 >>> v1;
+		if (lVal == null && rVal == null)
+		{
+			ret.taint = null;
+			return ret;
+		}
+		ret.taint = registerBinaryOp(getExpression(lVal, v2), getExpression(rVal, v1), Opcodes.LUSHR);
+		return ret;
+	}
+	
 	static Object lock = new Object();
 	public static TaintedIntWithObjTag LCMP(Taint<Expression> rVal, long v1, Taint<Expression> lVal, long v2, TaintedIntWithObjTag ret) {
 		/*
@@ -1433,7 +1445,22 @@ public class PathUtils {
 //		{
 //			int newTaint = registerBinaryOpWithAffix(origTaint, splitTaint, i, StringOpcodes.STR_SPLIT);
 //			returnedStrings[i].setINVIVO_PC_TAINT(newTaint);
-//		}
-		
+//		}	
+	}
+	
+	public static Taint<Expression> toReal(Taint<Expression> t)
+	{
+		if(t == null)
+			return null;
+		if(t.lbl instanceof IntegerConstant)
+		{
+			return new Taint<Expression>(new RealConstant(((IntegerConstant)t.lbl).value));	
+		}
+		else if(t.lbl instanceof SymbolicInteger)
+		{
+			throw new IllegalArgumentException("Got: " + t.lbl);
+		}
+		else
+			throw new IllegalArgumentException("Got: " + t.lbl);
 	}
 }
