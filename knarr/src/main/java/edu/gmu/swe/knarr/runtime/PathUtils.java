@@ -344,6 +344,18 @@ public class PathUtils {
 		return ret;
 	}
 	
+	public static TaintedIntWithObjTag IMUL(Taint<Expression> lVal, int v2, Taint<Expression> rVal, int v1, TaintedIntWithObjTag ret)
+	{
+		ret.val = v2 * v1;
+		if (lVal == null && rVal == null)
+		{
+			ret.taint = null;
+			return ret;
+		}
+		ret.taint = registerBinaryOp(getExpression(lVal, v2), getExpression(rVal, v1), Opcodes.IMUL);
+		return ret;
+	}
+	
 	public static TaintedIntWithObjTag IXOR(Taint<Expression> lVal, int v2, Taint<Expression> rVal, int v1, TaintedIntWithObjTag ret)
 	{
 		ret.val = v2 ^ v1;
@@ -516,6 +528,17 @@ public class PathUtils {
 		ret.taint = registerBinaryOp(getExpression(lVal, v2), getExpression(rVal, v1), Opcodes.LDIV);
 		return ret;
 	}
+	public static TaintedLongWithObjTag LMUL(Taint<Expression> lVal, long v2, Taint<Expression> rVal, long v1, TaintedLongWithObjTag ret)
+	{
+		ret.val = v2 * v1;
+		if (lVal == null && rVal == null)
+		{
+			ret.taint = null;
+			return ret;
+		}
+		ret.taint = registerBinaryOp(getExpression(lVal, v2), getExpression(rVal, v1), Opcodes.LMUL);
+		return ret;
+	}
 	public static TaintedLongWithObjTag LOR(Taint<Expression> lVal, long v2, Taint<Expression> rVal, long v1, TaintedLongWithObjTag ret)
 	{
 		ret.val = v2 | v1;
@@ -547,6 +570,30 @@ public class PathUtils {
 			return ret;
 		}
 		ret.taint = registerBinaryOp(getExpression(lVal, v2), getExpression(rVal, v1), Opcodes.LAND);
+		return ret;
+	}
+	
+	public static TaintedLongWithObjTag LSHL(Taint<Expression> lVal, long v2, Taint<Expression> rVal, int v1, TaintedLongWithObjTag ret)
+	{
+		ret.val = v2 << v1;
+		if (lVal == null && rVal == null)
+		{
+			ret.taint = null;
+			return ret;
+		}
+		ret.taint = registerBinaryOp(getExpression(lVal, v2), getExpression(rVal, v1), Opcodes.LSHL);
+		return ret;
+	}
+	
+	public static TaintedLongWithObjTag LSHR(Taint<Expression> lVal, long v2, Taint<Expression> rVal, int v1, TaintedLongWithObjTag ret)
+	{
+		ret.val = v2 >> v1;
+		if (lVal == null && rVal == null)
+		{
+			ret.taint = null;
+			return ret;
+		}
+		ret.taint = registerBinaryOp(getExpression(lVal, v2), getExpression(rVal, v1), Opcodes.LSHR);
 		return ret;
 	}
 	
@@ -974,7 +1021,7 @@ public class PathUtils {
 	 * @param opcode
 	 * @return
 	 */
-	public static Expression registerUnaryOp(Taint<Expression> exp, int opcode) {
+	public static Taint<Expression> registerUnaryOp(Taint<Expression> exp, int opcode) {
 
 		if (exp == null)
 			return null;
@@ -998,8 +1045,8 @@ public class PathUtils {
 			throw new IllegalArgumentException("Returning null expression!");
 		}
 		//		v.expression = ((IntegerExpression)values.get(taint).expression).
-		return ret;
-
+		exp.lbl = ret;
+		return exp;
 	}
 
 	public static void registerStringBooleanOp(TaintedBooleanWithObjTag res, String str1, Object str2, int op) {

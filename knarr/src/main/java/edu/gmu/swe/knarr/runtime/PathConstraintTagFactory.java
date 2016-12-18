@@ -65,6 +65,11 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes {
 		case Opcodes.FSUB:
 		case Opcodes.FMUL:
 		case Opcodes.FDIV:
+			if(!ta.topCarriesTaint())
+			{
+				mv.visitInsn(opcode);
+				break;
+			}
 			Type holder = Type.getType(TaintedFloatWithObjTag.class);
 			mv.visitVarInsn(ALOAD, lvs.getPreAllocedReturnTypeVar(holder));
 			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, Printer.OPCODES[opcode], "(" + Configuration.TAINT_TAG_DESC + "F" + Configuration.TAINT_TAG_DESC + "F" + holder.getDescriptor() + ")" + holder.getDescriptor(), false);
@@ -75,6 +80,11 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes {
 		case Opcodes.DMUL:
 		case Opcodes.DDIV:
 		case Opcodes.DREM:
+			if(!ta.topCarriesTaint())
+			{
+				mv.visitInsn(opcode);
+				break;
+			}
 			holder = Type.getType(TaintedDoubleWithObjTag.class);
 			mv.visitVarInsn(ALOAD, lvs.getPreAllocedReturnTypeVar(holder));
 			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, Printer.OPCODES[opcode], "(" + Configuration.TAINT_TAG_DESC + "D" + Configuration.TAINT_TAG_DESC + "D" + holder.getDescriptor() + ")" + holder.getDescriptor(), false);
@@ -83,6 +93,11 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes {
 		case Opcodes.LSHL:
 		case Opcodes.LUSHR:
 		case Opcodes.LSHR:
+			if(!ta.topCarriesTaint())
+			{
+				mv.visitInsn(opcode);
+				break;
+			}
 			holder = Type.getType(TaintedLongWithObjTag.class);
 			mv.visitVarInsn(ALOAD, lvs.getPreAllocedReturnTypeVar(holder));
 			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, Printer.OPCODES[opcode], "(" + Configuration.TAINT_TAG_DESC + "J" + Configuration.TAINT_TAG_DESC + "I" + holder.getDescriptor() + ")" + holder.getDescriptor(), false);
@@ -96,6 +111,11 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes {
 		case Opcodes.LAND:
 		case Opcodes.LOR:
 		case Opcodes.LXOR:
+			if(!ta.topCarriesTaint())
+			{
+				mv.visitInsn(opcode);
+				break;
+			}
 			holder = Type.getType(TaintedLongWithObjTag.class);
 			mv.visitVarInsn(ALOAD, lvs.getPreAllocedReturnTypeVar(holder));
 			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, Printer.OPCODES[opcode], "(" + Configuration.TAINT_TAG_DESC + "J" + Configuration.TAINT_TAG_DESC + "J" + holder.getDescriptor() + ")" + holder.getDescriptor(), false);
@@ -103,6 +123,11 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes {
 			break;
 		case Opcodes.INEG:
 		case Opcodes.FNEG:
+			if(!ta.topCarriesTaint())
+			{
+				mv.visitInsn(opcode);
+				break;
+			}
 			mv.visitInsn(opcode);
 			mv.visitInsn(SWAP);
 			mv.visitIntInsn(BIPUSH, opcode);
@@ -111,6 +136,11 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes {
 			break;
 		case Opcodes.LNEG:
 		case Opcodes.DNEG:
+			if(!ta.topCarriesTaint())
+			{
+				mv.visitInsn(opcode);
+				break;
+			}
 			mv.visitInsn(opcode);
 			// VV T
 			mv.visitInsn(DUP2_X1);
@@ -139,12 +169,22 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes {
 			mv.visitInsn(opcode);
 			break;
 		case Opcodes.LCMP:
+			if(!ta.topCarriesTaint())
+			{
+				mv.visitInsn(opcode);
+				break;
+			}
 			mv.visitVarInsn(ALOAD, lvs.getPreAllocedReturnTypeVar(Type.getType(TaintedIntWithObjTag.class)));
 			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "LCMP", "(" + Configuration.TAINT_TAG_DESC + "J" + Configuration.TAINT_TAG_DESC + "J" + Type.getDescriptor(TaintedIntWithObjTag.class) + ")" + Type.getDescriptor(TaintedIntWithObjTag.class), false);
 			ta.unwrapTaintedInt();
 			break;
 		case Opcodes.DCMPL:
 		case Opcodes.DCMPG:
+			if(!ta.topCarriesTaint())
+			{
+				mv.visitInsn(opcode);
+				break;
+			}
 			mv.visitVarInsn(ALOAD, lvs.getPreAllocedReturnTypeVar(Type.getType(TaintedIntWithObjTag.class)));
 			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, Printer.OPCODES[opcode], "(" + Configuration.TAINT_TAG_DESC + "D" + Configuration.TAINT_TAG_DESC + "D" + Type.getDescriptor(TaintedIntWithObjTag.class) + ")" + Type.getDescriptor(TaintedIntWithObjTag.class),
 					false);
@@ -152,6 +192,11 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes {
 			break;
 		case Opcodes.FCMPG:
 		case Opcodes.FCMPL:
+			if(!ta.topCarriesTaint())
+			{
+				mv.visitInsn(opcode);
+				break;
+			}
 			mv.visitVarInsn(ALOAD, lvs.getPreAllocedReturnTypeVar(Type.getType(TaintedIntWithObjTag.class)));
 			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, Printer.OPCODES[opcode], "(" + Configuration.TAINT_TAG_DESC + "F" + Configuration.TAINT_TAG_DESC + "F" + Type.getDescriptor(TaintedIntWithObjTag.class) + ")" + Type.getDescriptor(TaintedIntWithObjTag.class),
 					false);
@@ -213,6 +258,11 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes {
 		case Opcodes.IOR:
 		case Opcodes.IAND:
 		case Opcodes.IXOR:
+			if(!ta.topCarriesTaint())
+			{
+				mv.visitInsn(opcode);
+				break;
+			}
 			holder = TaintUtils.getContainerReturnType("I");
 			mv.visitVarInsn(ALOAD, lvs.getPreAllocedReturnTypeVar(holder));
 			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, Printer.OPCODES[opcode], "(" + Configuration.TAINT_TAG_DESC + "I" + Configuration.TAINT_TAG_DESC + "I" + holder.getDescriptor() + ")" + holder.getDescriptor(), false);
@@ -518,6 +568,25 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes {
 	public void lineNumberVisited(int line) {
 		// TODO Auto-generated method stub
 		
+	}
+	@Override
+	public void typeOp(int opcode, String type, MethodVisitor mv, LocalVariableManager lvs, TaintPassingMV ta) {
+		// TODO Auto-generated method stub
+		
+	}
+	@Override
+	public void lookupSwitch(Label dflt, int[] keys, Label[] labels, MethodVisitor mv, LocalVariableManager lvs, TaintPassingMV taintPassingMV) {
+		mv.visitInsn(SWAP);
+		mv.visitInsn(POP);
+		mv.visitLookupSwitchInsn(dflt, keys, labels);
+		//TODO record constraints through lookupswitch
+	}
+	@Override
+	public void tableSwitch(int min, int max, Label dflt, Label[] labels, MethodVisitor mv, LocalVariableManager lvs, TaintPassingMV taintPassingMV) {
+		mv.visitInsn(SWAP);
+		mv.visitInsn(POP);
+		mv.visitTableSwitchInsn(min, max, dflt, labels);
+		//TODO record constraints through tableswitch
 	}
 
 }
