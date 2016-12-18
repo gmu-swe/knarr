@@ -33,9 +33,10 @@ public class StackOpITCase {
 		assertEquals(3, c);
 		Symbolicator.dumpConstraints();
 	}
-public static void main(String[] args) {
-	System.out.println(5d/6d);
-}
+
+	public static void main(String[] args) {
+		System.out.println(5d / 6d);
+	}
 	@Test
 	public void testLong() {
 		long a = Symbolicator.symbolic(5L);
@@ -62,6 +63,8 @@ public static void main(String[] args) {
 		assertEquals(4, c);
 		c = a ^ b;
 		assertEquals(3, c);
+		Symbolicator.dumpConstraints();
+
 	}
 
 	@Test
@@ -78,6 +81,8 @@ public static void main(String[] args) {
 		assertEquals(0.8333333, c, 0.0001);
 		c = a % b;
 		assertEquals(5, c, 0);
+		Symbolicator.dumpConstraints();
+
 	}
 
 	@Test
@@ -94,5 +99,7 @@ public static void main(String[] args) {
 		assertEquals(0.8333333333333334, c, 0.0001);
 		c = a % b;
 		assertEquals(5, c, 0);
+		Symbolicator.dumpConstraints();
+
 	}
 }

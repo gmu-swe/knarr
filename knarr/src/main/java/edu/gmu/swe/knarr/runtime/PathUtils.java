@@ -7,7 +7,13 @@ import java.util.HashSet;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import sun.misc.VM;
-import edu.columbia.cs.psl.phosphor.TaintUtils;
+import za.ac.sun.cs.green.expr.Expression;
+import za.ac.sun.cs.green.expr.IntConstant;
+import za.ac.sun.cs.green.expr.IntVariable;
+import za.ac.sun.cs.green.expr.Operation;
+import za.ac.sun.cs.green.expr.Operation.Operator;
+import za.ac.sun.cs.green.expr.RealConstant;
+import za.ac.sun.cs.green.expr.StringConstant;
 import edu.columbia.cs.psl.phosphor.org.objectweb.asm.Opcodes;
 import edu.columbia.cs.psl.phosphor.org.objectweb.asm.util.Printer;
 import edu.columbia.cs.psl.phosphor.runtime.Taint;
@@ -19,28 +25,13 @@ import edu.columbia.cs.psl.phosphor.struct.TaintedIntWithObjTag;
 import edu.columbia.cs.psl.phosphor.struct.TaintedLongWithObjTag;
 import edu.columbia.cs.psl.phosphor.struct.TaintedPrimitiveWithObjTag;
 import edu.columbia.cs.psl.phosphor.struct.TaintedWithObjTag;
-import gov.nasa.jpf.Config;
-import gov.nasa.jpf.symbc.SymbolicInstructionFactory;
-import gov.nasa.jpf.symbc.numeric.Comparator;
-import gov.nasa.jpf.symbc.numeric.Expression;
-import gov.nasa.jpf.symbc.numeric.IntegerConstant;
-import gov.nasa.jpf.symbc.numeric.IntegerExpression;
-import gov.nasa.jpf.symbc.numeric.PathCondition;
-import gov.nasa.jpf.symbc.numeric.RealConstant;
-import gov.nasa.jpf.symbc.numeric.RealExpression;
-import gov.nasa.jpf.symbc.numeric.SymbolicInteger;
-import gov.nasa.jpf.symbc.string.DerivedStringExpression;
-import gov.nasa.jpf.symbc.string.StringComparator;
-import gov.nasa.jpf.symbc.string.StringConstant;
-import gov.nasa.jpf.symbc.string.StringExpression;
-import gov.nasa.jpf.symbc.string.StringOperator;
 
 public class PathUtils {
-	private static PathCondition curPC;
+	private static PathConditionWrapper curPC;
 	public static final boolean IGNORE_SHIFTS = true;
 	public static final String INTERNAL_NAME = "edu/gmu/swe/knarr/runtime/PathUtils";
 
-	public static PathCondition getCurPC()
+	public static PathConditionWrapper getCurPC()
 	{
 		if(curPC == null)
 			curPC = new PathConditionWrapper();
@@ -216,7 +207,7 @@ public class PathUtils {
 	
 	private static Expression getExpression(Taint<Expression> t, int v) {
 		if(t == null)
-			return new IntegerConstant(v);
+			return new IntConstant(v);
 		return t.lbl;
 	}
 	private static Expression getExpression(Taint<Expression> t, float v) {
@@ -226,7 +217,7 @@ public class PathUtils {
 	}
 	private static Expression getExpression(Taint<Expression> t, long v) {
 		if(t == null)
-			return new IntegerConstant((int) v);
+			return new IntConstant((int) v);
 		return t.lbl;
 	}
 	private static Expression getExpression(Taint<Expression> t, double v) {
@@ -636,11 +627,11 @@ public class PathUtils {
 			Expression r = getExpression(rVal, v1);
 			ret.taint = null;
 			if(v1 == v2)
-				getCurPC()._addDet(Comparator.EQ, l, r);
+				getCurPC()._addDet(Operator.EQ, l, r);
 			else if (v1 < v2)
-				getCurPC()._addDet(Comparator.GT, l, r);
+				getCurPC()._addDet(Operator.GT, l, r);
 			else
-				getCurPC()._addDet(Comparator.LT, l, r);
+				getCurPC()._addDet(Operator.LT, l, r);
 		}
 		return ret;
 	}
@@ -668,11 +659,11 @@ public class PathUtils {
 				r = rVal.lbl;
 			ret.taint = null;
 			if(v1 == v2)
-				getCurPC()._addDet(Comparator.EQ, l, r);
+				getCurPC()._addDet(Operator.EQ, l, r);
 			else if (v1 < v2)
-				getCurPC()._addDet(Comparator.GT, l, r);
+				getCurPC()._addDet(Operator.GT, l, r);
 			else
-				getCurPC()._addDet(Comparator.LT, l, r);
+				getCurPC()._addDet(Operator.LT, l, r);
 		}
 		return ret;
 	}
@@ -700,11 +691,11 @@ public class PathUtils {
 				r = rVal.lbl;
 			ret.taint = null;
 			if(v1 == v2)
-				getCurPC()._addDet(Comparator.EQ, l, r);
+				getCurPC()._addDet(Operator.EQ, l, r);
 			else if (v1 < v2)
-				getCurPC()._addDet(Comparator.GT, l, r);
+				getCurPC()._addDet(Operator.GT, l, r);
 			else
-				getCurPC()._addDet(Comparator.LT, l, r);
+				getCurPC()._addDet(Operator.LT, l, r);
 			}
 		return ret;
 	}
@@ -732,11 +723,11 @@ public class PathUtils {
 				r = rVal.lbl;
 			ret.taint = null;
 			if(v1 == v2)
-				getCurPC()._addDet(Comparator.EQ, l, r);
+				getCurPC()._addDet(Operator.EQ, l, r);
 			else if (v1 < v2)
-				getCurPC()._addDet(Comparator.GT, l, r);
+				getCurPC()._addDet(Operator.GT, l, r);
 			else
-				getCurPC()._addDet(Comparator.LT, l, r);
+				getCurPC()._addDet(Operator.LT, l, r);
 			}
 		return ret;
 	}
@@ -764,11 +755,11 @@ public class PathUtils {
 				r = rVal.lbl;
 			ret.taint = null;
 			if(v1 == v2)
-				getCurPC()._addDet(Comparator.EQ, l, r);
+				getCurPC()._addDet(Operator.EQ, l, r);
 			else if (v1 < v2)
-				getCurPC()._addDet(Comparator.GT, l, r);
+				getCurPC()._addDet(Operator.GT, l, r);
 			else
-				getCurPC()._addDet(Comparator.LT, l, r);
+				getCurPC()._addDet(Operator.LT, l, r);
 			}
 		return ret;
 	}
@@ -832,19 +823,19 @@ public class PathUtils {
 		}
 	}
 	
-	private static IntegerConstant ICONST_0;
+	private static IntConstant ICONST_0;
 	static boolean JPFInited = false;
 	
 	static void initJPF()
 	{
 		if(!JPFInited)
 		{
-			ICONST_0 = new IntegerConstant(0);
+			ICONST_0 = new IntConstant(0);
 			JPFInited = true;
-			String[] options = { "+symbolic.dp=choco", "+symbolic.string_dp=sat", "+symbolic.string_dp_timeout_ms=0" };
-			Config cfg = new Config(options);
-			new SymbolicInstructionFactory(cfg);
-			System.out.println("JPF inited");
+//			String[] options = { "+symbolic.dp=choco", "+symbolic.string_dp=sat", "+symbolic.string_dp_timeout_ms=0" };
+//			Config cfg = new Config(options);
+//			new SymbolicInstructionFactory(cfg);
+//			System.out.println("JPF inited");
 
 		}
 	}
@@ -853,26 +844,26 @@ public class PathUtils {
 			return;
 		if(!JPFInited)
 			initJPF();
-		IntegerExpression exp =  (IntegerExpression) t.lbl;
+		Expression exp = t.lbl;
 		switch(opcode)
 		{
 		case Opcodes.IFEQ:
-			getCurPC()._addDet(Comparator.EQ, ICONST_0, exp);
+			getCurPC()._addDet(Operator.EQ, ICONST_0, exp);
 			break;
 		case Opcodes.IFGE:
-			getCurPC()._addDet(Comparator.GE, exp, ICONST_0);
+			getCurPC()._addDet(Operator.GE, exp, ICONST_0);
 			break;
 		case Opcodes.IFLE:
-			getCurPC()._addDet(Comparator.LE, exp, ICONST_0);
+			getCurPC()._addDet(Operator.LE, exp, ICONST_0);
 			break;
 		case Opcodes.IFLT:
-			getCurPC()._addDet(Comparator.LT, exp, ICONST_0);
+			getCurPC()._addDet(Operator.LT, exp, ICONST_0);
 			break;
 		case Opcodes.IFGT:
-			getCurPC()._addDet(Comparator.GT, exp, ICONST_0);
+			getCurPC()._addDet(Operator.GT, exp, ICONST_0);
 			break;
 		case Opcodes.IFNE:
-			getCurPC()._addDet(Comparator.NE,exp, ICONST_0);
+			getCurPC()._addDet(Operator.NE,exp, ICONST_0);
 			break;
 		default:
 				throw new IllegalArgumentException("Unimplemented branch type: " + Printer.OPCODES[opcode]);
@@ -888,11 +879,11 @@ public class PathUtils {
 			return;
 		Expression lExp, rExp;
 		if(l == null)
-			lExp = new IntegerConstant(v1);
+			lExp = new IntConstant(v1);
 		else
 			lExp = l.lbl;
 		if(r == null)
-			rExp = new IntegerConstant(v2);
+			rExp = new IntConstant(v2);
 		else
 			rExp = r.lbl;
 		switch (opcode) {
@@ -901,23 +892,23 @@ public class PathUtils {
 			//TODO - object equality constraints?
 			break;
 		case Opcodes.IF_ICMPEQ:
-			getCurPC()._addDet(Comparator.EQ, (IntegerExpression) lExp, (IntegerExpression) rExp);
+			getCurPC()._addDet(Operator.EQ, lExp, rExp);
 			break;
 		case Opcodes.IF_ICMPGE:
-			getCurPC()._addDet(Comparator.GE, (IntegerExpression) lExp, (IntegerExpression) rExp);
+			getCurPC()._addDet(Operator.GE,lExp,rExp);
 			break;
 		case Opcodes.IF_ICMPGT:
-			getCurPC()._addDet(Comparator.GT, (IntegerExpression) lExp, (IntegerExpression) rExp);
+			getCurPC()._addDet(Operator.GT,lExp,rExp);
 			break;
 		case Opcodes.IF_ICMPLE:
-			getCurPC()._addDet(Comparator.LE, (IntegerExpression) lExp, (IntegerExpression) rExp);
+			getCurPC()._addDet(Operator.LE,lExp,rExp);
 			break;
 		case Opcodes.IF_ICMPLT:
 			//			System.out.println("Other one is " + branches[branch].rVal.concreteValue_int+ "...."+branches[branch].rVal.expression);
-			getCurPC()._addDet(Comparator.LT, (IntegerExpression) lExp, (IntegerExpression) rExp);
+			getCurPC()._addDet(Operator.LT,lExp,rExp);
 			break;
 		case Opcodes.IF_ICMPNE:
-			getCurPC()._addDet(Comparator.NE, (IntegerExpression) lExp, (IntegerExpression) rExp);
+			getCurPC()._addDet(Operator.NE,lExp,rExp);
 			break;
 		default:
 			throw new IllegalArgumentException("Unimplemented branch type: " + Printer.OPCODES[opcode]);
@@ -947,7 +938,7 @@ public class PathUtils {
 //			c.rVal.concreteValue = clazz;
 //			v.constraints.add(c);
 //			values.add(v);
-//			v.expression = new SymbolicInteger(); //TODO implement instanceof constraint??
+//			v.expression = new IntVariable(); //TODO implement instanceof constraint??
 //			return ret;
 //		}
 	}
@@ -961,22 +952,22 @@ public class PathUtils {
 	 * @return
 	 */
 	public static Expression addArrayLengthConstraint(Expression expr) {
-		if (expr == null)
+//		if (expr == null)
 			return null;
-
-		if (expr.related != null)
-			return expr.related;
-		expr.related = new SymbolicInteger(((SymbolicInteger) expr).getName() + "_Length", 0, Integer.MAX_VALUE);
-		return expr.related;
+			//TODO
+//		if (expr.related != null)
+//			return expr.related;
+//		expr.related = new IntVariable(((IntVariable) expr).getName() + "_Length", 0, Integer.MAX_VALUE);
+//		return expr.related;
 	}
 
 	public static void registerArrayLength(Object array, int idx) {
-		if (array != null && VM.isBooted())
-			if (arraysHash.containsKey(array)) {
-				Expression obj = arraysHash.get(array);
-				((SymbolicInteger) obj)._min = Math.max(((SymbolicInteger) obj)._min, idx + 1);
-			}
-
+//		if (array != null && VM.isBooted())
+//			if (arraysHash.containsKey(array)) {
+//				Expression obj = arraysHash.get(array);
+//				((IntVariable) obj)._min = Math.max(((IntVariable) obj)._min, idx + 1);
+//			}
+		//TODO
 	}
 	static AtomicInteger uniq;
 	public static void registerUnaryToTaint(TaintedPrimitiveWithObjTag ret, Expression _exp2, int opcode) {
@@ -1042,11 +1033,9 @@ public class PathUtils {
 		switch (opcode) {
 		case Opcodes.INEG:
 		case Opcodes.LNEG:
-			ret = ((IntegerExpression) exp.lbl )._neg();
-			break;
 		case Opcodes.FNEG:
 		case Opcodes.DNEG:
-			ret = ((RealExpression) exp.lbl)._neg();
+			ret = new Operation(Operator.NEG, exp.lbl);
 			break;
 		default:
 			throw new IllegalStateException("Unimplemented opcode handler: " + Printer.OPCODES[opcode]);
@@ -1071,16 +1060,16 @@ public class PathUtils {
 			t2 = (Expression) ((TaintedWithObjTag) str2).getPHOSPHOR_TAG();
 		if (t1 == null && t2 == null)
 			return;
-		StringComparator strCmp;
+		Operator strCmp;
 
 		if(res.val) //result is true
 		{
 			switch (op) {
 			case StringOpcodes.STR_EQUAL:
-				strCmp = StringComparator.EQUALS;
+				strCmp = Operator.EQUALS;
 				break;
 			case StringOpcodes.STR_START:
-				strCmp = StringComparator.STARTSWITH;
+				strCmp = Operator.STARTSWITH;
 				break;
 			default:
 				throw new IllegalArgumentException("Unkown op: " + op);
@@ -1090,10 +1079,10 @@ public class PathUtils {
 		{
 			switch (op) {
 			case StringOpcodes.STR_EQUAL:
-				strCmp = StringComparator.NOTEQUALS;
+				strCmp = Operator.NOTEQUALS;
 				break;
 			case StringOpcodes.STR_START:
-				strCmp = StringComparator.NOTSTARTSWITH;
+				strCmp = Operator.NOTSTARTSWITH;
 				break;
 			default:
 				throw new IllegalArgumentException("Unkown op: " + op);
@@ -1104,7 +1093,7 @@ public class PathUtils {
 			lVal = (t2 == null) ? new StringConstant((String) str2) : t2;
 			rVal = (t1 == null) ? new StringConstant(str1) : t1;
 		}
-		getCurPC().spc._addDet(strCmp, (StringExpression) rVal, (StringExpression) lVal);
+		getCurPC()._addDet(strCmp, rVal, lVal);
 	}
 
 	public static void registerStringBooleanOp(TaintedBooleanWithObjTag res, String str1, int op) {
@@ -1114,12 +1103,12 @@ public class PathUtils {
 
 		if (t1 == null)
 			return;
-		StringComparator strCmp;
+		Operator strCmp;
 		if(res.val) //result is true
 		{
 			switch (op) {
 			case StringOpcodes.STR_EMPTY:
-				strCmp = StringComparator.EMPTY;
+				strCmp = Operator.EMPTY;
 				break;
 			default:
 				throw new IllegalArgumentException();
@@ -1129,13 +1118,13 @@ public class PathUtils {
 		{
 			switch (op) {
 			case StringOpcodes.STR_EMPTY:
-				strCmp = StringComparator.NOTEMPTY;
+				strCmp = Operator.NOTEMPTY;
 				break;
 			default:
 				throw new IllegalArgumentException();
 			}			
 		}
-		getCurPC().spc._addDet(strCmp, (StringExpression) t1);
+		getCurPC()._addDet(strCmp, t1);
 	}
 	
 	/**
@@ -1156,85 +1145,65 @@ public class PathUtils {
 		switch(opcode){
 		case Opcodes.IADD:
 		case Opcodes.LADD:
-			ret = ((IntegerExpression) expr1)._plus((IntegerExpression) expr2);
-			break;
 		case Opcodes.FADD:
 		case Opcodes.DADD:
-			ret = ((RealExpression) expr1)._plus((RealExpression) expr2);
+			ret = new Operation(Operator.ADD,expr1,expr2);
 			break;
 		case Opcodes.IMUL:
 		case Opcodes.LMUL:
-			ret = ((IntegerExpression) expr1)._mul((IntegerExpression) expr2);
-			break;
 		case Opcodes.FMUL:
 		case Opcodes.DMUL:
-			ret = ((RealExpression) expr1)._mul((RealExpression) expr2);
+			ret = new Operation(Operator.MUL,expr1,expr2);
 			break;
 		case Opcodes.IDIV:
 		case Opcodes.LDIV:
-			ret = ((IntegerExpression) expr1)._div((IntegerExpression) expr2);
-			break;
 		case Opcodes.FDIV:
 		case Opcodes.DDIV:
-			ret = ((RealExpression) expr1)._div((RealExpression) expr2);
+			ret = new Operation(Operator.DIV,expr1,expr2);
 			break;
 		case Opcodes.IREM:
 		case Opcodes.LREM:
-			ret = ((IntegerExpression) expr1)._rem((IntegerExpression) expr2);
-			break;
 		case Opcodes.DREM:
 		case Opcodes.FREM:
-			throw new IllegalArgumentException("haven't implemented drem/frem");
-//			v.expression = ((RealExpression) lVal.expression)._(RealExpression) rVal.expression);
-//			break;
+			ret = new Operation(Operator.MOD,expr1,expr2);
+			break;
 		case Opcodes.ISUB:
 		case Opcodes.LSUB:
-			ret = ((IntegerExpression) expr1)._minus((IntegerExpression) expr2);
-			break;
 		case Opcodes.DSUB:
 		case Opcodes.FSUB:
-			ret = ((RealExpression) expr1)._minus((RealExpression) expr2);
+			ret = new Operation(Operator.SUB,expr1,expr2);
 			break;
 		case Opcodes.IAND:
 		case Opcodes.LAND:
-			ret = ((IntegerExpression) expr1)._and((IntegerExpression) expr2);
+			ret = new Operation(Operator.BIT_AND,expr1,expr2);
 			break;
 		case Opcodes.IOR:
 		case Opcodes.LOR:
-			ret = ((IntegerExpression) expr1)._or((IntegerExpression) expr2);
+			ret = new Operation(Operator.BIT_OR,expr1,expr2);
 			break;
 		case Opcodes.ISHL:
 		case Opcodes.LSHL:
-			if(!IGNORE_SHIFTS)
-				ret = ((IntegerExpression) expr1)._shiftL((IntegerExpression) expr2);
-			else
-				ret = new SymbolicInteger();
+			ret = new Operation(Operator.SHIFTL,expr1,expr2);
 			break;
 		case Opcodes.ISHR:
 		case Opcodes.LSHR:
-			if(!IGNORE_SHIFTS)
-				ret = ((IntegerExpression) expr1)._shiftR((IntegerExpression) expr2);
-			else
-				ret = new SymbolicInteger();
+			ret = new Operation(Operator.SHIFTR,expr1,expr2);
 			break;
 		case Opcodes.IUSHR:
 		case Opcodes.LUSHR:
-			if(!IGNORE_SHIFTS)
-				ret = ((IntegerExpression) expr1)._shiftUR((IntegerExpression) expr2);
-			else
-				ret = new SymbolicInteger();
+			ret = new Operation(Operator.SHIFTUR,expr1,expr2);
 			break;
 		case Opcodes.IXOR:
 		case Opcodes.LXOR:
-			ret = ((IntegerExpression) expr1)._xor((IntegerExpression) expr2);
+			ret = new Operation(Operator.BIT_XOR,expr1,expr2);
 			break;
 		case StringOpcodes.STR_CONCAT:
-			ret = ((StringExpression) expr1)._concat(((StringExpression) expr2));
+			ret = new Operation(Operator.CONCAT,expr1,expr2);
 			break;
 		case Opcodes.LCMP:
 		case Opcodes.DCMPG:
 		case Opcodes.DCMPL:
-			ret = new SymbolicInteger(); //TODO support XCMP
+			ret = null;
 			break;
 		default:
 			throw new IllegalArgumentException("Unimplemented binary opcode: " + Printer.OPCODES[opcode]);
@@ -1258,13 +1227,13 @@ public class PathUtils {
 			ret = rVal;//StringExpression._valueOf((StringExpression) c.rVal.expression);
 			break;
 		case StringOpcodes.STR_TRIM:
-			ret = ((StringExpression) rVal)._trim();
+			ret = new Operation(Operator.TRIM, rVal);
 			break;
 		case StringOpcodes.STR_UCASE:
-			ret = new DerivedStringExpression(StringOperator.TOUPPERCASE, (StringExpression) rVal);
+			ret = new Operation(Operator.TOUPPERCASE, rVal);
 			break;
 		case StringOpcodes.STR_LCASE:
-			ret = new DerivedStringExpression(StringOperator.TOLOWERCASE, (StringExpression) rVal);
+			ret = new Operation(Operator.TOLOWERCASE, rVal);
 			break;
 		case StringOpcodes.STR_TO_DOUBLE: //TODO support for str -> int/double
 //			ret = ((StringExpression) rVal)._RvalueOf();
@@ -1313,21 +1282,25 @@ public class PathUtils {
 		//			c.rVal = values.get(toTaint);
 		//			c.thirdVal = values.get(origTaint);
 		//			v.constraints.add(c);
-		StringExpression firstPart = (StringExpression) origString.getPHOSPHOR_TAG();
-		StringExpression exp2 = (StringExpression) toString.getPHOSPHOR_TAG();
-		StringExpression exp3 = (StringExpression)fromString.getPHOSPHOR_TAG();
-		if (exp2 == null)
-			exp2 = new StringConstant(toString);
-		if (exp3 == null)
-			exp3 = new StringConstant(fromString);
+		Expression firstPart =  getExpression(origString);
+		Expression exp2 =  getExpression(toString);
+		Expression exp3 = getExpression(fromString);
 
 		switch (opCode) {
 		case StringOpcodes.STR_REPLACE:
+			returnedString.setPHOSPHOR_TAG(new Operation(Operator.REPLACEFIRST,firstPart,exp2,exp3));
+			break;
 		case StringOpcodes.STR_REPLACEALL:
-			returnedString.setPHOSPHOR_TAG(firstPart._replace(exp2, exp3));
+			returnedString.setPHOSPHOR_TAG(new Operation(Operator.REPLACE,firstPart,exp2,exp3));
 			break;
 		}
 
+	}
+
+	private static Expression getExpression(String origString) {
+		if(origString.PHOSPHOR_TAG == null)
+			return new StringConstant(origString);
+		return (Expression) origString.PHOSPHOR_TAG.lbl;
 	}
 
 	public static void addReplaceConstraint(String returnedString, CharSequence fromString, CharSequence toString, String origString)
@@ -1352,61 +1325,55 @@ public class PathUtils {
 		addReplaceAllConstraint(returnedString, from, to, origString, StringOpcodes.STR_REPLACE);
 	}
 	
-	public static void addSubstringConstraint(String returnedString, String origString, Expression taint1, int val1, Expression taint2, int val2)
+	public static void addSubstringConstraint(String returnedString, String origString, Taint<Expression> taint1, int val1, Taint<Expression> taint2, int val2)
 	{
-		Expression origTaint = taint1;
-		if (origString != null)
-			origTaint = (Expression) ((TaintedWithObjTag) ((Object)origString)).getPHOSPHOR_TAG();
-		if (origTaint == null && taint1 == null && taint2 == null)
-			return;
-		StringExpression thirdVal = null;
-		if(!JPFInited) initJPF();
-		int ret = 0;
-		Expression lVal, rVal;
-			if (origTaint == null) {
-				thirdVal = new StringConstant(origString);
-			} else
-				thirdVal = (StringExpression) origTaint;
-
-			lVal = (taint1 != null) ? taint1 : null; 
-			rVal = (taint2 != null) ? taint2 : null;
-	Expression newExp;
-		if (taint1 == null)
-			if (taint2 == null)
-				newExp = ((StringExpression) thirdVal)._subString(val2, val1);
-			else
-				newExp = ((StringExpression) thirdVal)._subString((IntegerExpression) rVal, val1);
-		else if (taint2 == null)
-			newExp = ((StringExpression) thirdVal)._subString(val2, (IntegerExpression) lVal);
-		else
-			newExp = ((StringExpression) thirdVal)._subString((IntegerExpression) rVal, (IntegerExpression) lVal);
-
-		((TaintedWithObjTag) ((Object)returnedString)).setPHOSPHOR_TAG(newExp);
-
-		if (newExp == null) {
-			throw new IllegalArgumentException("Returning null expression!");
-		}
+//		if (origString != null)
+//			taint1 = (Expression) ((TaintedWithObjTag) ((Object)origString)).getPHOSPHOR_TAG();
+//		if (taint1 == null && taint1 == null && taint2 == null)
+//			return;
+//		Expression origTaint = taint1.lbl;
+//
+//		Expression thirdVal = null;
+//		if(!JPFInited) initJPF();
+//		int ret = 0;
+//		Expression lVal, rVal;
+//		if (origTaint == null) {
+//			thirdVal = new StringConstant(origString);
+//		} else
+//			thirdVal = (Expression) origTaint;
+//		lVal = getExpression(taint1, val1);
+//		lVal = (taint1 != null) ? taint1 : null;
+//		rVal = (taint2 != null) ? taint2 : null;
+//		Expression newExp = new Operation(Operator.SUBSTRING,thirdVal,rVal,lVal);
+//
+//		((TaintedWithObjTag) ((Object) returnedString)).setPHOSPHOR_TAG(newExp);
+//
+//		if (newExp == null) {
+//			throw new IllegalArgumentException("Returning null expression!");
+//		}
+		//TODO
 	}
 
 	public static void addSubstringConstraint(String returnedString, String origString, Expression lVal, int val) {
 
-		Expression origExp = (Expression) origString.getPHOSPHOR_TAG();
-		if (origExp == null && lVal == null)
-			return;
-		if (!JPFInited)
-			initJPF();
-		if (origExp == null)
-			origExp = new StringConstant(origString);
-		Expression newExp;
-		if (lVal == null)
-			newExp = ((StringExpression) origExp)._subString(val);
-		else
-			newExp = ((StringExpression) origExp)._subString((IntegerExpression) lVal);
-
-		returnedString.setPHOSPHOR_TAG(newExp);
-		if (newExp == null) {
-			throw new IllegalArgumentException("Returning null expression!");
-		}
+//		Expression origExp = (Expression) origString.getPHOSPHOR_TAG();
+//		if (origExp == null && lVal == null)
+//			return;
+//		if (!JPFInited)
+//			initJPF();
+//		if (origExp == null)
+//			origExp = new StringConstant(origString);
+//		Expression newExp;
+//		if (lVal == null)
+//			newExp = ((StringExpression) origExp)._subString(val);
+//		else
+//			newExp = ((StringExpression) origExp)._subString((IntegerExpression) lVal);
+//
+//		returnedString.setPHOSPHOR_TAG(newExp);
+//		if (newExp == null) {
+//			throw new IllegalArgumentException("Returning null expression!");
+//		}
+		//TODO
 	}
 
 	public static void addSplitConstraint(String[] returnedStrings, String origString, String splitString)
@@ -1451,11 +1418,11 @@ public class PathUtils {
 	{
 		if(t == null)
 			return null;
-		if(t.lbl instanceof IntegerConstant)
+		if(t.lbl instanceof IntConstant)
 		{
-			return new ExpressionTaint(new RealConstant(((IntegerConstant)t.lbl).value));	
+			return new ExpressionTaint(new RealConstant(((IntConstant)t.lbl).getValue()));	
 		}
-		else if(t.lbl instanceof SymbolicInteger)
+		else if(t.lbl instanceof IntVariable)
 		{
 			throw new IllegalArgumentException("Got: " + t.lbl);
 		}

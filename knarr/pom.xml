@@ -72,10 +72,6 @@
 						</goals>
 						<configuration>
 							<relocations>
-								<!-- <relocation>
-									<pattern>gov.nasa.jpf</pattern>
-									<shadedPattern>edu.gmu.swe.knarr.gov.nasa.jpf</shadedPattern>
-								</relocation> -->
 								<relocation>
 									<pattern>za.ac.sun.cs.green</pattern>
 									<shadedPattern>edu.gmu.swe.knarr.za.ac.sun.cs.green</shadedPattern>
@@ -102,20 +98,14 @@
 			<version>0.0.3-SNAPSHOT</version>
 		</dependency>
 		<dependency>
-			<groupId>javapathfinder</groupId>
-			<artifactId>jpf</artifactId>
-			<version>SNAPSHOT</version>
-		</dependency>
-		<dependency>
-			<groupId>javapathfinder</groupId>
-			<artifactId>jpf-symbc</artifactId>
-			<version>SNAPSHOT</version>
-		</dependency>
-		<dependency>
-			<groupId>javapathfinder</groupId>
+			<groupId>greensolver</groupId>
 			<artifactId>green</artifactId>
 			<version>SNAPSHOT</version>
 		</dependency>
-
+		<dependency>
+			<groupId>net.jonbell.java</groupId>
+			<artifactId>CRIJ</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+		</dependency>
 	</dependencies>
 </project>

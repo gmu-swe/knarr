@@ -3,52 +3,30 @@ package edu.gmu.swe.knarr.runtime;
 import java.io.Serializable;
 import java.util.LinkedList;
 
-import gov.nasa.jpf.symbc.numeric.Constraint;
-import gov.nasa.jpf.symbc.numeric.PathCondition;
-import gov.nasa.jpf.symbc.string.StringConstraint;
-import gov.nasa.jpf.symbc.string.StringPathCondition;
+import za.ac.sun.cs.green.expr.Expression;
+import za.ac.sun.cs.green.expr.Operation;
+import za.ac.sun.cs.green.expr.Operation.Operator;
 
-public class PathConditionWrapper extends PathCondition implements Serializable {
+
+public class PathConditionWrapper implements Serializable {
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = -8116156330739369246L;
-	public LinkedList<Serializable> constraints = new LinkedList<Serializable>();
+	public LinkedList<Operation> constraints = new LinkedList<Operation>();
 
 	public PathConditionWrapper() {
-		spc = new StringPathConditionWrapper(this);
 	}
 
-	@Override
-	public boolean prependUnlessRepeated(Constraint t) {
-//		if (super.prependUnlessRepeated(t)) {
-		//TODO remove duplicates???
-			constraints.add(t);
-			return true;
-//		}
-//		return false;
+	public void _addDet(Operator op, Expression l, Expression r) {
+		Operation ret = new Operation(op, l, r);
+		constraints.add(ret);
 	}
 
-	public class StringPathConditionWrapper extends StringPathCondition implements Serializable {
-
-		/**
-		 * 
-		 */
-		private static final long serialVersionUID = -2501829705046774079L;
-
-		@Override
-		public boolean hasConstraint(StringConstraint c) {
-
-			if (!super.hasConstraint(c)) {
-				constraints.add(c);
-				return false;
-			}
-			return true;
-		}
-
-		public StringPathConditionWrapper(PathCondition npc) {
-			super(npc);
-		}
-
+	public void _addDet(Operator op, Expression t1) {
+		Operation ret = new Operation(op, t1);
+		constraints.add(ret);
 	}
+
+	
 }

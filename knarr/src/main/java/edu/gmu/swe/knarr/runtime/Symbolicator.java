@@ -9,6 +9,10 @@ import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import za.ac.sun.cs.green.expr.Expression;
+import za.ac.sun.cs.green.expr.IntVariable;
+import za.ac.sun.cs.green.expr.RealVariable;
+import za.ac.sun.cs.green.expr.StringVariable;
 import edu.columbia.cs.psl.phosphor.org.objectweb.asm.Type;
 import edu.columbia.cs.psl.phosphor.runtime.Taint;
 import edu.columbia.cs.psl.phosphor.struct.LazyIntArrayObjTags;
@@ -18,14 +22,10 @@ import edu.columbia.cs.psl.phosphor.struct.TaintedCharWithObjTag;
 import edu.columbia.cs.psl.phosphor.struct.TaintedDoubleWithObjTag;
 import edu.columbia.cs.psl.phosphor.struct.TaintedFloatWithObjTag;
 import edu.columbia.cs.psl.phosphor.struct.TaintedIntWithObjTag;
-import gov.nasa.jpf.symbc.numeric.Comparator;
 import edu.columbia.cs.psl.phosphor.struct.TaintedLongWithObjTag;
 import edu.columbia.cs.psl.phosphor.struct.TaintedShortWithObjTag;
 import edu.columbia.cs.psl.phosphor.struct.TaintedWithObjTag;
-import gov.nasa.jpf.symbc.numeric.Expression;
-import gov.nasa.jpf.symbc.numeric.SymbolicInteger;
-import gov.nasa.jpf.symbc.numeric.SymbolicReal;
-import gov.nasa.jpf.symbc.string.StringSymbolic;
+
 
 public class Symbolicator {
 	static Socket serverConnection;
@@ -97,7 +97,7 @@ public class Symbolicator {
 		{
 //			if (DEBUG)
 				System.out.println("Numeric constraints: " + ((PathConditionWrapper) PathUtils.getCurPC()).constraints);
-				System.out.println("String constraints: " + ((PathConditionWrapper) PathUtils.getCurPC()).spc);
+//				System.out.println("String constraints: " + ((PathConditionWrapper) PathUtils.getCurPC()).spc);
 			//			System.out.println(TaintUtils.getCurPC().spc);
 //			oos = new ObjectOutputStream(getSocket().getOutputStream());
 //			oos.writeObject(PathUtils.getCurPC());
@@ -282,13 +282,13 @@ public class Symbolicator {
 				in = (T) mySoln.varMapping.get(label);
 			//			TaintedCharArrayWithObjTag z = symbolic$$PHOSPHORTAGGED(label, null, str.toCharArray(), new TaintedCharArray());
 			//			str.valueINVIVO_PC_TAINTWithObjTag = z.taint;
-			Expression taint = new StringSymbolic(label);
+			Expression taint = new StringVariable(label);
 			((TaintedWithObjTag) in).setPHOSPHOR_TAG(taint);
 			return in;
 		}
 		if (in instanceof TaintedWithObjTag) {
 			PathUtils.checkLabelAndInitJPF(label);
-			Expression taint = new SymbolicInteger(label);
+			Expression taint = new IntVariable(label,Integer.MIN_VALUE,Integer.MAX_VALUE);
 			((TaintedWithObjTag) in).setPHOSPHOR_TAG(taint);
 			return in;
 		}
@@ -320,7 +320,7 @@ public class Symbolicator {
 		Expression ret = null;
 		if(str == str.intern())
 			str = new String(str);
-		ret = new StringSymbolic(lbl);
+		ret = new StringVariable(lbl);
 		str.setPHOSPHOR_TAG(new ExpressionTaint(ret));
 		return str;
 	}
@@ -335,7 +335,7 @@ public class Symbolicator {
 		switch(sort)
 		{
 		case Type.OBJECT:
-			ret = new SymbolicInteger(lbl, 0, 1);
+			ret = new IntVariable(lbl, 0, 1);
 			break;
 		case Type.ARRAY:
 			throw new UnsupportedOperationException();
@@ -349,28 +349,28 @@ public class Symbolicator {
 			//				in[i] = symbolic(label + "_" + i, in[i]);
 			//			}
 		case Type.BOOLEAN:
-			ret = new SymbolicInteger(lbl, 0, 1);
+			ret = new IntVariable(lbl, 0, 1);
 			break;
 		case Type.BYTE:
-			ret = new SymbolicInteger(lbl, Byte.MIN_VALUE, Byte.MAX_VALUE);
+			ret = new IntVariable(lbl, Integer.valueOf(Byte.MIN_VALUE), Integer.valueOf(Byte.MAX_VALUE));
 			break;
 		case Type.CHAR:
-			ret = new SymbolicInteger(lbl, Character.MIN_VALUE, Character.MAX_VALUE);
+			ret = new IntVariable(lbl, Integer.valueOf(Character.MIN_VALUE), Integer.valueOf(Character.MAX_VALUE));
 			break;
 		case Type.DOUBLE:
-			ret = new SymbolicReal(lbl, Double.MIN_VALUE, Double.MAX_VALUE);
+			ret = new RealVariable(lbl, Double.MIN_VALUE, Double.MAX_VALUE);
 			break;
 		case Type.FLOAT:
-			ret = new SymbolicReal(lbl, Float.MIN_VALUE, Float.MAX_VALUE);
+			ret = new RealVariable(lbl, Double.valueOf(Float.MIN_VALUE), Double.valueOf(Float.MAX_VALUE));
 			break;
 		case Type.INT:
-			ret = new SymbolicInteger(lbl, Integer.MIN_VALUE, Integer.MAX_VALUE);
+			ret = new IntVariable(lbl, Integer.MIN_VALUE, Integer.MAX_VALUE);
 			break;
 		case Type.LONG:
-			ret = new SymbolicReal(lbl, Long.MIN_VALUE, Long.MAX_VALUE);
+			ret = new IntVariable(lbl, Integer.MIN_VALUE, Integer.MAX_VALUE);
 			break;
 		case Type.SHORT:
-			ret = new SymbolicInteger(lbl, Short.MIN_VALUE, Short.MAX_VALUE);
+			ret = new IntVariable(lbl, Integer.valueOf(Short.MIN_VALUE), Integer.valueOf(Short.MAX_VALUE));
 			break;
 		default:
 			throw new UnsupportedOperationException();
@@ -384,7 +384,7 @@ public class Symbolicator {
 		ret.val = in;
 		if (mySoln != null && !mySoln.isUnconstrained)
 			ret.val = (Integer) mySoln.varMapping.get(label);
-		ret.taint = new ExpressionTaint(new SymbolicInteger((String) label));
+		ret.taint = new ExpressionTaint(new IntVariable((String) label, Integer.valueOf(Integer.MIN_VALUE), Integer.valueOf(Integer.MAX_VALUE)));
 		symbolicLabels.put((ExpressionTaint) ret.taint, label);
 		return ret;
 	}
@@ -394,7 +394,7 @@ public class Symbolicator {
 		ret.val = in;
 		if (mySoln != null && !mySoln.isUnconstrained)
 			ret.val = ((Integer) mySoln.varMapping.get(label)).byteValue();
-		ret.taint = new ExpressionTaint(new SymbolicInteger((String) label));
+		ret.taint = new ExpressionTaint(new IntVariable((String) label, Integer.valueOf(Byte.MIN_VALUE), Integer.valueOf(Byte.MAX_VALUE)));
 		symbolicLabels.put((ExpressionTaint) ret.taint, label);
 		return ret;
 	}
@@ -404,7 +404,7 @@ public class Symbolicator {
 		ret.val = in;
 		if (mySoln != null && !mySoln.isUnconstrained)
 			ret.val = ((Integer) mySoln.varMapping.get(label)).intValue() == 1;
-		ret.taint = new ExpressionTaint(new SymbolicInteger((String) label));
+		ret.taint = new ExpressionTaint(new IntVariable((String) label, 0,1));
 		symbolicLabels.put((ExpressionTaint) ret.taint, label);
 		return ret;
 	}
@@ -414,7 +414,7 @@ public class Symbolicator {
 		ret.val = in;
 		if (mySoln != null && !mySoln.isUnconstrained)
 			ret.val = (char) ((Integer) mySoln.varMapping.get(label)).intValue();
-		ret.taint = new ExpressionTaint(new SymbolicInteger((String) label));
+		ret.taint = new ExpressionTaint(new IntVariable((String) label, Integer.valueOf(Character.MIN_VALUE), Integer.valueOf(Character.MAX_VALUE)));
 		symbolicLabels.put((ExpressionTaint) ret.taint, label);
 		return ret;
 	}
@@ -424,7 +424,7 @@ public class Symbolicator {
 		ret.val = in;
 		if (mySoln != null && !mySoln.isUnconstrained)
 			ret.val = ((Double) mySoln.varMapping.get(label)).doubleValue();
-		ret.taint = new ExpressionTaint(new SymbolicReal((String) label));
+		ret.taint = new ExpressionTaint(new RealVariable((String) label, Double.MIN_VALUE, Double.MAX_VALUE));
 		symbolicLabels.put((ExpressionTaint) ret.taint, label);
 		return ret;
 	}
@@ -434,7 +434,7 @@ public class Symbolicator {
 		ret.val = in;
 		if (mySoln != null && !mySoln.isUnconstrained)
 			ret.val = ((Double) mySoln.varMapping.get(label)).floatValue();
-		ret.taint = new ExpressionTaint(new SymbolicReal((String) label));
+		ret.taint = new ExpressionTaint(new RealVariable((String) label, Double.valueOf(Float.MIN_VALUE), Double.valueOf(Float.MAX_VALUE)));
 		symbolicLabels.put((ExpressionTaint) ret.taint, label);
 		return ret;
 	}
@@ -444,7 +444,7 @@ public class Symbolicator {
 		ret.val = in;
 		if (mySoln != null && !mySoln.isUnconstrained)
 			ret.val = ((Long) mySoln.varMapping.get(label)).longValue();
-		ret.taint = new ExpressionTaint(new SymbolicInteger((String) label));
+		ret.taint = new ExpressionTaint(new IntVariable((String) label, Integer.valueOf(Integer.MIN_VALUE), Integer.valueOf(Integer.MAX_VALUE)));
 		symbolicLabels.put((ExpressionTaint) ret.taint, label);
 		return ret;
 	}
@@ -454,7 +454,7 @@ public class Symbolicator {
 		ret.val = in;
 		if (mySoln != null && !mySoln.isUnconstrained)
 			ret.val = ((Short) mySoln.varMapping.get(label)).shortValue();
-		ret.taint = new ExpressionTaint(new SymbolicInteger((String) label));
+		ret.taint = new ExpressionTaint(new IntVariable((String) label, Integer.valueOf(Short.MIN_VALUE), Integer.valueOf(Short.MAX_VALUE)));
 		symbolicLabels.put((ExpressionTaint) ret.taint, label);
 		return ret;
 	}

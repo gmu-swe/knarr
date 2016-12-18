@@ -1,7 +1,7 @@
 package edu.gmu.swe.knarr.runtime;
 
+import za.ac.sun.cs.green.expr.Expression;
 import edu.columbia.cs.psl.phosphor.runtime.Taint;
-import gov.nasa.jpf.symbc.numeric.Expression;
 
 public class ExpressionTaint extends Taint<Expression>{
 
