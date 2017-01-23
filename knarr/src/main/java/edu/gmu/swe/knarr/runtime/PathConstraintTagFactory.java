@@ -625,4 +625,14 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes {
 			idx += t.getSize();
 		}
 	}
+	@Override
+	public void instrumentationStarting(int access, String methodName, String methodDesc) {
+		// TODO Auto-generated method stub
+		
+	}
+	@Override
+	public void insnIndexVisited(int offset) {
+		// TODO Auto-generated method stub
+		
+	}
 }

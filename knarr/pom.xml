@@ -6,6 +6,16 @@
 	<version>0.0.2-SNAPSHOT</version>
 	<repositories>
 		<repository>
+			<id>jb.snapshots</id>
+			<name>jons snapshots</name>
+			<url>https://maven.jonbell.net/repository/snapshots</url>
+		</repository>
+		<repository>
+			<id>jb.priv</id>
+			<name>JB Priv snaps</name>
+			<url>https://priv:VbK|fzU99@maven.jonbell.net/repository/privatesnaps/</url>
+		</repository>
+		<repository>
 			<id>local-repo</id>
 			<url>file://${project.basedir}/../local-repository</url>
 		</repository>
@@ -108,4 +118,11 @@
 			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
 	</dependencies>
+	<distributionManagement>
+		<snapshotRepository>
+			<id>privsnapshots</id>
+			<name>JB PRIVATE Snapshots Repository</name>
+			<url>https://maven.jonbell.net/repository/privatesnaps</url>
+		</snapshotRepository>
+	</distributionManagement>
 </project>
