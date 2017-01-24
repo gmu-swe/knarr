@@ -108,4 +108,12 @@
 			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
 	</dependencies>
+	<distributionManagement>
+		<snapshotRepository>
+			<id>jb.snapshots</id>
+			<name>JB Snapshots Repository</name>
+			<url>https://maven.jonbell.net/repository/snapshots</url>
+		</snapshotRepository>
+	</distributionManagement>
+
 </project>

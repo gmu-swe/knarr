@@ -1,5 +1,6 @@
 package edu.gmu.swe.knarr;
 
+import net.jonbell.crij.instrument.CRClassFileTransformer;
 import edu.columbia.cs.psl.phosphor.Configuration;
 import edu.columbia.cs.psl.phosphor.Instrumenter;
 import edu.gmu.swe.knarr.runtime.PathConstraintTagFactory;
@@ -17,6 +18,7 @@ public class Main {
 		Configuration.WITH_TAGS_FOR_JUMPS = true;
 		Configuration.taintTagFactory = new PathConstraintTagFactory();
 		System.arraycopy(_args, 0, args, 3, _args.length);
+		Instrumenter.addlTransformer = new CRClassFileTransformer();
 		Instrumenter.main(args);
 	}
 }
