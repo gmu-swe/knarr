@@ -15,10 +15,6 @@
 			<name>JB Priv snaps</name>
 			<url>https://priv:VbK|fzU99@maven.jonbell.net/repository/privatesnaps/</url>
 		</repository>
-		<repository>
-			<id>local-repo</id>
-			<url>file://${project.basedir}/../local-repository</url>
-		</repository>
 	</repositories>
 	<build>
 		<resources>
