@@ -270,8 +270,7 @@ public class PathUtils {
 			return ret;
 		}
 		//TODO figure out how to support this
-		ret.taint = null;
-//		ret.taint = registerBinaryOp(getExpression(lVal, v2), getExpression(rVal, v1), Opcodes.IREM);
+		ret.taint = registerBinaryOp(getExpression(lVal, v2), getExpression(rVal, v1), Opcodes.IREM);
 		return ret;
 	}
 	
@@ -969,31 +968,31 @@ public class PathUtils {
 		//TODO
 	}
 	static AtomicInteger uniq;
-	public static void registerUnaryToTaint(TaintedPrimitiveWithObjTag ret, Expression _exp2, int opcode) {
+	public static void registerUnaryToTaint(TaintedPrimitiveWithObjTag ret, Taint t, int opcode) {
 //		if(((StringExpression)values.get(taint2).expression).getName().getPHOSPHORTAG() != 0)
 //		throw new IllegalArgumentException("Got a non-zero taint on the name of this: " + ((StringExpression)values.get(taint2).expression).getName().getPHOSPHORTAG());
-//		if(_exp2 == null)
-//		{
-//			ret.taint = null;
-//			return;
-//		}
-//		if(!JPFInited) initJPF();
+		if(t == null)
+		{
+			ret.taint = null;
+			return;
+		}
 //		if(uniq == null)
 //			uniq = new AtomicInteger();
 //		StringExpression exp2 = (StringExpression) _exp2;
-//		switch (opcode) {
-//		case StringOpcodes.STR_LEN:
-//			if (exp2 != null)
+		switch (opcode) {
+		case StringOpcodes.STR_LEN:
+//			if (t != null)
 //			{
-//				ret.taint = exp2._length();
+//				ret.taint = new Taint(new Operation(Operator., operands));
 //			}
-//			break;
-//		default:
+			ret.taint = null; // TODO don't support array length yet
+			break;
+		default:
 			throw new IllegalArgumentException("unimplemented string op: " + opcode);
-//		}
+		}
 	}
 
-	public static ExpressionTaint registerBinaryStringOp(String strL, String strR, int opcode) {
+	public static Taint<Expression> registerBinaryStringOp(String strL, String strR, int opcode) {
 		if (strL == null || strR == null) {
 			return null;
 		}
@@ -1051,14 +1050,22 @@ public class PathUtils {
 	public static void registerStringBooleanOp(TaintedBooleanWithObjTag res, String str1, Object str2, int op) {
 		Expression t1 = null;
 		Expression t2 = null;
-		if (str1 != null)
-			t1 = (Expression) str1.getPHOSPHOR_TAG();
-		if(!(str2 instanceof String))
+		if (str1 == null || str2 == null)
 			return;
-		if (str2 != null)
-			t2 = (Expression) ((TaintedWithObjTag) str2).getPHOSPHOR_TAG();
-		if (t1 == null && t2 == null)
+		if (!(str2 instanceof String))
 			return;
+		Taint<Expression> _t1 = ((Taint<Expression>) ((TaintedWithObjTag) str1).getPHOSPHOR_TAG());
+		Taint<Expression> _t2 = ((Taint<Expression>) ((TaintedWithObjTag) str2).getPHOSPHOR_TAG());
+		if (_t1 == null && _t2 == null)
+			return;
+		if (_t1 != null)
+			t1 = _t1.lbl;
+		else
+			t1 = new StringConstant((String) str1);
+		if (_t2 != null)
+			t2 = _t2.lbl;
+		else
+			t2 = new StringConstant((String) str2);
 		Operator strCmp;
 
 		if(res.val) //result is true
@@ -1088,11 +1095,8 @@ public class PathUtils {
 			}
 		}
 		Expression lVal, rVal;
-		synchronized (lock) {
-			lVal = (t2 == null) ? new StringConstant((String) str2) : t2;
-			rVal = (t1 == null) ? new StringConstant(str1) : t1;
-		}
-		getCurPC()._addDet(strCmp, rVal, lVal);
+		
+		getCurPC()._addDet(strCmp, t1, t2);
 	}
 
 	public static void registerStringBooleanOp(TaintedBooleanWithObjTag res, String str1, int op) {
@@ -1212,7 +1216,7 @@ public class PathUtils {
 
 	
 
-	public static Expression registerStringOp(Expression rVal, int opcode) {
+	public static Taint<Expression> registerStringOp(Taint<Expression> rVal, int opcode) {
 		if (rVal == null)
 			return null;
 		if (!JPFInited)
@@ -1223,16 +1227,16 @@ public class PathUtils {
 		switch (opcode) {
 		//TODO handle strcpy!!!
 		case StringOpcodes.STR_CPY:
-			ret = rVal;//StringExpression._valueOf((StringExpression) c.rVal.expression);
+			ret = rVal.lbl;//StringExpression._valueOf((StringExpression) c.rVal.expression);
 			break;
 		case StringOpcodes.STR_TRIM:
-			ret = new Operation(Operator.TRIM, rVal);
+			ret = new Operation(Operator.TRIM, rVal.lbl);
 			break;
 		case StringOpcodes.STR_UCASE:
-			ret = new Operation(Operator.TOUPPERCASE, rVal);
+			ret = new Operation(Operator.TOUPPERCASE, rVal.lbl);
 			break;
 		case StringOpcodes.STR_LCASE:
-			ret = new Operation(Operator.TOLOWERCASE, rVal);
+			ret = new Operation(Operator.TOLOWERCASE, rVal.lbl);
 			break;
 		case StringOpcodes.STR_TO_DOUBLE: //TODO support for str -> int/double
 //			ret = ((StringExpression) rVal)._RvalueOf();
@@ -1247,7 +1251,7 @@ public class PathUtils {
 			throw new IllegalArgumentException("got op " + opcode);
 		}
 		if(ret == null) throw new IllegalArgumentException("Null exp returned?");
-		return ret;
+		return new Taint(ret);
 	}
 	
 	public static Expression[] registerTaintOnArray(Object val, Object label) {
@@ -1353,7 +1357,7 @@ public class PathUtils {
 		//TODO
 	}
 
-	public static void addSubstringConstraint(String returnedString, String origString, Expression lVal, int val) {
+	public static void addSubstringConstraint(String returnedString, String origString, Taint<Expression> lVal, int val) {
 
 //		Expression origExp = (Expression) origString.getPHOSPHOR_TAG();
 //		if (origExp == null && lVal == null)
