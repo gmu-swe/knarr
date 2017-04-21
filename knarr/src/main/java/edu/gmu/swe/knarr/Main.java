@@ -1,6 +1,5 @@
 package edu.gmu.swe.knarr;
 
-import net.jonbell.crij.instrument.CRClassFileTransformer;
 import edu.columbia.cs.psl.phosphor.Configuration;
 import edu.columbia.cs.psl.phosphor.Instrumenter;
 import edu.gmu.swe.knarr.runtime.PathConstraintTagFactory;

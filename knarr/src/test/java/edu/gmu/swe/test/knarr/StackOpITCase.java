@@ -1,6 +1,5 @@
 package edu.gmu.swe.test.knarr;
 
-import net.jonbell.crij.runtime.CheckpointRollbackAgent;
 
 import org.junit.Test;
 
