@@ -1,7 +1,6 @@
 package edu.gmu.swe.knarr.runtime;
 
 import java.io.IOException;
-import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
@@ -26,7 +25,6 @@ import edu.columbia.cs.psl.phosphor.struct.TaintedLongWithObjTag;
 import edu.columbia.cs.psl.phosphor.struct.TaintedShortWithObjTag;
 import edu.columbia.cs.psl.phosphor.struct.TaintedWithObjTag;
 
-
 public class Symbolicator {
 	static Socket serverConnection;
 	static String SERVER_HOST = System.getProperty("SATServer", "127.0.0.1");
@@ -35,35 +33,37 @@ public class Symbolicator {
 	public static final boolean DEBUG = Boolean.valueOf(System.getProperty("DEBUG", "false"));
 	public static final String INTERNAL_NAME = "edu/columbia/cs/psl/knarr/runtime/Symbolicator";
 	static {
-		
-//		System.setOut(new PrintStream(System.out)
-//		{
-//			@Override
-//			public void println(Object x) {
-//				// TODO Auto-generated method stub
-//				new Exception().printStackTrace();
-//				super.println(x);
-//			}
-//			@Override
-//			public void println(String x) {
-//				// TODO Auto-generated method stub
-//				new Exception().printStackTrace();
-//				super.println(x);
-//			}
-//		});
-		//Try to get a solution
-//		try {
-//			ObjectOutputStream oos = new ObjectOutputStream(getSocket().getOutputStream());
-//			oos.writeObject("REGISTER");
-//			ObjectInputStream ois = new ObjectInputStream(getSocket().getInputStream());
-//			mySoln = (InputSolution) ois.readObject();
-//			if (DEBUG)
-//				System.out.println("Received input set: " + mySoln.varMapping);
-//			serverConnection.close();
-//			serverConnection = null;
-//		} catch (Exception ex) {
-//			ex.printStackTrace();
-//		}
+
+		// System.setOut(new PrintStream(System.out)
+		// {
+		// @Override
+		// public void println(Object x) {
+		// // TODO Auto-generated method stub
+		// new Exception().printStackTrace();
+		// super.println(x);
+		// }
+		// @Override
+		// public void println(String x) {
+		// // TODO Auto-generated method stub
+		// new Exception().printStackTrace();
+		// super.println(x);
+		// }
+		// });
+		// Try to get a solution
+		// try {
+		// ObjectOutputStream oos = new
+		// ObjectOutputStream(getSocket().getOutputStream());
+		// oos.writeObject("REGISTER");
+		// ObjectInputStream ois = new
+		// ObjectInputStream(getSocket().getInputStream());
+		// mySoln = (InputSolution) ois.readObject();
+		// if (DEBUG)
+		// System.out.println("Received input set: " + mySoln.varMapping);
+		// serverConnection.close();
+		// serverConnection = null;
+		// } catch (Exception ex) {
+		// ex.printStackTrace();
+		// }
 	}
 
 	public static Socket getSocket() {
@@ -82,34 +82,37 @@ public class Symbolicator {
 	}
 
 	private static void collectArrayLenConstraints() {
-//		for (Expression v : TaintUtils.arraysHash.values()) {
-//			SymbolicInteger length = (SymbolicInteger) v.related;
-////			SymbolicInteger length = (SymbolicInteger) lengthVal.expression;
-//			TaintUtils.getCurPC()._addDet(Comparator.GE, length, length._min);
-//		}
+		// for (Expression v : TaintUtils.arraysHash.values()) {
+		// SymbolicInteger length = (SymbolicInteger) v.related;
+		// // SymbolicInteger length = (SymbolicInteger) lengthVal.expression;
+		// TaintUtils.getCurPC()._addDet(Comparator.GE, length, length._min);
+		// }
 		System.out.println("Warning - array length constraints disabled?");
 	}
 
 	public static void dumpConstraints() {
 		ObjectOutputStream oos;
 		collectArrayLenConstraints();
-//		try 
+		// try
 		{
-//			if (DEBUG)
-				System.out.println("Numeric constraints: " + ((PathConditionWrapper) PathUtils.getCurPC()).constraints);
-//				System.out.println("String constraints: " + ((PathConditionWrapper) PathUtils.getCurPC()).spc);
-			//			System.out.println(TaintUtils.getCurPC().spc);
-//			oos = new ObjectOutputStream(getSocket().getOutputStream());
-//			oos.writeObject(PathUtils.getCurPC());
-			//			oos.close();
-			//			ObjectInputStream ois = new ObjectInputStream(getSocket().getInputStream());
-			//			HashMap<String, Serializable> solution = (HashMap<String, Serializable>) ois.readObject();
-			//			System.out.println("Solution received: " + solution);
-		} 
-//		catch (IOException e) {
-//			// TODO Auto-generated catch block
-//			e.printStackTrace();
-//		}
+			// if (DEBUG)
+			System.out.println("Numeric constraints: " + ((PathConditionWrapper) PathUtils.getCurPC()).constraints);
+			// System.out.println("String constraints: " +
+			// ((PathConditionWrapper) PathUtils.getCurPC()).spc);
+			// System.out.println(TaintUtils.getCurPC().spc);
+			// oos = new ObjectOutputStream(getSocket().getOutputStream());
+			// oos.writeObject(PathUtils.getCurPC());
+			// oos.close();
+			// ObjectInputStream ois = new
+			// ObjectInputStream(getSocket().getInputStream());
+			// HashMap<String, Serializable> solution = (HashMap<String,
+			// Serializable>) ois.readObject();
+			// System.out.println("Solution received: " + solution);
+		}
+		// catch (IOException e) {
+		// // TODO Auto-generated catch block
+		// e.printStackTrace();
+		// }
 	}
 
 	public static void solve() {
@@ -187,35 +190,36 @@ public class Symbolicator {
 	public static byte[] symbolic(byte[] in) {
 		return in;
 	}
-	public static String generateLabel()
-	{
-		return "autoVar_"+autoLblr.getAndIncrement();
+
+	public static String generateLabel() {
+		return "autoVar_" + autoLblr.getAndIncrement();
 	}
+
 	public static int[] symbolic$$PHOSPHORTAGGED(String label, LazyIntArrayObjTags in_tags, int[] in) {
-//		PathUtils.checkLabelAndInitJPF(label);
-//		Expression exp = new SymbolicInteger(label+"_length",0,Integer.MAX_VALUE);
-//		symbolicLabels.put(exp, label);
-//		in_tags.lengthTaint = new ExpressionTaint(exp);
-//		exp.elements = new Expression[in.length];
-//		for (int i = 0; i < in.length; i++) {
-//			Expression tag = new SymbolicInteger(label + "_" + i, Byte.MIN_VALUE, Byte.MAX_VALUE);
-//			exp.elements[i] = tag;
-//		}
-//		
-//		return in;
+		// PathUtils.checkLabelAndInitJPF(label);
+		// Expression exp = new
+		// SymbolicInteger(label+"_length",0,Integer.MAX_VALUE);
+		// symbolicLabels.put(exp, label);
+		// in_tags.lengthTaint = new ExpressionTaint(exp);
+		// exp.elements = new Expression[in.length];
+		// for (int i = 0; i < in.length; i++) {
+		// Expression tag = new SymbolicInteger(label + "_" + i, Byte.MIN_VALUE,
+		// Byte.MAX_VALUE);
+		// exp.elements[i] = tag;
+		// }
+		//
+		// return in;
 		throw new UnsupportedOperationException();
 	}
 
-
 	public static <T> T[] symbolic(T[] in) {
-		return symbolic(generateLabel(),in);
+		return symbolic(generateLabel(), in);
 	}
 
 	@SuppressWarnings("unchecked")
 	public static <T> T symbolic(T in) {
-		return symbolic(generateLabel(),in);
+		return symbolic(generateLabel(), in);
 	}
-
 
 	public static TaintedIntWithObjTag symbolic$$PHOSPHORTAGGED(Taint<Expression> tag, int in, TaintedIntWithObjTag ret) {
 		return symbolic$$PHOSPHORTAGGED(generateLabel(), tag, in, ret);
@@ -248,28 +252,31 @@ public class Symbolicator {
 	public static TaintedShortWithObjTag symbolic$$PHOSPHORTAGGED(Taint<Expression> tag, short in, TaintedShortWithObjTag ret) {
 		return symbolic$$PHOSPHORTAGGED(generateLabel(), tag, in, ret);
 	}
-	
-//	public static byte[] symbolic$$PHOSPHORTAGGED(Expression in_tags_ignore, byte[] in) {
-//		return symbolic$$PHOSPHORTAGGED(generateLabel(), in_tags_ignore, in);
-//	}
-//
-//	public static char[] symbolic$$PHOSPHORTAGGED(Expression in_tags_ignore, char[] in) {
-//		return symbolic$$PHOSPHORTAGGED(generateLabel(), in_tags_ignore, in);
-//	}
 
-//	public static <T> T[] symbolic(String label, T[] in) {
-//		PathUtils.checkLabelAndInitJPF(label);
-//		PathUtils.registerTaintOnArray(in, label);
-//		Expression exp = new SymbolicInteger(label+"_length",0,Integer.MAX_VALUE); //for array length
-//		ArrayHelper.setExpression(in, exp);
-//		exp.elements = new Expression[in.length];
-//		symbolicLabels.put(exp, label+"_length");
-//		System.out.println("2");
-//		for (int i = 0; i < in.length; i++) {
-//			in[i] = symbolic(label + "_" + i, in[i]);
-//		}
-//		return in;
-//	}
+	// public static byte[] symbolic$$PHOSPHORTAGGED(Expression in_tags_ignore,
+	// byte[] in) {
+	// return symbolic$$PHOSPHORTAGGED(generateLabel(), in_tags_ignore, in);
+	// }
+	//
+	// public static char[] symbolic$$PHOSPHORTAGGED(Expression in_tags_ignore,
+	// char[] in) {
+	// return symbolic$$PHOSPHORTAGGED(generateLabel(), in_tags_ignore, in);
+	// }
+
+	// public static <T> T[] symbolic(String label, T[] in) {
+	// PathUtils.checkLabelAndInitJPF(label);
+	// PathUtils.registerTaintOnArray(in, label);
+	// Expression exp = new
+	// SymbolicInteger(label+"_length",0,Integer.MAX_VALUE); //for array length
+	// ArrayHelper.setExpression(in, exp);
+	// exp.elements = new Expression[in.length];
+	// symbolicLabels.put(exp, label+"_length");
+	// System.out.println("2");
+	// for (int i = 0; i < in.length; i++) {
+	// in[i] = symbolic(label + "_" + i, in[i]);
+	// }
+	// return in;
+	// }
 
 	@SuppressWarnings("unchecked")
 	public static <T> T symbolic(String label, T in) {
@@ -280,74 +287,75 @@ public class Symbolicator {
 		if (in instanceof String) {
 			if (mySoln != null && !mySoln.isUnconstrained)
 				in = (T) mySoln.varMapping.get(label);
-			//			TaintedCharArrayWithObjTag z = symbolic$$PHOSPHORTAGGED(label, null, str.toCharArray(), new TaintedCharArray());
-			//			str.valueINVIVO_PC_TAINTWithObjTag = z.taint;
+			// TaintedCharArrayWithObjTag z = symbolic$$PHOSPHORTAGGED(label,
+			// null, str.toCharArray(), new TaintedCharArray());
+			// str.valueINVIVO_PC_TAINTWithObjTag = z.taint;
 			Expression taint = new StringVariable(label);
 			((TaintedWithObjTag) in).setPHOSPHOR_TAG(taint);
 			return in;
 		}
 		if (in instanceof TaintedWithObjTag) {
 			PathUtils.checkLabelAndInitJPF(label);
-			Expression taint = new IntVariable(label,Integer.MIN_VALUE,Integer.MAX_VALUE);
+			Expression taint = new IntVariable(label, Integer.MIN_VALUE, Integer.MAX_VALUE);
 			((TaintedWithObjTag) in).setPHOSPHOR_TAG(taint);
 			return in;
 		}
 		throw new UnsupportedOperationException();
-//		else if(in instanceof int[])
-//		{
-//			PathUtils.checkLabelAndInitJPF(label);
-//			symbolic$$PHOSPHORTAGGED(label,null,(int[]) in);
-////			Expression exp = new SymbolicInteger(0, Integer.MAX_VALUE);
-////			exp.elements = new SymbolicInteger[((int[])in).length];
-////			ArrayHelper.setExpression(in, exp);
-////			symbolicLabels.put(exp, label);
-//			return in;
-//		}
+		// else if(in instanceof int[])
+		// {
+		// PathUtils.checkLabelAndInitJPF(label);
+		// symbolic$$PHOSPHORTAGGED(label,null,(int[]) in);
+		// // Expression exp = new SymbolicInteger(0, Integer.MAX_VALUE);
+		// // exp.elements = new SymbolicInteger[((int[])in).length];
+		// // ArrayHelper.setExpression(in, exp);
+		// // symbolicLabels.put(exp, label);
+		// return in;
+		// }
 
 	}
 
 	static HashMap<ExpressionTaint, Object> symbolicLabels = new HashMap<ExpressionTaint, Object>();
 
 	static ConcurrentHashMap<String, AtomicInteger> lblCounters = new ConcurrentHashMap<String, AtomicInteger>();
-	
-	public static final String symbolicString(String str, String lbl)
-	{
-		if(!lblCounters.containsKey(lbl))
+
+	public static final String symbolicString(String str, String lbl) {
+		if (!lblCounters.containsKey(lbl))
 			lblCounters.put(lbl, new AtomicInteger());
 		AtomicInteger i = lblCounters.get(lbl);
-		lbl = lbl + "_"+i.getAndIncrement();
+		lbl = lbl + "_" + i.getAndIncrement();
 		PathUtils.checkLabelAndInitJPF(lbl);
 		Expression ret = null;
-		if(str == str.intern())
+		if (str == str.intern())
 			str = new String(str);
 		ret = new StringVariable(lbl);
 		str.setPHOSPHOR_TAG(new ExpressionTaint(ret));
 		return str;
 	}
-	public static final Expression generateExpression(String lbl, int sort)
-	{
-		if(!lblCounters.containsKey(lbl))
+
+	public static final Expression generateExpression(String lbl, int sort) {
+		if (!lblCounters.containsKey(lbl))
 			lblCounters.put(lbl, new AtomicInteger());
 		AtomicInteger i = lblCounters.get(lbl);
-		lbl = lbl + "_"+i.getAndIncrement();
+		lbl = lbl + "_" + i.getAndIncrement();
 		PathUtils.checkLabelAndInitJPF(lbl);
 		Expression ret = null;
-		switch(sort)
-		{
+		switch (sort) {
 		case Type.OBJECT:
 			ret = new IntVariable(lbl, 0, 1);
 			break;
 		case Type.ARRAY:
 			throw new UnsupportedOperationException();
-//			PathUtils.checkLabelAndInitJPF(lbl);
-//			Expression exp = new SymbolicInteger(lbl+"_length",0,Integer.MAX_VALUE); //for array length
-//			return exp;
-//			ArrayHelper.setExpression(in, exp);
-//			exp.elements = new Expression[in.length];
-//			symbolicLabels.put(exp, label+"_length");
-//			for (int i = 0; i < in.length; i++) {
-			//				in[i] = symbolic(label + "_" + i, in[i]);
-			//			}
+			// PathUtils.checkLabelAndInitJPF(lbl);
+			// Expression exp = new
+			// SymbolicInteger(lbl+"_length",0,Integer.MAX_VALUE); //for array
+			// length
+			// return exp;
+			// ArrayHelper.setExpression(in, exp);
+			// exp.elements = new Expression[in.length];
+			// symbolicLabels.put(exp, label+"_length");
+			// for (int i = 0; i < in.length; i++) {
+			// in[i] = symbolic(label + "_" + i, in[i]);
+			// }
 		case Type.BOOLEAN:
 			ret = new IntVariable(lbl, 0, 1);
 			break;
@@ -375,10 +383,12 @@ public class Symbolicator {
 		default:
 			throw new UnsupportedOperationException();
 		}
-//		symbolicLabels.put(ret, lbl);
+		// symbolicLabels.put(ret, lbl);
 		return ret;
 	}
+
 	static AtomicInteger autoLblr = new AtomicInteger();
+
 	public static TaintedIntWithObjTag symbolic$$PHOSPHORTAGGED(String label, Taint<Expression> tag, int in, TaintedIntWithObjTag ret) {
 		PathUtils.checkLabelAndInitJPF(label);
 		ret.val = in;
@@ -404,7 +414,7 @@ public class Symbolicator {
 		ret.val = in;
 		if (mySoln != null && !mySoln.isUnconstrained)
 			ret.val = ((Integer) mySoln.varMapping.get(label)).intValue() == 1;
-		ret.taint = new ExpressionTaint(new IntVariable((String) label, 0,1));
+		ret.taint = new ExpressionTaint(new IntVariable((String) label, 0, 1));
 		symbolicLabels.put((ExpressionTaint) ret.taint, label);
 		return ret;
 	}
@@ -458,41 +468,40 @@ public class Symbolicator {
 		symbolicLabels.put((ExpressionTaint) ret.taint, label);
 		return ret;
 	}
-	
-	public static Expression getExpression(int in)
-	{
+
+	public static Expression getExpression(int in) {
 		throw new UnsupportedOperationException("You must instrument your code before running it.");
 	}
-	public static Expression getExpression(long in)
-	{
+
+	public static Expression getExpression(long in) {
 		throw new UnsupportedOperationException("You must instrument your code before running it.");
 	}
-	public static Expression getExpression(byte in)
-	{
+
+	public static Expression getExpression(byte in) {
 		throw new UnsupportedOperationException("You must instrument your code before running it.");
 	}
-	public static Expression getExpression(char in)
-	{
+
+	public static Expression getExpression(char in) {
 		throw new UnsupportedOperationException("You must instrument your code before running it.");
 	}
-	public static Expression getExpression(double in)
-	{
+
+	public static Expression getExpression(double in) {
 		throw new UnsupportedOperationException("You must instrument your code before running it.");
 	}
-	public static Expression getExpression(float in)
-	{
+
+	public static Expression getExpression(float in) {
 		throw new UnsupportedOperationException("You must instrument your code before running it.");
 	}
-	public static Expression getExpression(boolean in)
-	{
+
+	public static Expression getExpression(boolean in) {
 		throw new UnsupportedOperationException("You must instrument your code before running it.");
 	}
-	public static Expression getExpression(Object in)
-	{
+
+	public static Expression getExpression(Object in) {
 		throw new UnsupportedOperationException("You must instrument your code before running it.");
 	}
-	public static Expression getExpression$$PHOSPHORTAGGED(Taint<Expression> exp, int in)
-	{
+
+	public static Expression getExpression$$PHOSPHORTAGGED(Taint<Expression> exp, int in) {
 		if (exp != null)
 			return exp.lbl;
 		return null;
@@ -534,9 +543,8 @@ public class Symbolicator {
 		return null;
 	}
 
-	public static Expression getExpression$$PHOSPHORTAGGED(Object obj)
-	{
-		if(obj instanceof TaintedWithObjTag)
+	public static Expression getExpression$$PHOSPHORTAGGED(Object obj) {
+		if (obj instanceof TaintedWithObjTag)
 			return (Expression) ((TaintedWithObjTag) obj).getPHOSPHOR_TAG();
 		return null;
 	}

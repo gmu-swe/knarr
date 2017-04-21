@@ -7,7 +7,6 @@ import za.ac.sun.cs.green.expr.Expression;
 import za.ac.sun.cs.green.expr.Operation;
 import za.ac.sun.cs.green.expr.Operation.Operator;
 
-
 public class PathConditionWrapper implements Serializable {
 	/**
 	 * 
@@ -28,5 +27,4 @@ public class PathConditionWrapper implements Serializable {
 		constraints.add(ret);
 	}
 
-	
 }

@@ -16,7 +16,7 @@ public interface StringOpcodes {
 	public static final int STR_TRIM = 312;
 	public static final int STR_REPLACEALL = 313;
 	public static final int STR_TO_INT = 314;
-	public static final int STR_TO_LONG= 315;
+	public static final int STR_TO_LONG = 315;
 	public static final int STR_TO_DOUBLE = 316;
 
 }
