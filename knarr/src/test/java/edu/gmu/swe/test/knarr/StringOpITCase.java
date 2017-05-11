@@ -13,7 +13,7 @@ public class StringOpITCase {
 		String MyStr = Symbolicator.symbolicString("MyStr", new String("MyStr"));
 		assertEquals("MyStr", MyStr);
 		assertEquals("MyStrZ", MyStr.concat("Z"));
-//		assertEquals("M", MyStr.charAt(0));
+		assertEquals('M', MyStr.charAt(0));
 		Symbolicator.dumpConstraints();
 	}
 	

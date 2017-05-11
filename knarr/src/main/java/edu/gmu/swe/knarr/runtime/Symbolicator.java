@@ -328,8 +328,7 @@ public class Symbolicator {
 		if (str == str.intern())
 			str = new String(str);
 		ret = new StringVariable(lbl);
-//		str.setPHOSPHOR_TAG(new ExpressionTaint(ret));
-		str.PHOSPHOR_TAG = new ExpressionTaint(ret);
+		str.setPHOSPHOR_TAG(new ExpressionTaint(ret));
 		return str;
 	}
 

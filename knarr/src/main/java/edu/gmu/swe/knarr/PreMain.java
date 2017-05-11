@@ -14,6 +14,7 @@ public class PreMain {
 		Configuration.PREALLOC_STACK_OPS = true;
 		// Configuration.extensionClassVisitor =
 		// DependencyTrackingClassVisitor.class;
+//		edu.columbia.cs.psl.phosphor.PreMain.DEBUG = true;
 		Configuration.init();
 		edu.columbia.cs.psl.phosphor.PreMain.premain(args, inst);
 	}

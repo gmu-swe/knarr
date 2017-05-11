@@ -17,6 +17,7 @@ import edu.columbia.cs.psl.phosphor.org.objectweb.asm.util.Printer;
 import edu.columbia.cs.psl.phosphor.runtime.Taint;
 import edu.columbia.cs.psl.phosphor.struct.LazyArrayObjTags;
 import edu.columbia.cs.psl.phosphor.struct.TaintedBooleanWithObjTag;
+import edu.columbia.cs.psl.phosphor.struct.TaintedCharWithObjTag;
 import edu.columbia.cs.psl.phosphor.struct.TaintedDoubleWithObjTag;
 import edu.columbia.cs.psl.phosphor.struct.TaintedFloatWithObjTag;
 import edu.columbia.cs.psl.phosphor.struct.TaintedIntWithObjTag;
@@ -1320,7 +1321,22 @@ public class PathUtils {
 		// }
 		// TODO
 	}
-
+	public static void addCharAtConstraint(TaintedCharWithObjTag returnedChar, String origString, Taint<Expression> lVal, int val) {
+		if(lVal == null && origString.getPHOSPHOR_TAG() == null)
+			return;
+		Expression strExp = null;
+		if(origString.PHOSPHOR_TAG != null)
+			strExp = (Expression) origString.PHOSPHOR_TAG.lbl;
+		else
+			strExp = new StringConstant(origString);
+		Expression posExp = null;
+		if(lVal != null)
+			posExp = lVal.lbl;
+		else
+			posExp = new IntConstant(val);
+		Expression exp = new Operation(Operator.SUBSTRING, strExp,posExp,new IntConstant(1));
+		returnedChar.taint = new Taint(exp);
+	}
 	public static void addSubstringConstraint(String returnedString, String origString, Taint<Expression> lVal, int val) {
 
 		// Expression origExp = (Expression) origString.getPHOSPHOR_TAG();

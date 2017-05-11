@@ -12,6 +12,7 @@ import edu.columbia.cs.psl.phosphor.org.objectweb.asm.Opcodes;
 import edu.columbia.cs.psl.phosphor.org.objectweb.asm.Type;
 import edu.columbia.cs.psl.phosphor.org.objectweb.asm.tree.FrameNode;
 import edu.columbia.cs.psl.phosphor.org.objectweb.asm.util.Printer;
+import edu.columbia.cs.psl.phosphor.runtime.Taint;
 import edu.columbia.cs.psl.phosphor.struct.TaintedDoubleWithObjTag;
 import edu.columbia.cs.psl.phosphor.struct.TaintedFloatWithObjTag;
 import edu.columbia.cs.psl.phosphor.struct.TaintedIntWithObjTag;
@@ -19,6 +20,14 @@ import edu.columbia.cs.psl.phosphor.struct.TaintedLongWithObjTag;
 
 public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, StringOpcodes {
 
+	@Override
+	public void fieldOp(int opcode, String owner, String name, String desc, MethodVisitor mv, LocalVariableManager lvs, TaintPassingMV ta, boolean trackedLoad) {
+		
+	}
+	@Override
+	public Taint<?> getAutoTaint(String source) {
+		return new Taint<String>(source);
+	}
 	@Override
 	public void methodOp(int opcode, String owner, String name, String desc, boolean itfc, MethodVisitor mv, LocalVariableManager lvs, TaintPassingMV ta) {
 	}
@@ -308,6 +317,8 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 					handleReplace(mv);
 				else if (this.name.equals("substring$$PHOSPHORTAGGED"))
 					handleSubstring(mv);
+				else if(this.name.equals("charAt$$PHOSPHORTAGGED"))
+					handleCharAt(mv);
 				// TODO: make sustring not break jvm
 				break;
 			}
@@ -614,11 +625,6 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 
 	}
 
-	@Override
-	public void fieldOp(int opcode, String owner, String name, String desc, MethodVisitor mv, LocalVariableManager lvs, TaintPassingMV ta) {
-
-	}
-
 	boolean inStringClass = false;
 	String name;
 	Type[] args;
@@ -716,6 +722,13 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 		{
 			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addSubstringConstraint", "(Ljava/lang/String;Ljava/lang/String;" + Configuration.TAINT_TAG_DESC + "I)V", false);
 		}
+	}
+	private void handleCharAt(MethodVisitor mv) {
+		mv.visitInsn(DUP);
+		mv.visitVarInsn(ALOAD, 0);
+		mv.visitVarInsn(ALOAD, 1);
+		mv.visitVarInsn(ILOAD, 2);
+		mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addCharAtConstraint", "(Ledu/columbia/cs/psl/phosphor/struct/TaintedCharWithObjTag;Ljava/lang/String;" + Configuration.TAINT_TAG_DESC + "I)V", false);
 	}
 
 	private void handleSplit(MethodVisitor mv) {
