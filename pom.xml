@@ -7,5 +7,6 @@
 	<packaging>pom</packaging>
  <modules>
      <module>knarr</module>
+     <module>knarr-server</module>
 	   </modules>
 </project>

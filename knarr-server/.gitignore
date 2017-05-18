@@ -1,0 +1,10 @@
+/bin
+debug
+debug-preinst
+/target
+.project
+.classpath
+.settings
+dependency-reduced-pom.xml
+.externalToolBuilders
+maven-eclipse.xml
