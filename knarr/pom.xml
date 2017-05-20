@@ -10,11 +10,6 @@
             <name>jons snapshots</name>
             <url>https://maven.jonbell.net/repository/snapshots</url>
         </repository>
-        <repository>
-            <id>jb.priv</id>
-            <name>JB Priv snaps</name>
-            <url>https://priv:VbK|fzU99@maven.jonbell.net/repository/privatesnaps/</url>
-        </repository>
     </repositories>
     <build>
         <resources>
@@ -43,6 +38,38 @@
                     <!-- <execution> <id>run-dacapo</id> <phase>integration-test</phase> 
                         <goals> <goal>exec</goal> </goals> <configuration> <skip>${dacapo.skip}</skip> 
                         <executable>${basedir}/runDacapo.sh</executable> </configuration> </execution> -->
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>com.bazaarvoice.maven.plugins</groupId>
+                <artifactId>process-exec-maven-plugin</artifactId>
+                <version>0.7</version>
+                <executions>
+                    <!--Start constraint server -->
+                    <execution>
+                        <id>start-jar</id>
+                        <phase>pre-integration-test</phase>
+                        <goals>
+                            <goal>start</goal>
+                        </goals>
+                        <configuration>
+                            <workingDir>../../knarr-server/</workingDir>
+                            <waitAfterLaunch>5</waitAfterLaunch>
+                            <arguments>
+                                <argument>java</argument>
+                                <argument>-jar</argument>
+                                <argument>${basedir}/../knarr-server/target/Knarr-Server-0.0.2-SNAPSHOT.jar</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                    <!--Stop Process -->
+                    <execution>
+                        <id>stop-jar-process</id>
+                        <phase>post-integration-test</phase>
+                        <goals>
+                            <goal>stop-all</goal>
+                        </goals>
+                    </execution>
                 </executions>
             </plugin>
             <plugin>
@@ -128,11 +155,8 @@
             <artifactId>green</artifactId>
             <version>SNAPSHOT</version>
         </dependency>
-<!--         <dependency>
-            <groupId>net.jonbell.java</groupId>
-            <artifactId>CRIJ</artifactId>
-            <version>0.0.1-SNAPSHOT</version>
-        </dependency> -->
+        <!-- <dependency> <groupId>net.jonbell.java</groupId> <artifactId>CRIJ</artifactId> 
+            <version>0.0.1-SNAPSHOT</version> </dependency> -->
     </dependencies>
     <distributionManagement>
         <snapshotRepository>

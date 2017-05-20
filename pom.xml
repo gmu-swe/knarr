@@ -6,7 +6,7 @@
 	<version>0.0.3-SNAPSHOT</version>
 	<packaging>pom</packaging>
  <modules>
-     <module>knarr</module>
      <module>knarr-server</module>
-	   </modules>
+     <module>knarr</module>
+ </modules>
 </project>

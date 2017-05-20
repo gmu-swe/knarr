@@ -6,23 +6,40 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.net.Socket;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import za.ac.sun.cs.green.Green;
 import za.ac.sun.cs.green.Instance;
+import za.ac.sun.cs.green.expr.ArrayVariable;
 import za.ac.sun.cs.green.expr.Expression;
 import za.ac.sun.cs.green.expr.IntConstant;
 import za.ac.sun.cs.green.expr.IntVariable;
 import za.ac.sun.cs.green.expr.Operation;
+import za.ac.sun.cs.green.expr.RealConstant;
+import za.ac.sun.cs.green.expr.RealVariable;
+import za.ac.sun.cs.green.expr.StringConstant;
+import za.ac.sun.cs.green.expr.StringVariable;
+import za.ac.sun.cs.green.expr.Variable;
 import za.ac.sun.cs.green.expr.Operation.Operator;
+import za.ac.sun.cs.green.parser.klee.ParseException;
+import za.ac.sun.cs.green.parser.klee.Parser;
+import za.ac.sun.cs.green.parser.klee.Scanner;
 import za.ac.sun.cs.green.service.ModelService;
 import za.ac.sun.cs.green.service.SATService;
+import za.ac.sun.cs.green.service.canonizer.ModelCanonizerService;
 import za.ac.sun.cs.green.service.choco3.ModelChoco3Service;
 import za.ac.sun.cs.green.service.choco3.SATChoco3Service;
+import za.ac.sun.cs.green.service.factorizer.ModelFactorizerService;
+import za.ac.sun.cs.green.service.factorizer.SATFactorizerService;
+import za.ac.sun.cs.green.service.slicer.SATSlicerService;
+import za.ac.sun.cs.green.service.z3.ModelZ3JavaService;
 import za.ac.sun.cs.green.util.Configuration;
 public class ConstraintServerHandler extends Thread {
 	ObjectInputStream ois;
@@ -30,37 +47,92 @@ public class ConstraintServerHandler extends Thread {
 	ObjectOutputStream oos;
 	static AtomicInteger clientID = new AtomicInteger();
 
-	static Green green;
+	static final Green green;
+	static final ModelFactorizerService slicer;
+	static final ModelCanonizerService canonizer;
+	static final ModelService modeler;
+	static final Map<Variable, Variable> variableMap;
 	static {
 		green = new Green();
-	}
-
-	public static void main(String[] args) {
 		Properties props = new Properties();
-		props.setProperty("green.services", "sat");
-		props.setProperty("green.service.sat", "(slice (canonize choco3))");
-		props.setProperty("green.service.sat.slice",
+		props.setProperty("green.services", "model");
+		props.setProperty("green.service.model", "(slice (canonize z3))");
+		props.setProperty("green.service.model.slice",
 				"za.ac.sun.cs.green.service.slicer.SATSlicerService");
-		props.setProperty("green.service.sat.canonize",
-				"za.ac.sun.cs.green.service.canonizer.SATCanonizerService");
-		props.setProperty("green.service.sat.choco3",
-				"za.ac.sun.cs.green.service.choco3.SATChoco3Service");
+		props.setProperty("green.service.model.canonize",
+				"za.ac.sun.cs.green.service.canonizer.ModelCanonizerService");
+		props.setProperty("green.service.model.z3",
+				"za.ac.sun.cs.green.service.z3.ModelZ3JavaService");
 		//props.setProperty("green.store", "za.ac.sun.cs.green.store.redis.RedisStore");
 		Configuration config = new Configuration(green, props);
 		config.configure();
-
-		IntVariable v = new IntVariable("myVar", 0, 1000);
-		Expression e = new Operation(Operator.ADD, new IntConstant(10), v);
-//		Expression e2 = new Operation(Operator.GT, new IntConstant(15), e);
-		Expression e2 = new Operation(Operator.LT, new IntConstant(4), v);
+		slicer = new ModelFactorizerService(green);
+		canonizer = new ModelCanonizerService(green);
+		variableMap = new HashMap<Variable, Variable>();
+		modeler = new ModelZ3JavaService(green, null);
 		
-//		e2 = new Operation(Operator.AND,e2, e3);
+	}
+
+	public static void main(String[] args) throws Throwable {
+		
+
+		RealVariable v = new RealVariable("myVar", 0d, 1000d);
+//		Expression e = new Operation(Operator.ADD, new RealConstant(10), v);
+//		Expression e2 = new Operation(Operator.MUL, new RealConstant(15), e);
+//		e2 = new Operation(Operator.GT, new RealConstant(20), e2);
+//		IntVariable v2 = new IntVariable("myVar2", 0, 1000);
+//		Cp
+//		System.out.println(e2);
+//		e2 = new Operation(Operator.AND, e2, e3);
+//
+//		e3 = new Operation(Operator.GT, new IntConstant(20), v2);
+//		e2 = new Operation(Operator.AND, e2, e3);
+//
+//		
+		StringVariable sv = new StringVariable("myStr");
+		Expression e2 = new Operation(Operator.EQUALS,new StringConstant("foo"),new Operation(Operator.SUBSTRING, sv, new IntConstant(4), new IntConstant(3)));
+//		e3 = new Operation(Operator.STARTSWITH, new StringConstant("foo"), sv);
+//		e2 = new Operation(Operator.AND, e2,e3);
+//		e3 = new Operation(Operator.ENDSWITH, new StringConstant("bar"), sv);
+//		e2 = new Operation(Operator.AND, e2,e3);
+//
+//		e3 = new Operation(Operator.EQ, new IntConstant(20), new Operation(Operator.LENGTH, sv));
+//		e2 = new Operation(Operator.AND, e2, e3);
+//		
+//		ArrayVariable av = new ArrayVariable("myAr");
+//		e3 = new Operation(Operator.EQ, v, new Operation(Operator.SELECT, av, new IntConstant(0)));
+//		e2 = new Operation(Operator.AND, e2, e3);
+
+		
 		Instance i = new Instance(green, null, e2);
-//		i = new Instance(green, i, e3);
-		System.out.println(i.getFullExpression());
-		ModelService m = new ModelChoco3Service(green);
-		m.processRequest(i);
-		System.out.println(i.getData(m.getClass()));
+		System.out.println(e2);
+		ModelFactorizerService slicer = new ModelFactorizerService(green);
+		Set<Instance> r = slicer.processRequest(i);
+		ModelCanonizerService cs = new ModelCanonizerService(green);
+		final Map<Variable, Variable> variableMap = new HashMap<Variable, Variable>();
+		ModelService m = new ModelZ3JavaService(green, null);
+		for(Instance j : r)
+		{
+			System.out.println("Fact: " + j.getFullExpression());
+			Expression exp = j.getFullExpression();
+			
+			Expression c = cs.canonize(j.getFullExpression(), variableMap);
+			if(c != null)
+				exp = c;
+			Instance k = new Instance(green, j, null, exp);
+			System.out.println("Modeling: " + k.getFullExpression());
+			m.processRequest(k);
+			System.out.println(k.getData(m.getClass()));
+
+		}
+//		
+//		//		i = new Instance(green, i, e3);
+//		System.out.println("Orig:" + i.getFullExpression());
+//		ModelService m = new ModelChoco3Service(green);
+//		m.processRequest(i);
+//		System.out.println(i.getData(m.getClass()));
+		
+//		System.out.println(i.request("model"));
 	}
 //	static void updatePossibleStates(ConstraintNode n, PathCondition curPC) {
 //		//		System.out.println("---");
@@ -174,10 +246,31 @@ public class ConstraintServerHandler extends Thread {
 		this.sock = sock;
 		try {
 			ois = new ObjectInputStream(sock.getInputStream());
-
+			oos = new ObjectOutputStream(sock.getOutputStream());
 			Object input = ois.readObject();
 
-			if (input instanceof Operator) {
+			if (input instanceof Expression) {
+				System.out.println("Received expression: " + input);
+				Instance i = new Instance(green, null, ((Expression) input));
+				Set<Instance> sliced = slicer.processRequest(i);
+				HashMap ret = new HashMap();
+				for(Instance j : sliced)
+				{
+					Expression exp = j.getFullExpression();
+					System.out.println("Factor: " + exp);
+					
+					Expression c = canonizer.canonize(j.getFullExpression(), variableMap);
+					if(c != null)
+						exp = c;
+					Instance k = new Instance(green, j, null, exp);
+					System.out.println("Modeling: " + k.getFullExpression());
+					modeler.processRequest(k);
+					HashMap sol = (HashMap)k.getData(modeler.getClass());
+					if(sol != null)
+						ret.putAll(sol);
+				}
+				oos.writeObject(ret);
+				oos.close();
 				
 					//				System.out.println(pc);
 					//				System.out.println(pc.spc);

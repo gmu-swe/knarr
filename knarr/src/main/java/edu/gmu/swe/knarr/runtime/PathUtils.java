@@ -1334,7 +1334,7 @@ public class PathUtils {
 			posExp = lVal.lbl;
 		else
 			posExp = new IntConstant(val);
-		Expression exp = new Operation(Operator.SUBSTRING, strExp,posExp,new IntConstant(1));
+		Expression exp = new Operation(Operator.CHARAT, strExp,posExp);
 		returnedChar.taint = new Taint(exp);
 	}
 	public static void addSubstringConstraint(String returnedString, String origString, Taint<Expression> lVal, int val) {

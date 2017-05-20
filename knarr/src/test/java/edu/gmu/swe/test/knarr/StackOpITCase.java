@@ -100,18 +100,18 @@ public class StackOpITCase {
 
 	@Test
 	public void testDouble() {
-		double a = Symbolicator.symbolic("ad", 5d);
-		double b = Symbolicator.symbolic("bd", 6d);
+		double a = Symbolicator.symbolic("ad", 2d);
+		double b = Symbolicator.symbolic("bd", 4d);
 		double c = a + b;
-		assertEquals(11, c, 0);
+		assertEquals(6, c, 0);
 		c = a - b;
-		assertEquals(-1, c, 0);
+		assertEquals(-2, c, 0);
 		c = a * b;
-		assertEquals(30, c, 0);
+		assertEquals(8, c, 0);
 		c = a / b;
-		assertEquals(0.8333333333333334, c, 0.0001);
+		assertEquals(0.5, c, 0);
 		c = a % b;
-		assertEquals(5, c, 0);
+		assertEquals(2, c, 0);
 		Symbolicator.dumpConstraints();
 
 	}

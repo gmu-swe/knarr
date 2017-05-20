@@ -1,6 +1,7 @@
 package edu.gmu.swe.knarr.runtime;
 
 import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
@@ -93,26 +94,26 @@ public class Symbolicator {
 	public static void dumpConstraints() {
 		ObjectOutputStream oos;
 		collectArrayLenConstraints();
-		// try
-		{
+		try {
 			// if (DEBUG)
-			System.out.println("Numeric constraints: " + ((PathConditionWrapper) PathUtils.getCurPC()).constraints);
-			// System.out.println("String constraints: " +
-			// ((PathConditionWrapper) PathUtils.getCurPC()).spc);
-			// System.out.println(TaintUtils.getCurPC().spc);
-			// oos = new ObjectOutputStream(getSocket().getOutputStream());
-			// oos.writeObject(PathUtils.getCurPC());
-			// oos.close();
-			// ObjectInputStream ois = new
-			// ObjectInputStream(getSocket().getInputStream());
-			// HashMap<String, Serializable> solution = (HashMap<String,
-			// Serializable>) ois.readObject();
-			// System.out.println("Solution received: " + solution);
+			System.out.println("Constraints: " + PathUtils.getCurPC().constraints);
+			oos = new ObjectOutputStream(getSocket().getOutputStream());
+			ObjectInputStream ois = new ObjectInputStream(getSocket().getInputStream());
+
+			oos.writeObject(PathUtils.getCurPC().constraints);
+			PathUtils.getCurPC().constraints = null;
+			serverConnection = null;
+			HashMap solution = (HashMap) ois.readObject();
+			System.out.println("Solution received: " + solution);
+			oos.close();
+
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
-		// catch (IOException e) {
-		// // TODO Auto-generated catch block
-		// e.printStackTrace();
-		// }
 	}
 
 	public static void solve() {

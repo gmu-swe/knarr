@@ -12,19 +12,27 @@ public class PathConditionWrapper implements Serializable {
 	 * 
 	 */
 	private static final long serialVersionUID = -8116156330739369246L;
-	public LinkedList<Operation> constraints = new LinkedList<Operation>();
+	public Expression constraints = null;
 
 	public PathConditionWrapper() {
 	}
 
 	public void _addDet(Operator op, Expression l, Expression r) {
 		Operation ret = new Operation(op, l, r);
-		constraints.add(ret);
+		if (constraints == null)
+			constraints = ret;
+		else {
+			constraints = new Operation(Operator.AND, constraints, ret);
+		}
 	}
 
 	public void _addDet(Operator op, Expression t1) {
 		Operation ret = new Operation(op, t1);
-		constraints.add(ret);
+		if (constraints == null)
+			constraints = ret;
+		else {
+			constraints = new Operation(Operator.AND, constraints, ret);
+		}
 	}
 
 }
