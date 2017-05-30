@@ -124,12 +124,12 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
-                            <relocations>
+                            <!-- <relocations>
                                 <relocation>
                                     <pattern>za.ac.sun.cs.green</pattern>
                                     <shadedPattern>edu.gmu.swe.knarr.za.ac.sun.cs.green</shadedPattern>
                                 </relocation>
-                            </relocations>
+                            </relocations> -->
                             <minimizeJar>false</minimizeJar>
                         </configuration>
                     </execution>
