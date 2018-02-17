@@ -47,18 +47,27 @@ public class Foo {
 		c = a%b;
 	}
 	public static void main(String[] args) {
-		int i = 0;
-		i = Symbolicator.symbolic("myInt", 1);
-		int j= i + 10;
-		if(i > 0)
-			System.out.println(i);
-		if(j < 400)
-			System.out.println("j<400");
-		testInt();
-		testDouble();
-		testFloat();
-		testLong();
-		System.out.println(Symbolicator.getExpression(i));
-		Symbolicator.dumpConstraints();
+//		int i = 0;
+//		i = Symbolicator.symbolic("myInt", 1);
+//		int j= i + 10;
+//		if(i > 0)
+//			System.out.println(i);
+//		if(j < 400)
+//			System.out.println("j<400");
+//		testInt();
+//		testDouble();
+//		testFloat();
+//		testLong();
+//		String s = Symbolicator.symbolicString("abc", "input");
+		if(args[0].charAt(0) == 'a')
+		{
+			System.out.println("OK");
+		}
+		else
+		{
+			System.out.println("Error found");
+		}
+//		System.out.println(Symbolicator.getExpression(i));
+//		Symbolicator.dumpConstraints();
 	}
 }

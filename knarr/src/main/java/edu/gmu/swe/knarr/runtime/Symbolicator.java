@@ -15,6 +15,7 @@ import za.ac.sun.cs.green.expr.RealVariable;
 import za.ac.sun.cs.green.expr.StringVariable;
 import edu.columbia.cs.psl.phosphor.org.objectweb.asm.Type;
 import edu.columbia.cs.psl.phosphor.runtime.Taint;
+import edu.columbia.cs.psl.phosphor.struct.LazyByteArrayObjTags;
 import edu.columbia.cs.psl.phosphor.struct.LazyIntArrayObjTags;
 import edu.columbia.cs.psl.phosphor.struct.TaintedBooleanWithObjTag;
 import edu.columbia.cs.psl.phosphor.struct.TaintedByteWithObjTag;
@@ -91,12 +92,14 @@ public class Symbolicator {
 		System.out.println("Warning - array length constraints disabled?");
 	}
 
-	public static void dumpConstraints() {
+	public static HashMap<String, Object> dumpConstraints() {
 		ObjectOutputStream oos;
 		collectArrayLenConstraints();
 		try {
 			// if (DEBUG)
 			System.out.println("Constraints: " + PathUtils.getCurPC().constraints);
+			if(PathUtils.getCurPC().constraints == null)
+				return null;
 			oos = new ObjectOutputStream(getSocket().getOutputStream());
 			ObjectInputStream ois = new ObjectInputStream(getSocket().getInputStream());
 
@@ -106,7 +109,7 @@ public class Symbolicator {
 			HashMap solution = (HashMap) ois.readObject();
 			System.out.println("Solution received: " + solution);
 			oos.close();
-
+			return solution;
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -114,6 +117,7 @@ public class Symbolicator {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		return null;
 	}
 
 	public static void solve() {
@@ -320,11 +324,11 @@ public class Symbolicator {
 	static ConcurrentHashMap<String, AtomicInteger> lblCounters = new ConcurrentHashMap<String, AtomicInteger>();
 
 	public static final String symbolicString(String str, String lbl) {
-		if (!lblCounters.containsKey(lbl))
-			lblCounters.put(lbl, new AtomicInteger());
-		AtomicInteger i = lblCounters.get(lbl);
-		lbl = lbl + "_" + i.getAndIncrement();
-		PathUtils.checkLabelAndInitJPF(lbl);
+//		if (!lblCounters.containsKey(lbl))
+//			lblCounters.put(lbl, new AtomicInteger());
+//		AtomicInteger i = lblCounters.get(lbl);
+//		lbl = lbl + "_" + i.getAndIncrement();
+//		PathUtils.checkLabelAndInitJPF(lbl);
 		Expression ret = null;
 		if (str == str.intern())
 			str = new String(str);
@@ -548,5 +552,10 @@ public class Symbolicator {
 		if (obj instanceof TaintedWithObjTag)
 			return (Expression) ((TaintedWithObjTag) obj).getPHOSPHOR_TAG();
 		return null;
+	}
+	
+	public static LazyByteArrayObjTags symbolic$$PHOSPHORTAGGED(LazyByteArrayObjTags t, byte[] b)
+	{
+		return t;
 	}
 }

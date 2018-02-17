@@ -45,7 +45,7 @@
                 <artifactId>process-exec-maven-plugin</artifactId>
                 <version>0.7</version>
                 <executions>
-                    <!--Start constraint server -->
+                    <!--Start constraint server 
                     <execution>
                         <id>start-jar</id>
                         <phase>pre-integration-test</phase>
@@ -61,15 +61,15 @@
                                 <argument>${basedir}/../knarr-server/target/Knarr-Server-0.0.2-SNAPSHOT.jar</argument>
                             </arguments>
                         </configuration>
-                    </execution>
-                    <!--Stop Process -->
+                    </execution>-->
+                    <!--Stop Process 
                     <execution>
                         <id>stop-jar-process</id>
                         <phase>post-integration-test</phase>
                         <goals>
                             <goal>stop-all</goal>
                         </goals>
-                    </execution>
+                    </execution>-->
                 </executions>
             </plugin>
             <plugin>
@@ -146,9 +146,9 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>edu.columbia.cs.psl.phosphor</groupId>
+            <groupId>edu.gmu.swe.phosphor</groupId>
             <artifactId>Phosphor</artifactId>
-            <version>0.0.3-SNAPSHOT</version>
+            <version>0.0.4-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>greensolver</groupId>

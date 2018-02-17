@@ -12,7 +12,12 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import com.microsoft.z3.BoolExpr;
+import com.microsoft.z3.Expr;
 
 import za.ac.sun.cs.green.Green;
 import za.ac.sun.cs.green.Instance;
@@ -41,7 +46,9 @@ import za.ac.sun.cs.green.service.factorizer.ModelFactorizerService;
 import za.ac.sun.cs.green.service.factorizer.SATFactorizerService;
 import za.ac.sun.cs.green.service.slicer.SATSlicerService;
 import za.ac.sun.cs.green.service.z3.ModelZ3JavaService;
+import za.ac.sun.cs.green.service.z3.Z3JavaTranslator.Z3GreenBridge;
 import za.ac.sun.cs.green.util.Configuration;
+import za.ac.sun.cs.green.util.NotSatException;
 
 public class ConstraintServerHandler extends Thread {
 	ObjectInputStream ois;
@@ -52,7 +59,7 @@ public class ConstraintServerHandler extends Thread {
 	static final Green green;
 	static final ModelFactorizerService slicer;
 	static final ModelCanonizerService canonizer;
-	static final ModelService modeler;
+	static final ModelZ3JavaService modeler;
 	static final Map<Variable, Variable> variableMap;
 	static final StateStore stateStore;
 	static final ConstraintOptionGenerator optionGenerator;
@@ -78,22 +85,12 @@ public class ConstraintServerHandler extends Thread {
 
 	public static void main(String[] args) throws Throwable {
 
-		IntVariable v = new IntVariable("myVar", 0, 1000);
-		Expression e = new Operation(Operator.ADD, new IntConstant(10), v);
-		Expression e2 = new Operation(Operator.MUL, new IntConstant(15), e);
-		e2 = new Operation(Operator.LT, new IntConstant(20), e2);
-		IntVariable v2 = new IntVariable("myVar2", 0, 1000);
-		// Cp
-		// System.out.println(e2);
-		// e2 = new Operation(Operator.AND, e2, e3);
-		//
-		// e3 = new Operation(Operator.GT, new IntConstant(20), v2);
-		// e2 = new Operation(Operator.AND, e2, e3);
-		//
-		//
-//		StringVariable sv = new StringVariable("myStr");
-//		Expression e3 = new Operation(Operator.EQUALS, new StringConstant("foo"), new Operation(Operator.SUBSTRING, sv, new IntConstant(4), new IntConstant(3)));
-//		e2 = new Operation(Operator.AND, e2, e3);
+		StringVariable sv = new StringVariable("myStr");
+		Expression e3 = new Operation(Operator.EQUALS, new StringConstant("foo"), new Operation(Operator.SUBSTRING, sv, new IntConstant(4), new IntConstant(3)));
+		Expression e2 = new Operation(Operator.GT, new IntConstant(100), new Operation(Operator.CHARAT,sv,new IntConstant(0)));
+		e2 = new Operation(Operator.AND, e2, e3);
+		e2 = new Operation(Operator.AND, e2, new Operation(Operator.GT, new IntConstant(105), new Operation(Operator.CHARAT,sv,new IntConstant(0))));
+
 		// e3 = new Operation(Operator.STARTSWITH, new StringConstant("foo"),
 		// sv);
 		// e2 = new Operation(Operator.AND, e2,e3);
@@ -111,30 +108,37 @@ public class ConstraintServerHandler extends Thread {
 
 		Instance i = new Instance(green, null, e2);
 		System.out.println(e2);
+		
 		ModelFactorizerService slicer = new ModelFactorizerService(green);
 		Set<Instance> r = slicer.processRequest(i);
 		ModelCanonizerService cs = new ModelCanonizerService(green);
 		final Map<Variable, Variable> variableMap = new HashMap<Variable, Variable>();
-		ModelService m = new ModelZ3JavaService(green, null);
-		for (Instance j : r) {
-			System.out.println("Fact: " + j.getFullExpression());
-			Expression exp = j.getFullExpression();
-
-			Expression c = cs.canonize(j.getFullExpression(), variableMap);
-			if (c != null)
-				exp = c;
-			System.out.println(c);
-			Instance k = new Instance(green, j, null, exp);
-			System.out.println("Modeling: " + k.getFullExpression());
-			m.processRequest(k);
-			System.out.println(k.getData(m.getClass()));
-			HashMap<Variable, Object> sol = (HashMap<Variable, Object>) k.getData(m.getClass());
-			for(Variable va : sol.keySet())
-			{
-				System.out.println(va.getOriginal());
-			}
-
+		ModelZ3JavaService m = new ModelZ3JavaService(green, null);
+		System.out.println(m.getUnderlyingExpr(i));
+		ConstraintOptionGenerator g = new ConstraintOptionGenerator();
+		for(Z3GreenBridge o : g.generateOptions(m.getUnderlyingExpr(i)))
+		{
+			System.out.println(m.solve(o));
 		}
+//		for (Instance j : r) {
+//			System.out.println("Fact: " + j.getFullExpression());
+//			Expression exp = j.getFullExpression();
+//
+//			Expression c = cs.canonize(j.getFullExpression(), variableMap);
+//			if (c != null)
+//				exp = c;
+//			System.out.println(c);
+//			Instance k = new Instance(green, j, null, exp);
+//			System.out.println("Modeling: " + k.getFullExpression());
+//			m.processRequest(k);
+//			System.out.println(k.getData(m.getClass()));
+//			HashMap<Variable, Object> sol = (HashMap<Variable, Object>) k.getData(m.getClass());
+//			for(Variable va : sol.keySet())
+//			{
+//				System.out.println(va.getOriginal());
+//			}
+//
+//		}
 		//
 		// // i = new Instance(green, i, e3);
 		// System.out.println("Orig:" + i.getFullExpression());
@@ -145,25 +149,40 @@ public class ConstraintServerHandler extends Thread {
 		// System.out.println(i.request("model"));
 	}
 
-	private void generateAndAddNewOptions(Expression exp) {
+	private void generateAndAddNewOptions(Z3GreenBridge data) {
 		int nAdded = 0;
-		for (Expression e : optionGenerator.generateOptions(exp)) {
+		for (Z3GreenBridge e : optionGenerator.generateOptions(data)) {
 			// Slice, then canonize, then try to add to list
-			Instance i = new Instance(green, null, e);
-			Set<Instance> sliced = slicer.processRequest(i);
-			Set<Expression> exps = new HashSet<Expression>();
-			for (Instance j : sliced) {
-				Expression fact = j.getFullExpression();
-				Expression c = canonizer.canonize(j.getFullExpression(), variableMap);
-				if (c != null)
-					fact = c;
-				exps.add(fact);
-			}
-			if (stateStore.addOption(exps))
+//			Instance i = new Instance(green, null, e);
+//			Set<Instance> sliced = slicer.processRequest(i);
+//			Set<Expression> exps = new HashSet<Expression>();
+//			for (Instance j : sliced) {
+//				Expression fact = j.getFullExpression();
+//				Expression c = canonizer.canonize(j.getFullExpression(), variableMap);
+//				if (c != null)
+//					fact = c;
+//				exps.add(fact);
+//			}
+			if (stateStore.addOption(e))
 				nAdded++;
 		}
 	}
 
+	static int nSolved;
+	static int nSat;
+	static long inZ3;
+	static{
+		Timer timer = new Timer(true);
+		timer.schedule(new TimerTask() {
+			
+			@Override
+			public void run() {
+				System.out.println("Solved: " + nSolved + ", sat: "+nSat +", Solver time: " + inZ3);
+				System.out.println("Options added: " + HashMapStateStore.optionsAdded +", ignored: " + HashMapStateStore.optionsIgnored +", trivilaly not sat: " + HashMapStateStore.optionsFoundUnsat);
+			}
+		}, 1000,1000);
+		
+	}
 	public ConstraintServerHandler(Socket sock) {
 
 		this.sock = sock;
@@ -173,36 +192,48 @@ public class ConstraintServerHandler extends Thread {
 			Object input = ois.readObject();
 
 			if (input instanceof Expression) {
-				System.out.println("Received expression: " + input);
-				generateAndAddNewOptions((Expression) input);
+//				System.out.println("Received expression: " + input);
+				Instance in = new Instance(green, null, (Expression) input);
+				
+//				modeler.processRequest(in);
+				generateAndAddNewOptions(modeler.getUnderlyingExpr(in));
 
-				Set<Expression> newExp = stateStore.getNewOption();
+				Z3GreenBridge newExp = stateStore.getNewOption();
 				boolean sat = false;
 				HashMap<String,Object> ret = null;
 				while (newExp != null && !sat) {
 					sat = true;
 					ret = new HashMap<String, Object>();
-					System.out.println("Trying out new version: " + newExp);
-					for (Expression e : newExp) {
-						Instance k = new Instance(green, null, e);
-						System.out.println("Modeling: " + k.getFullExpression());
-						modeler.processRequest(k);
+//					System.out.println("Trying out new version: " + newExp);
+					try{
+//						modeler.processRequest(k);
 						@SuppressWarnings("unchecked")
-						HashMap<Variable, Object> sol = (HashMap<Variable, Object>) k.getData(modeler.getClass());
+						long start = System.currentTimeMillis();
+
+						HashMap<String, Object> sol = modeler.solve(newExp);
+						inZ3 += (System.currentTimeMillis()-start);
+						nSolved++;
+
 						if (sol != null) {
+							nSat++;
 							System.out.println("SAT: " + sol);
-							for(Variable v : sol.keySet())	
+							for(String v : sol.keySet())	
 							{
-								System.out.println(v);
-								System.out.println(v.getOriginal());
-								ret.put(v.getOriginal().toString(), sol.get(v));
+								ret.put(v, sol.get(v));
 							}
 						} else {
-							System.out.println("NOT SAT");
+							
+							stateStore.addUnsat(newExp);
+//							System.out.println("NOT SAT");
 							sat = false;
-							break;
 						}
 					}
+					catch(NotSatException ex)
+					{
+						sat = false;
+						System.out.println("Not sat");
+					}
+					newExp = stateStore.getNewOption();
 				}
 				oos.writeObject(ret);
 				oos.close();

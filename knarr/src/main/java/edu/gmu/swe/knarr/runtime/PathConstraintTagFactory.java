@@ -370,6 +370,7 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 		case Opcodes.IFGT:
 		case Opcodes.IFLE:
 			// top is val, taint
+			boolean hasFrameAtEnd = ta.getAnalyzer().isFollowedByFrame;
 			Label willJump = new Label();
 			Label untainted = new Label();
 			Label originalEnd = new Label();
@@ -404,7 +405,9 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 
 			// maybe its a problem when the next thing that happens is another
 			// jump?
-			ta.acceptFn(fn3);
+			if(!hasFrameAtEnd)
+				ta.acceptFn(fn3);
+			
 			break;
 		case Opcodes.IF_ICMPEQ:
 		case Opcodes.IF_ICMPNE:

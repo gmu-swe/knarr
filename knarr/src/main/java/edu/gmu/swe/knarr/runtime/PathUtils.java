@@ -9,6 +9,7 @@ import za.ac.sun.cs.green.expr.Expression;
 import za.ac.sun.cs.green.expr.IntConstant;
 import za.ac.sun.cs.green.expr.IntVariable;
 import za.ac.sun.cs.green.expr.Operation;
+import za.ac.sun.cs.green.expr.StringVariable;
 import za.ac.sun.cs.green.expr.Operation.Operator;
 import za.ac.sun.cs.green.expr.RealConstant;
 import za.ac.sun.cs.green.expr.StringConstant;
@@ -937,7 +938,7 @@ public class PathUtils {
 
 	static AtomicInteger uniq;
 
-	public static void registerUnaryToTaint(TaintedPrimitiveWithObjTag ret, Taint t, int opcode) {
+	public static void registerUnaryToTaint(TaintedPrimitiveWithObjTag ret, Taint<Expression> t, int opcode) {
 		// if(((StringExpression)values.get(taint2).expression).getName().getPHOSPHORTAG()
 		// != 0)
 		// throw new
@@ -957,7 +958,7 @@ public class PathUtils {
 			// {
 			// ret.taint = new Taint(new Operation(Operator., operands));
 			// }
-			ret.taint = null; // TODO don't support array length yet
+			ret.taint = new Taint<Expression>(new Operation(Operator.LENGTH, t.lbl));
 			break;
 		default:
 			throw new IllegalArgumentException("unimplemented string op: " + opcode);
@@ -1221,7 +1222,7 @@ public class PathUtils {
 		}
 		if (ret == null)
 			throw new IllegalArgumentException("Null exp returned?");
-		return new Taint(ret);
+		return new Taint<Expression>(ret);
 	}
 
 	public static Expression[] registerTaintOnArray(Object val, Object label) {
@@ -1334,8 +1335,10 @@ public class PathUtils {
 			posExp = lVal.lbl;
 		else
 			posExp = new IntConstant(val);
+		if(strExp instanceof StringVariable)
+			((StringVariable) strExp).observedLength = Math.max(((StringVariable) strExp).observedLength, val + 1);
 		Expression exp = new Operation(Operator.CHARAT, strExp,posExp);
-		returnedChar.taint = new Taint(exp);
+		returnedChar.taint = new Taint<Expression>(exp);
 	}
 	public static void addSubstringConstraint(String returnedString, String origString, Taint<Expression> lVal, int val) {
 
