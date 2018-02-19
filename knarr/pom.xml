@@ -10,6 +10,13 @@
             <name>jons snapshots</name>
             <url>https://maven.jonbell.net/repository/snapshots</url>
         </repository>
+		<repository>
+            <id>ossrh</id>
+            <name>ossrh</name>
+			          <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+
+        </repository>
+
     </repositories>
     <build>
         <resources>
