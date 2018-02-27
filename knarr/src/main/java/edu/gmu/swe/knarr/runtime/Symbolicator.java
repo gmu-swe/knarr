@@ -97,7 +97,7 @@ public class Symbolicator {
 		collectArrayLenConstraints();
 		try {
 			// if (DEBUG)
-			System.out.println("Constraints: " + PathUtils.getCurPC().constraints);
+			// System.out.println("Constraints: " + PathUtils.getCurPC().constraints);
 			if(PathUtils.getCurPC().constraints == null)
 				return null;
 			oos = new ObjectOutputStream(getSocket().getOutputStream());
@@ -556,6 +556,13 @@ public class Symbolicator {
 	
 	public static LazyByteArrayObjTags symbolic$$PHOSPHORTAGGED(LazyByteArrayObjTags t, byte[] b)
 	{
-		return t;
+      t.val = new byte[b.length];
+      if(t.taints == null)
+          t.taints = new Taint[b.length];
+      for(int i =0 ; i < b.length; i++) {
+          t.taints[i] = new ExpressionTaint(new IntVariable(generateLabel(), Integer.valueOf(Byte.MIN_VALUE), Integer.valueOf(Byte.MAX_VALUE)));
+          t.val[i] = b[i];
+      }
+      return t;
 	}
 }
