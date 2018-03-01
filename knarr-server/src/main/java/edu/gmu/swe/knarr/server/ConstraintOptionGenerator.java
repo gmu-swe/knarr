@@ -98,6 +98,10 @@ public class ConstraintOptionGenerator {
 					}
 					return ret;
 				}
+				if (exp.getNumArgs() == 1) {
+					return createExpr(exp.getArgs()[0]);
+				}
+
 				break;
 			case Z3_OP_GE:
 				op = Operator.GE;
@@ -185,7 +189,7 @@ public class ConstraintOptionGenerator {
 			{
 				newOperands[i] = copyFirstN(c-1,((Operation) exp).getOperand(i));
 			}
-			return new Operation(((Operation) exp).getOperator(), newOperands);			
+			return new Operation(((Operation) exp).getOperator(), newOperands);
 		}
 		return null;
 	}
