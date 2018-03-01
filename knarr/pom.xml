@@ -52,7 +52,6 @@
                 <artifactId>process-exec-maven-plugin</artifactId>
                 <version>0.7</version>
                 <executions>
-                    <!--Start constraint server 
                     <execution>
                         <id>start-jar</id>
                         <phase>pre-integration-test</phase>
@@ -68,15 +67,14 @@
                                 <argument>${basedir}/../knarr-server/target/Knarr-Server-0.0.2-SNAPSHOT.jar</argument>
                             </arguments>
                         </configuration>
-                    </execution>-->
-                    <!--Stop Process 
+                    </execution>
                     <execution>
                         <id>stop-jar-process</id>
                         <phase>post-integration-test</phase>
                         <goals>
                             <goal>stop-all</goal>
                         </goals>
-                    </execution>-->
+                    </execution>
                 </executions>
             </plugin>
             <plugin>

@@ -9,7 +9,7 @@ public class ConstraintServer {
 	public static ConstraintNode rootConstraintNode = new ConstraintNode(null);
     public static void main(String[] args) throws Exception {
     	 ServerSocket listener = new ServerSocket(9090);
-
+    	 System.out.println(ConstraintServerHandler.inZ3);
     	 while (true) {
     		 try {
     			 new ConstraintServerHandler(listener.accept()).start();
