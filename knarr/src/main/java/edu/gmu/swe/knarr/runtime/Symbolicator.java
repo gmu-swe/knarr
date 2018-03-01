@@ -5,6 +5,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -97,7 +98,7 @@ public class Symbolicator {
 		collectArrayLenConstraints();
 		try {
 			// if (DEBUG)
-			// System.out.println("Constraints: " + PathUtils.getCurPC().constraints);
+			System.out.println("Constraints: " + PathUtils.getCurPC().constraints);
 			if(PathUtils.getCurPC().constraints == null)
 				return null;
 			oos = new ObjectOutputStream(getSocket().getOutputStream());
@@ -108,6 +109,15 @@ public class Symbolicator {
 			serverConnection = null;
 			HashMap solution = (HashMap) ois.readObject();
 			System.out.println("Solution received: " + solution);
+			byte[] array = new byte[solution.size()];
+			for (int i = 0 ; i < array.length ; i++) {
+				Integer b = (Integer) solution.get("autoVar_" + i);
+				if (b == null)
+					break;
+
+				array[i] = b.byteValue();
+			}
+			System.out.println(new String(array, StandardCharsets.UTF_8));
 			oos.close();
 			return solution;
 		} catch (IOException e) {
@@ -553,7 +563,7 @@ public class Symbolicator {
 			return (Expression) ((TaintedWithObjTag) obj).getPHOSPHOR_TAG();
 		return null;
 	}
-	
+
 	public static LazyByteArrayObjTags symbolic$$PHOSPHORTAGGED(LazyByteArrayObjTags t, byte[] b)
 	{
       t.val = new byte[b.length];
