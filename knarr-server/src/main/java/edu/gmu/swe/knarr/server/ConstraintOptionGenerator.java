@@ -5,13 +5,16 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedList;
 
+import com.microsoft.z3.BitVecNum;
 import com.microsoft.z3.BoolExpr;
 import com.microsoft.z3.Context;
 import com.microsoft.z3.Expr;
+import com.microsoft.z3.FuncDecl.Parameter;
 import com.microsoft.z3.IntNum;
 import com.microsoft.z3.SeqExpr;
 import com.microsoft.z3.enumerations.Z3_decl_kind;
 
+import za.ac.sun.cs.green.expr.BVConstant;
 import za.ac.sun.cs.green.expr.Constant;
 import za.ac.sun.cs.green.expr.Expression;
 import za.ac.sun.cs.green.expr.IntConstant;
@@ -63,8 +66,11 @@ public class ConstraintOptionGenerator {
 			switch (exp.getFuncDecl().getDeclKind()) {
 			case Z3_OP_ANUM:
 				if(exp.isIntNum())
-					return new IntConstant(((IntNum)exp).getInt());
+					return new IntConstant(((IntNum)exp).getInt64());
 				return new IntVariable(exp.getSExpr(), 0, 0);
+			case Z3_OP_BNUM:
+				Parameter p[] = exp.getFuncDecl().getParameters();
+				return new BVConstant(((BitVecNum)exp).getLong(), p[1].getInt());
 			case Z3_OP_UNINTERPRETED:
 				if(exp.isInt())
 					return new IntVariable(exp.getSExpr(), 0, 0);
@@ -83,6 +89,21 @@ public class ConstraintOptionGenerator {
 				break;
 			case Z3_OP_SEQ_LENGTH:
 				op = Operator.LENGTH;
+				break;
+			case Z3_OP_EXTRACT:
+			{
+				op = Operator.EXTRACT;
+				Parameter[] p = exp.getFuncDecl().getParameters();
+				return new Operation(op, p[0].getInt(), p[1].getInt(), createExpr(exp.getArgs()[0]));
+			}
+			case Z3_OP_INT2BV:
+			{
+				op = Operator.I2BV;
+				Parameter[] p = exp.getFuncDecl().getParameters();
+				return new Operation(op, p[0].getInt(), createExpr(exp.getArgs()[0]));
+			}
+			case Z3_OP_BV2INT:
+				op = Operator.BV2I;
 				break;
 			default:
 				throw new UnsupportedOperationException("Got: " + exp + " " + exp.getFuncDecl().getDeclKind());
@@ -112,6 +133,7 @@ public class ConstraintOptionGenerator {
 				op = Operator.GT;
 				break;
 			case Z3_OP_LE:
+			case Z3_OP_SLEQ:
 				op = Operator.LE;
 				break;
 			case Z3_OP_LT:
@@ -122,6 +144,21 @@ public class ConstraintOptionGenerator {
 					op = Operator.EQUALS;
 				else
 					op = Operator.EQ;
+				break;
+			case Z3_OP_CONCAT:
+				op = Operator.BIT_CONCAT;
+				break;
+			case Z3_OP_ADD:
+				op = Operator.ADD;
+				if (exp.getNumArgs() == 3) {
+					return new Operation(op, new Operation(op, createExpr(exp.getArgs()[0]), createExpr(exp.getArgs()[1])), createExpr(exp.getArgs()[2]));
+				} else if (exp.getNumArgs() > 3) {
+					// TODO Implement ADD of N arguments by breaking it down into smaller ADDs
+					throw new UnsupportedOperationException("ADD of N > 3 arguments not implemented");
+				}
+				break;
+			case Z3_OP_MUL:
+				op = Operator.MUL;
 				break;
 			default:
 				throw new UnsupportedOperationException("Got: " + exp);
@@ -134,7 +171,8 @@ public class ConstraintOptionGenerator {
 			case Z3_OP_SEQ_EXTRACT:
 				return new Operation(Operator.SUBSTRING, createExpr(exp.getArgs()[0]), createExpr(exp.getArgs()[1]), createExpr(exp.getArgs()[2]));
 			case Z3_OP_ITE:
-				return new Operation(Operator.ITE, createExpr(exp.getArgs()[0]), createExpr(exp.getArgs()[1]), createExpr(exp.getArgs()[2]));
+				Expr[] e = exp.getArgs();
+				return new Operation(Operator.ITE, createExpr(e[0]), createExpr(e[1]), createExpr(e[2]));
 			default:
 				throw new UnsupportedOperationException("Got: " + exp);
 
