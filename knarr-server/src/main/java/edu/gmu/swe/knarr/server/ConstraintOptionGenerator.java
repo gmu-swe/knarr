@@ -10,6 +10,7 @@ import com.microsoft.z3.Context;
 import com.microsoft.z3.Expr;
 import com.microsoft.z3.IntNum;
 import com.microsoft.z3.SeqExpr;
+import com.microsoft.z3.enumerations.Z3_decl_kind;
 
 import za.ac.sun.cs.green.expr.Constant;
 import za.ac.sun.cs.green.expr.Expression;
@@ -56,6 +57,7 @@ public class ConstraintOptionGenerator {
 
 	Expression createExpr(Expr exp) {
 
+		Z3_decl_kind t = exp.getFuncDecl().getDeclKind();
 		switch (exp.getFuncDecl().getArity()) {
 		case 0:
 			switch (exp.getFuncDecl().getDeclKind()) {
@@ -87,7 +89,7 @@ public class ConstraintOptionGenerator {
 			}
 			return new Operation(op, createExpr(exp.getArgs()[0]));
 		case 2:
-			switch (exp.getFuncDecl().getDeclKind()) {
+			switch (t) {
 			case Z3_OP_AND:
 				op = Operator.AND;
 				if (exp.getNumArgs() > 2) {
@@ -128,9 +130,11 @@ public class ConstraintOptionGenerator {
 				throw new UnsupportedOperationException("Got: " + exp);
 			return new Operation(op, createExpr(exp.getArgs()[0]), createExpr(exp.getArgs()[1]));
 		case 3:
-			switch (exp.getFuncDecl().getDeclKind()) {
+			switch (t) {
 			case Z3_OP_SEQ_EXTRACT:
 				return new Operation(Operator.SUBSTRING, createExpr(exp.getArgs()[0]), createExpr(exp.getArgs()[1]), createExpr(exp.getArgs()[2]));
+			case Z3_OP_ITE:
+				return new Operation(Operator.ITE, createExpr(exp.getArgs()[0]), createExpr(exp.getArgs()[1]), createExpr(exp.getArgs()[2]));
 			default:
 				throw new UnsupportedOperationException("Got: " + exp);
 
