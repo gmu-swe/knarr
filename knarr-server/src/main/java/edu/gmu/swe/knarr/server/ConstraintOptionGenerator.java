@@ -167,15 +167,16 @@ public class ConstraintOptionGenerator {
 //		System.out.println(data.metaConstraints);
 
 		// System.out.println();
-		for(Expression e : combination(ctr.getOps(), data.constraints))
-		{
+//		for(Expression e : combination(ctr.getOps(), data.constraints))
+//		{
 			Z3GreenBridge newOption = new Z3GreenBridge();
 			newOption.charAts = data.charAts;
 			newOption.varNames = data.varNames;
-			newOption.constraints = e;
+//			newOption.constraints = e;
+			newOption.constraints = data.constraints;
 			newOption.metaConstraints = data.metaConstraints;
 			ret.add(newOption);
-		}
+//		}
 		return ret;
 		// return ret;
 	}
