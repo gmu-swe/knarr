@@ -155,13 +155,13 @@ public class ConstraintOptionGenerator {
 				break;
 			case Z3_OP_ADD:
 				op = Operator.ADD;
-				if (exp.getNumArgs() == 3) {
-					return new Operation(op, new Operation(op, createExpr(exp.getArgs()[0]), createExpr(exp.getArgs()[1])), createExpr(exp.getArgs()[2]));
-				} else if (exp.getNumArgs() > 3) {
-					// TODO Implement ADD of N arguments by breaking it down into smaller ADDs
-					throw new UnsupportedOperationException("ADD of N > 3 arguments not implemented");
+				{
+					Operation ret = new Operation(op, createExpr(exp.getArgs()[0]), createExpr(exp.getArgs()[1]));
+					for (int i = 2 ; i < exp.getNumArgs() ; i++)
+						ret = new Operation(op, ret, createExpr(exp.getArgs()[i]));
+
+					return ret;
 				}
-				break;
 			case Z3_OP_MUL:
 				op = Operator.MUL;
 				break;
