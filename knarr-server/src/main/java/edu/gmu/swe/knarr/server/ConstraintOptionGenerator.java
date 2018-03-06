@@ -15,6 +15,7 @@ import com.microsoft.z3.SeqExpr;
 import com.microsoft.z3.enumerations.Z3_decl_kind;
 
 import za.ac.sun.cs.green.expr.BVConstant;
+import za.ac.sun.cs.green.expr.BoolConstant;
 import za.ac.sun.cs.green.expr.Constant;
 import za.ac.sun.cs.green.expr.Expression;
 import za.ac.sun.cs.green.expr.IntConstant;
@@ -78,6 +79,10 @@ public class ConstraintOptionGenerator {
 					return new StringVariable(exp.getSExpr());
 			case Z3_OP_INTERNAL:
 				return new StringConstant(exp.getSExpr().substring(1, exp.getSExpr().length() - 1));
+			case Z3_OP_FALSE:
+				return new BoolConstant(false);
+			case Z3_OP_TRUE:
+				return new BoolConstant(true);
 			default:
 				throw new UnsupportedOperationException("Got: " + exp + " " + exp.getFuncDecl().getDeclKind());
 			}
