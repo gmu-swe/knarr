@@ -216,7 +216,7 @@ public class PathUtils {
 
 	private static Expression getExpression(Taint<Expression> t, long v) {
 		if (t == null)
-			return new IntConstant((int) v);
+			return new IntConstant(v);
 		return t.lbl;
 	}
 

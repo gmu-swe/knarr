@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import za.ac.sun.cs.green.expr.BVVariable;
 import za.ac.sun.cs.green.expr.Expression;
 import za.ac.sun.cs.green.expr.IntVariable;
 import za.ac.sun.cs.green.expr.RealVariable;
@@ -311,7 +312,7 @@ public class Symbolicator {
 		}
 		if (in instanceof TaintedWithObjTag) {
 			PathUtils.checkLabelAndInitJPF(label);
-			Expression taint = new IntVariable(label, Integer.MIN_VALUE, Integer.MAX_VALUE);
+			Expression taint = new BVVariable(label, 32);
 			((TaintedWithObjTag) in).setPHOSPHOR_TAG(taint);
 			return in;
 		}
@@ -375,10 +376,10 @@ public class Symbolicator {
 			ret = new IntVariable(lbl, 0, 1);
 			break;
 		case Type.BYTE:
-			ret = new IntVariable(lbl, Integer.valueOf(Byte.MIN_VALUE), Integer.valueOf(Byte.MAX_VALUE));
+			ret = new BVVariable(lbl, 8);
 			break;
 		case Type.CHAR:
-			ret = new IntVariable(lbl, Integer.valueOf(Character.MIN_VALUE), Integer.valueOf(Character.MAX_VALUE));
+			ret = new BVVariable(lbl, 16);
 			break;
 		case Type.DOUBLE:
 			ret = new RealVariable(lbl, Double.MIN_VALUE, Double.MAX_VALUE);
@@ -387,13 +388,13 @@ public class Symbolicator {
 			ret = new RealVariable(lbl, Double.valueOf(Float.MIN_VALUE), Double.valueOf(Float.MAX_VALUE));
 			break;
 		case Type.INT:
-			ret = new IntVariable(lbl, Integer.MIN_VALUE, Integer.MAX_VALUE);
+			ret = new BVVariable(lbl, 32);
 			break;
 		case Type.LONG:
-			ret = new IntVariable(lbl, Integer.MIN_VALUE, Integer.MAX_VALUE);
+			ret = new BVVariable(lbl, 64);
 			break;
 		case Type.SHORT:
-			ret = new IntVariable(lbl, Integer.valueOf(Short.MIN_VALUE), Integer.valueOf(Short.MAX_VALUE));
+			ret = new BVVariable(lbl, 16);
 			break;
 		default:
 			throw new UnsupportedOperationException();
@@ -409,7 +410,7 @@ public class Symbolicator {
 		ret.val = in;
 		if (mySoln != null && !mySoln.isUnconstrained)
 			ret.val = (Integer) mySoln.varMapping.get(label);
-		ret.taint = new ExpressionTaint(new IntVariable((String) label, Integer.valueOf(Integer.MIN_VALUE), Integer.valueOf(Integer.MAX_VALUE)));
+		ret.taint = new ExpressionTaint(new BVVariable((String) label, 32));
 		symbolicLabels.put((ExpressionTaint) ret.taint, label);
 		return ret;
 	}
@@ -419,7 +420,7 @@ public class Symbolicator {
 		ret.val = in;
 		if (mySoln != null && !mySoln.isUnconstrained)
 			ret.val = ((Integer) mySoln.varMapping.get(label)).byteValue();
-		ret.taint = new ExpressionTaint(new IntVariable((String) label, Integer.valueOf(Byte.MIN_VALUE), Integer.valueOf(Byte.MAX_VALUE)));
+		ret.taint = new ExpressionTaint(new BVVariable((String) label, 8));
 		symbolicLabels.put((ExpressionTaint) ret.taint, label);
 		return ret;
 	}
@@ -439,7 +440,7 @@ public class Symbolicator {
 		ret.val = in;
 		if (mySoln != null && !mySoln.isUnconstrained)
 			ret.val = (char) ((Integer) mySoln.varMapping.get(label)).intValue();
-		ret.taint = new ExpressionTaint(new IntVariable((String) label, Integer.valueOf(Character.MIN_VALUE), Integer.valueOf(Character.MAX_VALUE)));
+		ret.taint = new ExpressionTaint(new BVVariable((String) label, 16));
 		symbolicLabels.put((ExpressionTaint) ret.taint, label);
 		return ret;
 	}
@@ -469,7 +470,7 @@ public class Symbolicator {
 		ret.val = in;
 		if (mySoln != null && !mySoln.isUnconstrained)
 			ret.val = ((Long) mySoln.varMapping.get(label)).longValue();
-		ret.taint = new ExpressionTaint(new IntVariable((String) label, Integer.valueOf(Integer.MIN_VALUE), Integer.valueOf(Integer.MAX_VALUE)));
+		ret.taint = new ExpressionTaint(new BVVariable((String) label, 64));
 		symbolicLabels.put((ExpressionTaint) ret.taint, label);
 		return ret;
 	}
@@ -479,7 +480,7 @@ public class Symbolicator {
 		ret.val = in;
 		if (mySoln != null && !mySoln.isUnconstrained)
 			ret.val = ((Short) mySoln.varMapping.get(label)).shortValue();
-		ret.taint = new ExpressionTaint(new IntVariable((String) label, Integer.valueOf(Short.MIN_VALUE), Integer.valueOf(Short.MAX_VALUE)));
+		ret.taint = new ExpressionTaint(new BVVariable((String) label, 16));
 		symbolicLabels.put((ExpressionTaint) ret.taint, label);
 		return ret;
 	}
@@ -570,7 +571,7 @@ public class Symbolicator {
       if(t.taints == null)
           t.taints = new Taint[b.length];
       for(int i =0 ; i < b.length; i++) {
-          t.taints[i] = new ExpressionTaint(new IntVariable(generateLabel(), Integer.valueOf(Byte.MIN_VALUE), Integer.valueOf(Byte.MAX_VALUE)));
+          t.taints[i] = new ExpressionTaint(new BVVariable(generateLabel(), 8));
           t.val[i] = b[i];
       }
       return t;
