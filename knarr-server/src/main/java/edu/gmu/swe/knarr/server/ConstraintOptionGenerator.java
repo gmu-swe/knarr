@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedList;
 
+import com.microsoft.z3.BitVecExpr;
 import com.microsoft.z3.BitVecNum;
 import com.microsoft.z3.BoolExpr;
 import com.microsoft.z3.Context;
@@ -15,6 +16,7 @@ import com.microsoft.z3.SeqExpr;
 import com.microsoft.z3.enumerations.Z3_decl_kind;
 
 import za.ac.sun.cs.green.expr.BVConstant;
+import za.ac.sun.cs.green.expr.BVVariable;
 import za.ac.sun.cs.green.expr.BoolConstant;
 import za.ac.sun.cs.green.expr.Constant;
 import za.ac.sun.cs.green.expr.Expression;
@@ -75,6 +77,8 @@ public class ConstraintOptionGenerator {
 			case Z3_OP_UNINTERPRETED:
 				if(exp.isInt())
 					return new IntVariable(exp.getSExpr(), 0, 0);
+				else if (exp.isBV())
+					return new BVVariable(exp.getSExpr(), ((BitVecExpr)exp).getSortSize());
 				else
 					return new StringVariable(exp.getSExpr());
 			case Z3_OP_INTERNAL:
@@ -154,6 +158,7 @@ public class ConstraintOptionGenerator {
 				op = Operator.BIT_CONCAT;
 				break;
 			case Z3_OP_ADD:
+			case Z3_OP_BADD:
 				op = Operator.ADD;
 				{
 					Operation ret = new Operation(op, createExpr(exp.getArgs()[0]), createExpr(exp.getArgs()[1]));
@@ -163,6 +168,7 @@ public class ConstraintOptionGenerator {
 					return ret;
 				}
 			case Z3_OP_MUL:
+			case Z3_OP_BMUL:
 				op = Operator.MUL;
 				break;
 			default:
