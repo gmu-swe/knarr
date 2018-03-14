@@ -246,8 +246,12 @@ public class ConstraintServerHandler extends Thread {
 				Variable v1 = getVarFromOperation(o1);
 				Variable v2 = getVarFromOperation(o2);
 				
-				if (v1 != null && v2 != null)
-					return v1.getName().compareTo(v2.getName());
+				if (v1 != null && v2 != null) {
+					int ret = v1.getName().compareTo(v2.getName());
+					if (ret != 0)
+						return ret;
+					else return o1.toString().compareTo(o2.toString());
+				}
 				else if (v1 != null)
 					return -1;
 				else if (v2 != null)
