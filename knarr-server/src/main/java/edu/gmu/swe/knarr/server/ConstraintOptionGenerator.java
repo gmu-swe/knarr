@@ -96,6 +96,9 @@ public class ConstraintOptionGenerator {
 			case Z3_OP_NOT:
 				op = Operator.NOT;
 				break;
+			case Z3_OP_BNOT:
+				op = Operator.BIT_NOT;
+				break;
 			case Z3_OP_SEQ_LENGTH:
 				op = Operator.LENGTH;
 				break;
@@ -120,6 +123,12 @@ public class ConstraintOptionGenerator {
 			return new Operation(op, createExpr(exp.getArgs()[0]));
 		case 2:
 			switch (t) {
+			case Z3_OP_BOR:
+				op = Operator.BIT_OR;
+				break;
+			case Z3_OP_BAND:
+				op = Operator.BIT_AND;
+				break;
 			case Z3_OP_AND:
 				op = Operator.AND;
 				if (exp.getNumArgs() > 2) {
