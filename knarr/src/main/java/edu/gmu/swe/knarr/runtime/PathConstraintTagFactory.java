@@ -13,6 +13,7 @@ import edu.columbia.cs.psl.phosphor.org.objectweb.asm.Type;
 import edu.columbia.cs.psl.phosphor.org.objectweb.asm.tree.FrameNode;
 import edu.columbia.cs.psl.phosphor.org.objectweb.asm.util.Printer;
 import edu.columbia.cs.psl.phosphor.runtime.Taint;
+import edu.columbia.cs.psl.phosphor.struct.TaintedCharWithObjTag;
 import edu.columbia.cs.psl.phosphor.struct.TaintedDoubleWithObjTag;
 import edu.columbia.cs.psl.phosphor.struct.TaintedFloatWithObjTag;
 import edu.columbia.cs.psl.phosphor.struct.TaintedIntWithObjTag;
@@ -180,9 +181,19 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 		case Opcodes.D2L:
 		case Opcodes.D2F:
 		case Opcodes.I2B:
-		case Opcodes.I2C:
 		case Opcodes.I2S:
 			mv.visitInsn(opcode);
+			break;
+		case Opcodes.I2C:
+			if (!ta.topCarriesTaint()) {
+				mv.visitInsn(opcode);
+				break;
+			}
+			holder = TaintUtils.getContainerReturnType("C");
+			mv.visitVarInsn(ALOAD, lvs.getPreAllocedReturnTypeVar(holder));
+			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "I2C", "(" + Configuration.TAINT_TAG_DESC + "I" + Type.getDescriptor(TaintedCharWithObjTag.class) + ")" + Type.getDescriptor(TaintedCharWithObjTag.class), false);
+			unwrap(holder, "C", mv);
+			ta.getAnalyzer().setTopOfStackTagged();
 			break;
 		case Opcodes.LCMP:
 			if (!ta.topCarriesTaint()) {

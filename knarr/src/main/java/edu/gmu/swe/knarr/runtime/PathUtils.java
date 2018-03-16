@@ -556,6 +556,17 @@ public class PathUtils {
 
 	static Object lock = new Object();
 
+	public static TaintedCharWithObjTag I2C(Taint<Expression> val, int b, TaintedCharWithObjTag ret)
+	{
+		ret.val = (char) b;
+
+		if (val != null) {
+			Expression i2c = new Operation(Operator.BIT_AND, val.lbl, new IntConstant(0x0000FFFF));
+			ret.taint = new ExpressionTaint(i2c);
+		}
+
+		return ret;
+	}
 	public static TaintedIntWithObjTag LCMP(Taint<Expression> rVal, long v1, Taint<Expression> lVal, long v2, TaintedIntWithObjTag ret) {
 		/*
 		 * Takes two two-word long integers off the stack and compares them. If
