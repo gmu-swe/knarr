@@ -10,6 +10,7 @@ public class PreMain {
 		Configuration.IMPLICIT_TRACKING = false;
 		// Configuration.ARRAY_LENGTH_TRACKING = true;
 		Configuration.WITH_TAGS_FOR_JUMPS = true;
+		Configuration.ARRAY_INDEX_TRACKING = true;
 		Configuration.taintTagFactory = new PathConstraintTagFactory();
 		Configuration.PREALLOC_STACK_OPS = true;
 		// Configuration.extensionClassVisitor =

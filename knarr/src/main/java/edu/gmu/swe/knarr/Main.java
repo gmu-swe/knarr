@@ -13,6 +13,7 @@ public class Main {
 		args[2] = "-disableJumpOptimizations";
 		args[3] = "-disableJumpOptimizations";
 		Configuration.STRING_SET_TAG_TAINT_CLASS = "edu/gmu/swe/knarr/runtime/StringUtils";
+		Configuration.ARRAY_INDEX_TRACKING = true;
 		Configuration.IMPLICIT_TRACKING = false;
 		Configuration.ARRAY_LENGTH_TRACKING = true;
 		Configuration.PREALLOC_STACK_OPS = true;
