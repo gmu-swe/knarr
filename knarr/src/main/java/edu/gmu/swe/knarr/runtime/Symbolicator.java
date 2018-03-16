@@ -12,7 +12,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import za.ac.sun.cs.green.expr.BVVariable;
 import za.ac.sun.cs.green.expr.Expression;
+import za.ac.sun.cs.green.expr.IntConstant;
 import za.ac.sun.cs.green.expr.IntVariable;
+import za.ac.sun.cs.green.expr.Operation;
+import za.ac.sun.cs.green.expr.Operation.Operator;
 import za.ac.sun.cs.green.expr.RealVariable;
 import za.ac.sun.cs.green.expr.StringVariable;
 import edu.columbia.cs.psl.phosphor.org.objectweb.asm.Type;
@@ -376,10 +379,10 @@ public class Symbolicator {
 			ret = new IntVariable(lbl, 0, 1);
 			break;
 		case Type.BYTE:
-			ret = new BVVariable(lbl, 8);
+			ret = new Operation(Operator.BIT_AND, new BVVariable(lbl, 32), new IntConstant(0xFF));
 			break;
 		case Type.CHAR:
-			ret = new BVVariable(lbl, 16);
+			ret = new Operation(Operator.BIT_AND, new BVVariable(lbl, 32), new IntConstant(0xFFFF));
 			break;
 		case Type.DOUBLE:
 			ret = new RealVariable(lbl, Double.MIN_VALUE, Double.MAX_VALUE);
@@ -394,7 +397,7 @@ public class Symbolicator {
 			ret = new BVVariable(lbl, 64);
 			break;
 		case Type.SHORT:
-			ret = new BVVariable(lbl, 16);
+			ret = new Operation(Operator.BIT_AND, new BVVariable(lbl, 32), new IntConstant(0xFFFF));
 			break;
 		default:
 			throw new UnsupportedOperationException();
@@ -420,7 +423,7 @@ public class Symbolicator {
 		ret.val = in;
 		if (mySoln != null && !mySoln.isUnconstrained)
 			ret.val = ((Integer) mySoln.varMapping.get(label)).byteValue();
-		ret.taint = new ExpressionTaint(new BVVariable((String) label, 8));
+		ret.taint = new ExpressionTaint(new Operation(Operator.BIT_AND, new BVVariable((String) label, 32), new IntConstant(0xFF)));
 		symbolicLabels.put((ExpressionTaint) ret.taint, label);
 		return ret;
 	}
@@ -440,7 +443,7 @@ public class Symbolicator {
 		ret.val = in;
 		if (mySoln != null && !mySoln.isUnconstrained)
 			ret.val = (char) ((Integer) mySoln.varMapping.get(label)).intValue();
-		ret.taint = new ExpressionTaint(new BVVariable((String) label, 16));
+		ret.taint = new ExpressionTaint(new Operation(Operator.BIT_AND, new BVVariable((String) label, 32), new IntConstant(0xFFFF)));
 		symbolicLabels.put((ExpressionTaint) ret.taint, label);
 		return ret;
 	}
@@ -480,7 +483,7 @@ public class Symbolicator {
 		ret.val = in;
 		if (mySoln != null && !mySoln.isUnconstrained)
 			ret.val = ((Short) mySoln.varMapping.get(label)).shortValue();
-		ret.taint = new ExpressionTaint(new BVVariable((String) label, 16));
+		ret.taint = new ExpressionTaint(new Operation(Operator.BIT_AND, new BVVariable((String) label, 32), new IntConstant(0xFFFF)));
 		symbolicLabels.put((ExpressionTaint) ret.taint, label);
 		return ret;
 	}
