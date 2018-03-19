@@ -7,7 +7,7 @@ import edu.gmu.swe.knarr.runtime.PathConstraintTagFactory;
 
 public class Main {
 	public static void main(String[] _args) {
-		String[] args = new String[_args.length + 3];
+		String[] args = new String[_args.length + 4];
 		args[0] = "-multiTaint";
 		args[1] = "-withArrayLengthTags";
 		args[2] = "-disableJumpOptimizations";
@@ -17,10 +17,10 @@ public class Main {
 		Configuration.ARRAY_LENGTH_TRACKING = true;
 		Configuration.PREALLOC_STACK_OPS = true;
 		Configuration.WITH_TAGS_FOR_JUMPS = true;
-		
+
 		PreMain.DEBUG = System.getProperty("DEBUG") != null;
 		Configuration.taintTagFactory = new PathConstraintTagFactory();
-		System.arraycopy(_args, 0, args, 3, _args.length);
+		System.arraycopy(_args, 0, args, 4, _args.length);
 		// Instrumenter.addlTransformer = new CRClassFileTransformer();
 		Instrumenter.main(args);
 	}
