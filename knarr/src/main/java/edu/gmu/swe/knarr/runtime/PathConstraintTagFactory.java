@@ -863,4 +863,11 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 	private void putTaintField(MethodVisitor mv) {
 		mv.visitFieldInsn(PUTFIELD, "java/lang/String", TaintUtils.TAINT_FIELD, Configuration.TAINT_TAG_DESC);
 	}
+	@Override
+	public void generateSetTag(MethodVisitor mv, String className) {
+		mv.visitVarInsn(Opcodes.ALOAD, 0);
+		mv.visitVarInsn(Opcodes.ALOAD, 1);
+		mv.visitTypeInsn(Opcodes.CHECKCAST, Configuration.TAINT_TAG_INTERNAL_NAME);
+		mv.visitFieldInsn(Opcodes.PUTFIELD, className, TaintUtils.TAINT_FIELD, Configuration.TAINT_TAG_DESC);
+	}
 }
