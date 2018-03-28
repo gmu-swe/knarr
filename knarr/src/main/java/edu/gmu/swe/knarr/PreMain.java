@@ -4,6 +4,7 @@ import java.lang.instrument.Instrumentation;
 
 import edu.columbia.cs.psl.phosphor.Configuration;
 import edu.gmu.swe.knarr.runtime.PathConstraintTagFactory;
+import edu.gmu.swe.knarr.runtime.TaintListener;
 
 public class PreMain {
 	public static void premain(String args, Instrumentation inst) {
@@ -13,6 +14,7 @@ public class PreMain {
 		Configuration.ARRAY_INDEX_TRACKING = true;
 		Configuration.ARRAY_INDEX_TRACKING = true;
 		Configuration.taintTagFactory = new PathConstraintTagFactory();
+		Configuration.derivedTaintListener = new TaintListener();
 		Configuration.PREALLOC_STACK_OPS = true;
 		// Configuration.extensionClassVisitor =
 		// DependencyTrackingClassVisitor.class;

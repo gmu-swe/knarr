@@ -367,9 +367,7 @@ public class ConstraintServerHandler extends Thread {
 				// oos.writeObject("Remaining input combs: " +
 				// solutionsToTry.size());
 			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (ClassNotFoundException e) {
+		} catch (Throwable e) {
 			e.printStackTrace();
 		}
 		try {

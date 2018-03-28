@@ -115,4 +115,13 @@ public class StackOpITCase {
 		Symbolicator.dumpConstraints();
 
 	}
+	@Test
+	public void testArrayIndex(){
+		int idx = Symbolicator.symbolic("Aindex",5);
+		int[] ar = new int[100];
+		ar[5] = 10;
+		assertEquals(10,ar[idx]);
+		Symbolicator.dumpConstraints();
+
+	}
 }
