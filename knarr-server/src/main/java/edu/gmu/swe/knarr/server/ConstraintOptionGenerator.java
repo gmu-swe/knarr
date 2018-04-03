@@ -5,16 +5,20 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedList;
 
+import com.microsoft.z3.ArrayExpr;
+import com.microsoft.z3.ArraySort;
 import com.microsoft.z3.BitVecExpr;
 import com.microsoft.z3.BitVecNum;
+import com.microsoft.z3.BitVecSort;
 import com.microsoft.z3.BoolExpr;
-import com.microsoft.z3.Context;
 import com.microsoft.z3.Expr;
 import com.microsoft.z3.FuncDecl.Parameter;
 import com.microsoft.z3.IntNum;
 import com.microsoft.z3.SeqExpr;
+import com.microsoft.z3.Sort;
 import com.microsoft.z3.enumerations.Z3_decl_kind;
 
+import za.ac.sun.cs.green.expr.ArrayVariable;
 import za.ac.sun.cs.green.expr.BVConstant;
 import za.ac.sun.cs.green.expr.BVVariable;
 import za.ac.sun.cs.green.expr.BoolConstant;
@@ -79,8 +83,22 @@ public class ConstraintOptionGenerator {
 					return new IntVariable(exp.getSExpr(), 0, 0);
 				else if (exp.isBV())
 					return new BVVariable(exp.getSExpr(), ((BitVecExpr)exp).getSortSize());
+				else if (exp.isArray()) {
+					ArrayExpr e = (ArrayExpr)exp;
+					ArraySort s = (ArraySort)e.getSort();
+					Sort r = s.getRange();
+					if (r instanceof BitVecSort)
+					{
+						switch (((BitVecSort)r).getSize()) {
+							case 32:
+								return new ArrayVariable(exp.getSExpr(), java.lang.Integer.TYPE);
+						}
+					}
+					throw new Error("Not implemented!");
+				}
 				else
-					return new StringVariable(exp.getSExpr());
+					throw new Error("Not implemented!");
+//					return new StringVariable(exp.getSExpr());
 			case Z3_OP_INTERNAL:
 				return new StringConstant(exp.getSExpr().substring(1, exp.getSExpr().length() - 1));
 			case Z3_OP_FALSE:
@@ -179,6 +197,9 @@ public class ConstraintOptionGenerator {
 			case Z3_OP_MUL:
 			case Z3_OP_BMUL:
 				op = Operator.MUL;
+				break;
+			case Z3_OP_SELECT:
+				op = Operator.SELECT;
 				break;
 			default:
 				throw new UnsupportedOperationException("Got: " + exp);
