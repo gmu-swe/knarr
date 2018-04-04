@@ -11,6 +11,7 @@ import com.microsoft.z3.BitVecExpr;
 import com.microsoft.z3.BitVecNum;
 import com.microsoft.z3.BitVecSort;
 import com.microsoft.z3.BoolExpr;
+import com.microsoft.z3.BoolSort;
 import com.microsoft.z3.Expr;
 import com.microsoft.z3.FuncDecl.Parameter;
 import com.microsoft.z3.IntNum;
@@ -90,9 +91,14 @@ public class ConstraintOptionGenerator {
 					if (r instanceof BitVecSort)
 					{
 						switch (((BitVecSort)r).getSize()) {
+							case 8:
+								return new ArrayVariable(exp.getSExpr(), java.lang.Byte.TYPE);
 							case 32:
 								return new ArrayVariable(exp.getSExpr(), java.lang.Integer.TYPE);
 						}
+					} else if (r instanceof BoolSort)
+					{
+						return new ArrayVariable(exp.getSExpr(), java.lang.Boolean.TYPE);
 					}
 					throw new Error("Not implemented!");
 				}
@@ -208,12 +214,14 @@ public class ConstraintOptionGenerator {
 				throw new UnsupportedOperationException("Got: " + exp);
 			return new Operation(op, createExpr(exp.getArgs()[0]), createExpr(exp.getArgs()[1]));
 		case 3:
+			Expr[] e = exp.getArgs();
 			switch (t) {
 			case Z3_OP_SEQ_EXTRACT:
 				return new Operation(Operator.SUBSTRING, createExpr(exp.getArgs()[0]), createExpr(exp.getArgs()[1]), createExpr(exp.getArgs()[2]));
 			case Z3_OP_ITE:
-				Expr[] e = exp.getArgs();
 				return new Operation(Operator.ITE, createExpr(e[0]), createExpr(e[1]), createExpr(e[2]));
+			case Z3_OP_STORE:
+				return new Operation(Operator.STORE, createExpr(e[0]), createExpr(e[1]), createExpr(e[2]));
 			default:
 				throw new UnsupportedOperationException("Got: " + exp);
 
