@@ -17,6 +17,7 @@ public class Main {
 		Configuration.ARRAY_LENGTH_TRACKING = true;
 		Configuration.PREALLOC_STACK_OPS = true;
 		Configuration.WITH_TAGS_FOR_JUMPS = true;
+		Configuration.WITH_HEAVY_OBJ_EQUALS_HASHCODE = true;
 
 		PreMain.DEBUG = System.getProperty("DEBUG") != null;
 		Configuration.taintTagFactory = new PathConstraintTagFactory();
