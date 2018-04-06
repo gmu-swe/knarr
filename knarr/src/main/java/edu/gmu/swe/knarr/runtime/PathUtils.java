@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import za.ac.sun.cs.green.expr.BVConstant;
 import za.ac.sun.cs.green.expr.Expression;
 import za.ac.sun.cs.green.expr.IntConstant;
 import za.ac.sun.cs.green.expr.IntVariable;
@@ -1168,7 +1169,11 @@ public class PathUtils {
 			ret = new Operation(Operator.BIT_OR, expr1, expr2);
 			break;
 		case Opcodes.ISHL:
+			ret = new Operation(Operator.SHIFTL, expr1, expr2);
+			break;
 		case Opcodes.LSHL:
+			if (expr1 instanceof IntConstant)
+				expr1 = new BVConstant(((IntConstant)expr1).getValueLong(), 64);
 			ret = new Operation(Operator.SHIFTL, expr1, expr2);
 			break;
 		case Opcodes.ISHR:

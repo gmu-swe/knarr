@@ -95,6 +95,8 @@ public class ConstraintOptionGenerator {
 								return new ArrayVariable(exp.getSExpr(), java.lang.Byte.TYPE);
 							case 32:
 								return new ArrayVariable(exp.getSExpr(), java.lang.Integer.TYPE);
+							case 64:
+								return new ArrayVariable(exp.getSExpr(), java.lang.Long.TYPE);
 						}
 					} else if (r instanceof BoolSort)
 					{
@@ -206,6 +208,12 @@ public class ConstraintOptionGenerator {
 				break;
 			case Z3_OP_SELECT:
 				op = Operator.SELECT;
+				break;
+			case Z3_OP_BSHL:
+				op = Operator.SHIFTL;
+				break;
+			case Z3_OP_BASHR:
+				op = Operator.SHIFTR;
 				break;
 			default:
 				throw new UnsupportedOperationException("Got: " + exp);

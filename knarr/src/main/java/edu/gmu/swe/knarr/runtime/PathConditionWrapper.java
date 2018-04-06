@@ -17,6 +17,14 @@ public class PathConditionWrapper implements Serializable {
 	public PathConditionWrapper() {
 	}
 
+	public void _addDet(Operation op) {
+		if (constraints == null)
+			constraints = op;
+		else {
+			constraints = new Operation(Operator.AND, constraints, op);
+		}
+	}
+
 	public void _addDet(Operator op, Expression l, Expression r) {
 		Operation ret = new Operation(op, l, r);
 		if (constraints == null)

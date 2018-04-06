@@ -1,5 +1,6 @@
 package edu.gmu.swe.knarr.runtime;
 
+import java.lang.reflect.Array;
 import java.util.IdentityHashMap;
 
 import edu.columbia.cs.psl.phosphor.runtime.DerivedTaintListener;
@@ -14,19 +15,52 @@ import za.ac.sun.cs.green.expr.Operation;
 import za.ac.sun.cs.green.expr.Operation.Operator;
 
 public class TaintListener extends DerivedTaintListener {
-	
-	private IdentityHashMap<Object, ArrayVariable> arrayNames = new IdentityHashMap<>();
-	
-	private ArrayVariable getArrayVar(Object arr)
+
+	private IdentityHashMap<Object, Expression> arrayNames = new IdentityHashMap<>();
+
+	private Expression getArrayVar(Object arr)
 	{
 		synchronized (arrayNames)
 		{
-			ArrayVariable ret = arrayNames.get(arr);
+			Expression ret = arrayNames.get(arr);
 			if (ret == null)
 			{
 				Class<?> t = arr.getClass().getComponentType().isPrimitive() ? arr.getClass().getComponentType() : Object.class;
-				ret = new ArrayVariable("const_array_" + arrayNames.size(), t);
-				arrayNames.put(arr, ret);
+				ArrayVariable var = new ArrayVariable("const_array_" + arrayNames.size(), t);
+				arrayNames.put(arr, var);
+				ret = var;
+
+				Expression init = var;
+
+				for (int i = 0 ; i < Array.getLength(arr) ; i++)
+				{
+					BVConstant idx = new BVConstant(i, 32);
+					Expression val;
+					switch(arr.getClass().getComponentType().getName())
+					{
+						case "boolean":
+							val = new BoolConstant(((boolean[])arr)[i]);
+							break;
+						case "byte":
+							val = new BVConstant(((byte[])arr)[i], 8);
+							break;
+						case "char":
+							val = new BVConstant(((char[])arr)[i], 16);
+							break;
+						case "short":
+							val = new BVConstant(((short[])arr)[i], 16);
+							break;
+						case "int":
+							val = new BVConstant(((int[])arr)[i], 32);
+							break;
+						case "long":
+							val = new BVConstant(((long[])arr)[i], 64);
+							break;
+						default:
+							throw new Error("Not supported");
+					}
+					init = new Operation(Operator.STORE, init, idx, val);
+				}
 			}
 			return ret;
 		}
@@ -43,14 +77,14 @@ public class TaintListener extends DerivedTaintListener {
 		}
 		else if(idxTaint != null)
 		{
-			ArrayVariable var = getArrayVar(b.getVal());
+			Expression var = getArrayVar(b.getVal());
 			BVConstant idxBV = new BVConstant(idx, 32);
 			Operation store  = new Operation(Operator.STORE, var, idxBV, c);
 			Operation select = new Operation(Operator.SELECT, store, (Expression) idxTaint.lbl);
-//			Operation eq     = new Operation(Operator.EQ, (Expression)idxTaint.lbl, idxBV);
-			// Luis:  This may be too strong, instead we should give the solver the whole array and then tell it that arr[sym] = val
-			PathUtils.getCurPC()._addDet(Operator.EQ, (Expression)idxTaint.lbl, idxBV);
-//			PathUtils.getCurPC()._addDet(Operator.EQ, select, c);
+			PathUtils.getCurPC()._addDet(Operator.EQ, select, c);
+
+			// Index is within the array bounds
+			PathUtils.getCurPC()._addDet(Operator.LT, (Expression)idxTaint.lbl, new BVConstant(b.getLength(), 32));
 			return new ExpressionTaint(select);
 		}
 		
