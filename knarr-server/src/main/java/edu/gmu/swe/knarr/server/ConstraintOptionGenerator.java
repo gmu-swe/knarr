@@ -215,6 +215,9 @@ public class ConstraintOptionGenerator {
 			case Z3_OP_BASHR:
 				op = Operator.SHIFTR;
 				break;
+			case Z3_OP_BXOR:
+				op = Operator.BIT_XOR;
+				break;
 			default:
 				throw new UnsupportedOperationException("Got: " + exp);
 			}
