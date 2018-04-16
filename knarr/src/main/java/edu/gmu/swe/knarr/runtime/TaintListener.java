@@ -159,43 +159,43 @@ public class TaintListener extends DerivedTaintListener {
 		return ret;
 	}
 
-//	@Override
-//	public Taint arraySet(LazyShortArrayObjTags a, Taint idxTaint, int idx, Taint t, short v) {
-//		return super.arraySet(a, idxTaint, idx, t, v);
-//	}
-//
-//	@Override
-//	public Taint arraySet(LazyIntArrayObjTags a, Taint idxTaint, int idx, Taint t, int v) {
-//		return super.arraySet(a, idxTaint, idx, t, v);
-//	}
-//
-//	@Override
-//	public Taint arraySet(LazyByteArrayObjTags a, Taint idxTaint, int idx, Taint t, byte v) {
-//		return super.arraySet(a, idxTaint, idx, t, v);
-//	}
-//
-//	@Override
-//	public Taint arraySet(LazyBooleanArrayObjTags a, Taint idxTaint, int idx, Taint t, boolean v) {
-//		return super.arraySet(a, idxTaint, idx, t, v);
-//	}
-//
-//	@Override
-//	public Taint arraySet(LazyCharArrayObjTags a, Taint idxTaint, int idx, Taint t, char v) {
-//		return super.arraySet(a, idxTaint, idx, t, v);
-//	}
-//
-//	@Override
-//	public Taint arraySet(LazyFloatArrayObjTags a, Taint idxTaint, int idx, Taint t, float v) {
-//		return super.arraySet(a, idxTaint, idx, t, v);
-//	}
-//
-//	@Override
-//	public Taint arraySet(LazyDoubleArrayObjTags a, Taint idxTaint, int idx, Taint t, double v) {
-//		return super.arraySet(a, idxTaint, idx, t, v);
-//	}
-//
-//	@Override
-//	public Taint arraySet(LazyLongArrayObjTags a, Taint idxTaint, int idx, Taint t, long v) {
-//		return super.arraySet(a, idxTaint, idx, t, v);
-//	}
+	@Override
+	public Taint arraySet(LazyShortArrayObjTags a, Taint idxTaint, int idx, Taint t, short v, ControlTaintTagStack ctrl) {
+		return super.arraySet(a, null, idx, t, v, ctrl);
+	}
+
+	@Override
+	public Taint arraySet(LazyIntArrayObjTags a, Taint idxTaint, int idx, Taint t, int v, ControlTaintTagStack ctrl) {
+		return super.arraySet(a, null, idx, t, v, ctrl);
+	}
+
+	@Override
+	public Taint arraySet(LazyByteArrayObjTags a, Taint idxTaint, int idx, Taint t, byte v, ControlTaintTagStack ctrl) {
+		return super.arraySet(a, null, idx, t, v, ctrl);
+	}
+
+	@Override
+	public Taint arraySet(LazyBooleanArrayObjTags a, Taint idxTaint, int idx, Taint t, boolean v, ControlTaintTagStack ctrl) {
+		return super.arraySet(a, null, idx, t, v, ctrl);
+	}
+
+	@Override
+	public Taint arraySet(LazyCharArrayObjTags a, Taint idxTaint, int idx, Taint t, char v, ControlTaintTagStack ctrl) {
+		return super.arraySet(a, null, idx, t, v, ctrl);
+	}
+
+	@Override
+	public Taint arraySet(LazyFloatArrayObjTags a, Taint idxTaint, int idx, Taint t, float v, ControlTaintTagStack ctrl) {
+		return super.arraySet(a, null, idx, t, v, ctrl);
+	}
+
+	@Override
+	public Taint arraySet(LazyDoubleArrayObjTags a, Taint idxTaint, int idx, Taint t, double v, ControlTaintTagStack ctrl) {
+		return super.arraySet(a, null, idx, t, v, ctrl);
+	}
+
+	@Override
+	public Taint arraySet(LazyLongArrayObjTags a, Taint idxTaint, int idx, Taint t, long v, ControlTaintTagStack ctrl) {
+		return super.arraySet(a, null, idx, t, v, ctrl);
+	}
 }
