@@ -565,6 +565,10 @@ public class PathUtils {
 			Expression i2c = new Operation(Operator.BIT_AND, val.lbl, new IntConstant(0x0000FFFF));
 			ret.taint = new ExpressionTaint(i2c);
 		}
+		else
+		{
+			ret.taint = null;
+		}
 
 		return ret;
 	}
