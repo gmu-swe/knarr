@@ -143,6 +143,10 @@ public class ConstraintOptionGenerator {
 			case Z3_OP_BV2INT:
 				op = Operator.BV2I;
 				break;
+			case Z3_OP_SIGN_EXT:
+				op = Operator.SIGN_EXT;
+				Parameter[] p = exp.getFuncDecl().getParameters();
+				return new Operation(op, p[0].getInt(), createExpr(exp.getArgs()[0]));
 			default:
 				throw new UnsupportedOperationException("Got: " + exp + " " + exp.getFuncDecl().getDeclKind());
 			}
@@ -171,6 +175,7 @@ public class ConstraintOptionGenerator {
 
 				break;
 			case Z3_OP_GE:
+			case Z3_OP_SGEQ:
 				op = Operator.GE;
 				break;
 			case Z3_OP_GT:
@@ -181,6 +186,7 @@ public class ConstraintOptionGenerator {
 				op = Operator.LE;
 				break;
 			case Z3_OP_LT:
+			case Z3_OP_SLT:
 				op = Operator.LT;
 				break;
 			case Z3_OP_EQ:
