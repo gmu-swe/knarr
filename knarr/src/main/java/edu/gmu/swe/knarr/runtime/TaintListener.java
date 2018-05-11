@@ -16,7 +16,7 @@ import za.ac.sun.cs.green.expr.Operation.Operator;
 
 public class TaintListener extends DerivedTaintListener {
 
-	private IdentityHashMap<Object, Expression> arrayNames = new IdentityHashMap<>();
+	public static IdentityHashMap<Object, Expression> arrayNames = new IdentityHashMap<>();
 
 	private Expression getArrayVar(Object arr)
 	{
@@ -79,9 +79,9 @@ public class TaintListener extends DerivedTaintListener {
 		{
 			Expression var = getArrayVar(b.getVal());
 			BVConstant idxBV = new BVConstant(idx, 32);
-			Operation store  = new Operation(Operator.STORE, var, idxBV, c);
-			Operation select = new Operation(Operator.SELECT, store, (Expression) idxTaint.lbl);
-			PathUtils.getCurPC()._addDet(Operator.EQ, select, c);
+			
+			Operation select = new Operation(Operator.SELECT, var, (Expression) idxTaint.lbl);
+			PathUtils.getCurPC()._addDet(Operator.EQ, c, select);
 
 			// Index is within the array bounds
 			PathUtils.getCurPC()._addDet(Operator.LT, (Expression)idxTaint.lbl, new BVConstant(b.getLength(), 32));
