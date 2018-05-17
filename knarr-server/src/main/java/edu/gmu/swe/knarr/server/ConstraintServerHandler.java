@@ -5,7 +5,9 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.net.Socket;
-import java.util.Collection;
+import java.util.AbstractMap.SimpleEntry;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -315,10 +317,10 @@ public class ConstraintServerHandler extends Thread {
 
 				Z3GreenBridge newExp = stateStore.getNewOption();
 				boolean sat = false;
-				HashMap<String,Object> ret = null;
+				ArrayList<SimpleEntry<String, Object>> ret = new ArrayList<>();
+				final String prefix = "autoVar_";
 				while (newExp != null && !sat) {
 					sat = true;
-					ret = new HashMap<String, Object>();
 //					System.out.println("Trying out new version: " + newExp);
 					try{
 //						modeler.processRequest(k);
@@ -335,7 +337,8 @@ public class ConstraintServerHandler extends Thread {
 //							System.out.println("SAT: " + sol);
 							for(String v : sol.keySet())	
 							{
-								ret.put(v, sol.get(v));
+								if (v.startsWith(prefix))
+									ret.add(new SimpleEntry<String, Object>(v, sol.get(v)));
 							}
 						} else {
 							
@@ -351,6 +354,19 @@ public class ConstraintServerHandler extends Thread {
 					}
 					newExp = stateStore.getNewOption();
 				}
+
+				Collections.sort(ret, new Comparator<SimpleEntry<String, Object>>() {
+						@Override
+						public int compare(SimpleEntry<String, Object> o1, SimpleEntry<String, Object> o2) {
+							if (o1.getKey().startsWith(prefix) && o2.getKey().startsWith(prefix)) {
+								Integer i1 = Integer.valueOf(o1.getKey().substring(prefix.length()));
+								Integer i2 = Integer.valueOf(o2.getKey().substring(prefix.length()));
+								return i1.compareTo(i2);
+							}
+							
+							return o1.getKey().compareTo(o2.getKey());
+						}
+					});
 				oos.writeObject(ret);
 				oos.close();
 

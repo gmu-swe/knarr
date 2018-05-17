@@ -7,6 +7,8 @@ import java.lang.reflect.Array;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
+import java.util.AbstractMap.SimpleEntry;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map.Entry;
@@ -103,7 +105,7 @@ public class Symbolicator {
 		System.out.println("Warning - array length constraints disabled?");
 	}
 
-	public static HashMap<String, Object> dumpConstraints() {
+	public static ArrayList<SimpleEntry<String, Object>> dumpConstraints() {
 		ObjectOutputStream oos;
 		collectArrayLenConstraints();
 		for (Entry<Object, Expression> e : TaintListener.arrayNames.entrySet()) {
@@ -146,15 +148,16 @@ public class Symbolicator {
 			oos.writeObject(PathUtils.getCurPC().constraints);
 			PathUtils.getCurPC().constraints = null;
 			serverConnection = null;
-			HashMap solution = (HashMap) ois.readObject();
+			ArrayList<SimpleEntry<String, Object>> solution = (ArrayList<SimpleEntry<String,Object>>) ois.readObject();
 			System.out.println("Solution received: " + solution);
 			byte[] array = new byte[solution.size()];
-			for (int i = 0 ; i < array.length ; i++) {
-				Integer b = (Integer) solution.get("autoVar_" + i);
+			int i = 0;
+			for (Entry<String, Object> e: solution) {
+				Integer b = (Integer) e.getValue();
 				if (b == null)
 					break;
 
-				array[i] = b.byteValue();
+				array[i++] = b.byteValue();
 			}
 			System.out.println(new String(array, StandardCharsets.UTF_8));
 			oos.close();
