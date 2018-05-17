@@ -85,6 +85,7 @@ public class TaintListener extends DerivedTaintListener {
 
 			// Index is within the array bounds
 			PathUtils.getCurPC()._addDet(Operator.LT, (Expression)idxTaint.lbl, new BVConstant(b.getLength(), 32));
+			PathUtils.getCurPC()._addDet(Operator.GE, (Expression)idxTaint.lbl, new BVConstant(0, 32));
 			return new ExpressionTaint(select);
 		}
 		
