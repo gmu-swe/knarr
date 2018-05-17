@@ -149,16 +149,22 @@ public class Symbolicator {
 			PathUtils.getCurPC().constraints = null;
 			serverConnection = null;
 			ArrayList<SimpleEntry<String, Object>> solution = (ArrayList<SimpleEntry<String,Object>>) ois.readObject();
-			System.out.println("Solution received: " + solution);
+//			System.out.println("Solution received: " + solution);
 			byte[] array = new byte[solution.size()];
 			int i = 0;
+			boolean found = false;
 			for (Entry<String, Object> e: solution) {
+				if (!found && e.getKey().equals(firstLabel))
+					found = true;
+				else if (!found)
+					continue;
 				Integer b = (Integer) e.getValue();
 				if (b == null)
 					break;
 
 				array[i++] = b.byteValue();
 			}
+			firstLabel = null;
 			System.out.println(new String(array, StandardCharsets.UTF_8));
 			oos.close();
 			return solution;
@@ -247,9 +253,16 @@ public class Symbolicator {
 	public static byte[] symbolic(byte[] in) {
 		return in;
 	}
+	
+	private static String firstLabel = null;
 
 	public static String generateLabel() {
-		return "autoVar_" + autoLblr.getAndIncrement();
+		String ret = "autoVar_" + autoLblr.getAndIncrement();
+		
+		if (firstLabel == null)
+			firstLabel = ret;
+		
+		return ret;
 	}
 
 	public static int[] symbolic$$PHOSPHORTAGGED(String label, LazyIntArrayObjTags in_tags, int[] in) {
