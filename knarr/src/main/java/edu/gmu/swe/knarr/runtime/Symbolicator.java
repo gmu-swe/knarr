@@ -137,7 +137,7 @@ public class Symbolicator {
 		}
 		try {
 			// if (DEBUG)
-			System.out.println("Constraints: " + PathUtils.getCurPC().constraints);
+//			System.out.println("Constraints: " + PathUtils.getCurPC().constraints);
 			if(PathUtils.getCurPC().constraints == null)
 				return null;
 			oos = new ObjectOutputStream(getSocket().getOutputStream());

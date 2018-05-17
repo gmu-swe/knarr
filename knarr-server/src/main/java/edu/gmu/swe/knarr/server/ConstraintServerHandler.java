@@ -302,8 +302,8 @@ public class ConstraintServerHandler extends Thread {
 				
 				Set<Operation> dedup = dedup((Expression)input);
 				TreeSet<Operation> processed = sort(dedup);
-				for (Operation op : processed)
-					System.out.println(op);
+//				for (Operation op : processed)
+//					System.out.println(op);
 				
 				Operation processedInput = operationFromSet(processed);
 
@@ -331,7 +331,8 @@ public class ConstraintServerHandler extends Thread {
 
 						if (sol != null) {
 							nSat++;
-							System.out.println("SAT: " + sol);
+							System.out.println("SAT");
+//							System.out.println("SAT: " + sol);
 							for(String v : sol.keySet())	
 							{
 								ret.put(v, sol.get(v));
