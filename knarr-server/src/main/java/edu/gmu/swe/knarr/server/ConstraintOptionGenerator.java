@@ -194,6 +194,7 @@ public class ConstraintOptionGenerator {
 				op = Operator.GE;
 				break;
 			case Z3_OP_GT:
+			case Z3_OP_SGT:
 				op = Operator.GT;
 				break;
 			case Z3_OP_LE:
@@ -210,6 +211,8 @@ public class ConstraintOptionGenerator {
 				else
 					op = Operator.EQ;
 				break;
+			case Z3_OP_BSUB:
+				op = Operator.SUB;
 				break;
 			case Z3_OP_MUL:
 			case Z3_OP_BMUL:
