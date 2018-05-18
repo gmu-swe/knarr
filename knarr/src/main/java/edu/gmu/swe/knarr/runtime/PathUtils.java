@@ -572,6 +572,21 @@ public class PathUtils {
 
 		return ret;
 	}
+	public static TaintedLongWithObjTag I2L(Taint<Expression> val, int i, TaintedLongWithObjTag ret)
+	{
+		ret.val = (long) i;
+
+		if (val != null) {
+			Expression i2l = new Operation(Operator.SIGN_EXT, 32, val.lbl);
+			ret.taint = new ExpressionTaint(i2l);
+		}
+		else
+		{
+			ret.taint = null;
+		}
+
+		return ret;
+	}
 	public static TaintedIntWithObjTag LCMP(Taint<Expression> rVal, long v1, Taint<Expression> lVal, long v2, TaintedIntWithObjTag ret) {
 		/*
 		 * Takes two two-word long integers off the stack and compares them. If

@@ -159,6 +159,16 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 			mv.visitInsn(POP);
 			break;
 		case Opcodes.I2L:
+			if (!ta.topCarriesTaint()) {
+				mv.visitInsn(opcode);
+				break;
+			}
+			holder = TaintUtils.getContainerReturnType("J");
+			mv.visitVarInsn(ALOAD, lvs.getPreAllocedReturnTypeVar(holder));
+			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "I2L", "(" + Configuration.TAINT_TAG_DESC + "I" + Type.getDescriptor(TaintedLongWithObjTag.class) + ")" + Type.getDescriptor(TaintedLongWithObjTag.class), false);
+			unwrap(holder, "J", mv);
+			ta.getAnalyzer().setTopOfStackTagged();
+			break;
 		case Opcodes.I2F:
 		case Opcodes.I2D:
 			// if(ta.topCarriesTaint())
