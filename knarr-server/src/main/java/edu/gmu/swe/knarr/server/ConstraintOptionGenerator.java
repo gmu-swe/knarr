@@ -1,5 +1,6 @@
 package edu.gmu.swe.knarr.server;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -17,6 +18,7 @@ import com.microsoft.z3.FuncDecl.Parameter;
 import com.microsoft.z3.IntNum;
 import com.microsoft.z3.SeqExpr;
 import com.microsoft.z3.Sort;
+import com.microsoft.z3.Z3Exception;
 import com.microsoft.z3.enumerations.Z3_decl_kind;
 
 import za.ac.sun.cs.green.expr.ArrayVariable;
@@ -109,7 +111,20 @@ public class ConstraintOptionGenerator {
 				return new IntVariable(exp.getSExpr(), 0, 0);
 			case Z3_OP_BNUM:
 				Parameter p[] = exp.getFuncDecl().getParameters();
-				return new BVConstant(((BitVecNum)exp).getLong(), p[1].getInt());
+				int p1int = p[1].getInt();
+				int size = ((BitVecNum)exp).getSortSize();
+				long explong;
+				try {
+					explong = ((BitVecNum)exp).getLong();
+				} catch (Z3Exception e) {
+					if (size == 64) {
+						// Maybe it's a negative long?  Try again with BigInteger
+						// https://stackoverflow.com/questions/20383866/z3-modeling-java-twos-complement-overflow-and-underflow-in-z3-bit-vector-addit
+						BigInteger val = ((BitVecNum)exp).getBigInteger();
+						explong = val.longValue();
+					} else throw e;
+				}
+				return new BVConstant(explong, p1int);
 			case Z3_OP_UNINTERPRETED:
 				if(exp.isInt())
 					return new IntVariable(exp.getSExpr(), 0, 0);
