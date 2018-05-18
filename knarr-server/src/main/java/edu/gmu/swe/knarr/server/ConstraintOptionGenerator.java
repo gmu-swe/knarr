@@ -69,7 +69,38 @@ public class ConstraintOptionGenerator {
 	Expression createExpr(Expr exp) {
 
 		Z3_decl_kind t = exp.getFuncDecl().getDeclKind();
-		switch (exp.getFuncDecl().getArity()) {
+		
+		// Multi-arity operations
+		Operator op = null;
+		switch (exp.getFuncDecl().getDeclKind()) {
+			case Z3_OP_CONCAT:
+				op = Operator.BIT_CONCAT;
+				break;
+			case Z3_OP_AND:
+				op = Operator.AND;
+				break;
+			case Z3_OP_ADD:
+			case Z3_OP_BADD:
+				op = Operator.ADD;
+				break;
+			default:
+				op = null;
+				break;
+		}
+		
+		if (op != null) {
+			if (exp.getNumArgs() == 1)
+				return createExpr(exp.getArgs()[0]);
+
+			Operation ret = new Operation(op, createExpr(exp.getArgs()[0]), createExpr(exp.getArgs()[1]));
+			for (int i = 2 ; i < exp.getNumArgs() ; i++)
+				ret = new Operation(op, ret, createExpr(exp.getArgs()[i]));
+
+			return ret;
+		}
+		
+		int arity = exp.getFuncDecl().getArity();
+		switch (arity) {
 		case 0:
 			switch (exp.getFuncDecl().getDeclKind()) {
 			case Z3_OP_ANUM:
@@ -117,7 +148,6 @@ public class ConstraintOptionGenerator {
 				throw new UnsupportedOperationException("Got: " + exp + " " + exp.getFuncDecl().getDeclKind());
 			}
 		case 1:
-			Operator op;
 			switch (exp.getFuncDecl().getDeclKind()) {
 			case Z3_OP_NOT:
 				op = Operator.NOT;
@@ -159,21 +189,6 @@ public class ConstraintOptionGenerator {
 			case Z3_OP_BAND:
 				op = Operator.BIT_AND;
 				break;
-			case Z3_OP_AND:
-				op = Operator.AND;
-				if (exp.getNumArgs() > 2) {
-					Expression ret = new Operation(Operator.AND,createExpr(exp.getArgs()[0]),createExpr(exp.getArgs()[1]));
-					for(int i = 2; i < exp.getNumArgs(); i++)
-					{
-						ret = new Operation(Operator.AND, ret, createExpr(exp.getArgs()[i]));
-					}
-					return ret;
-				}
-				if (exp.getNumArgs() == 1) {
-					return createExpr(exp.getArgs()[0]);
-				}
-
-				break;
 			case Z3_OP_GE:
 			case Z3_OP_SGEQ:
 				op = Operator.GE;
@@ -195,19 +210,7 @@ public class ConstraintOptionGenerator {
 				else
 					op = Operator.EQ;
 				break;
-			case Z3_OP_CONCAT:
-				op = Operator.BIT_CONCAT;
 				break;
-			case Z3_OP_ADD:
-			case Z3_OP_BADD:
-				op = Operator.ADD;
-				{
-					Operation ret = new Operation(op, createExpr(exp.getArgs()[0]), createExpr(exp.getArgs()[1]));
-					for (int i = 2 ; i < exp.getNumArgs() ; i++)
-						ret = new Operation(op, ret, createExpr(exp.getArgs()[i]));
-
-					return ret;
-				}
 			case Z3_OP_MUL:
 			case Z3_OP_BMUL:
 				op = Operator.MUL;
