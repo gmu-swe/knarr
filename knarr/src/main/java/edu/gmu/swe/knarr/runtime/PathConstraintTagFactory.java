@@ -13,11 +13,13 @@ import edu.columbia.cs.psl.phosphor.org.objectweb.asm.Type;
 import edu.columbia.cs.psl.phosphor.org.objectweb.asm.tree.FrameNode;
 import edu.columbia.cs.psl.phosphor.org.objectweb.asm.util.Printer;
 import edu.columbia.cs.psl.phosphor.runtime.Taint;
+import edu.columbia.cs.psl.phosphor.struct.TaintedByteWithObjTag;
 import edu.columbia.cs.psl.phosphor.struct.TaintedCharWithObjTag;
 import edu.columbia.cs.psl.phosphor.struct.TaintedDoubleWithObjTag;
 import edu.columbia.cs.psl.phosphor.struct.TaintedFloatWithObjTag;
 import edu.columbia.cs.psl.phosphor.struct.TaintedIntWithObjTag;
 import edu.columbia.cs.psl.phosphor.struct.TaintedLongWithObjTag;
+import edu.columbia.cs.psl.phosphor.struct.TaintedShortWithObjTag;
 
 public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, StringOpcodes {
 
@@ -158,6 +160,39 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 			mv.visitInsn(DUP_X2);
 			mv.visitInsn(POP);
 			break;
+		case Opcodes.I2B:
+			if (!ta.topCarriesTaint()) {
+				mv.visitInsn(opcode);
+				break;
+			}
+			holder = TaintUtils.getContainerReturnType("B");
+			mv.visitVarInsn(ALOAD, lvs.getPreAllocedReturnTypeVar(holder));
+			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "I2B", "(" + Configuration.TAINT_TAG_DESC + "I" + Type.getDescriptor(TaintedByteWithObjTag.class) + ")" + Type.getDescriptor(TaintedByteWithObjTag.class), false);
+			unwrap(holder, "B", mv);
+			ta.getAnalyzer().setTopOfStackTagged();
+			break;
+		case Opcodes.I2C:
+			if (!ta.topCarriesTaint()) {
+				mv.visitInsn(opcode);
+				break;
+			}
+			holder = TaintUtils.getContainerReturnType("C");
+			mv.visitVarInsn(ALOAD, lvs.getPreAllocedReturnTypeVar(holder));
+			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "I2C", "(" + Configuration.TAINT_TAG_DESC + "I" + Type.getDescriptor(TaintedCharWithObjTag.class) + ")" + Type.getDescriptor(TaintedCharWithObjTag.class), false);
+			unwrap(holder, "C", mv);
+			ta.getAnalyzer().setTopOfStackTagged();
+			break;
+		case Opcodes.I2S:
+			if (!ta.topCarriesTaint()) {
+				mv.visitInsn(opcode);
+				break;
+			}
+			holder = TaintUtils.getContainerReturnType("S");
+			mv.visitVarInsn(ALOAD, lvs.getPreAllocedReturnTypeVar(holder));
+			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "I2S", "(" + Configuration.TAINT_TAG_DESC + "I" + Type.getDescriptor(TaintedShortWithObjTag.class) + ")" + Type.getDescriptor(TaintedShortWithObjTag.class), false);
+			unwrap(holder, "S", mv);
+			ta.getAnalyzer().setTopOfStackTagged();
+			break;
 		case Opcodes.I2L:
 			if (!ta.topCarriesTaint()) {
 				mv.visitInsn(opcode);
@@ -170,39 +205,124 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 			ta.getAnalyzer().setTopOfStackTagged();
 			break;
 		case Opcodes.I2F:
-		case Opcodes.I2D:
-			// if(ta.topCarriesTaint())
-			// {
-			// mv.visitInsn(SWAP);
-			// mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME,
-			// "toReal", "(" + Configuration.TAINT_TAG_DESC +
-			// ")"+Configuration.TAINT_TAG_DESC, false);
-			// mv.visitInsn(SWAP);
-			// }
-			// mv.visitInsn(opcode);
-			// break;
-		case Opcodes.L2I:
-		case Opcodes.L2F:
-		case Opcodes.L2D:
-		case Opcodes.F2I:
-		case Opcodes.F2L:
-		case Opcodes.F2D:
-		case Opcodes.D2I:
-		case Opcodes.D2L:
-		case Opcodes.D2F:
-		case Opcodes.I2B:
-		case Opcodes.I2S:
-			mv.visitInsn(opcode);
-			break;
-		case Opcodes.I2C:
 			if (!ta.topCarriesTaint()) {
 				mv.visitInsn(opcode);
 				break;
 			}
-			holder = TaintUtils.getContainerReturnType("C");
+			holder = TaintUtils.getContainerReturnType("F");
 			mv.visitVarInsn(ALOAD, lvs.getPreAllocedReturnTypeVar(holder));
-			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "I2C", "(" + Configuration.TAINT_TAG_DESC + "I" + Type.getDescriptor(TaintedCharWithObjTag.class) + ")" + Type.getDescriptor(TaintedCharWithObjTag.class), false);
-			unwrap(holder, "C", mv);
+			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "I2F", "(" + Configuration.TAINT_TAG_DESC + "I" + Type.getDescriptor(TaintedFloatWithObjTag.class) + ")" + Type.getDescriptor(TaintedFloatWithObjTag.class), false);
+			unwrap(holder, "F", mv);
+			ta.getAnalyzer().setTopOfStackTagged();
+			break;
+		case Opcodes.I2D:
+			if (!ta.topCarriesTaint()) {
+				mv.visitInsn(opcode);
+				break;
+			}
+			holder = TaintUtils.getContainerReturnType("D");
+			mv.visitVarInsn(ALOAD, lvs.getPreAllocedReturnTypeVar(holder));
+			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "I2D", "(" + Configuration.TAINT_TAG_DESC + "I" + Type.getDescriptor(TaintedDoubleWithObjTag.class) + ")" + Type.getDescriptor(TaintedDoubleWithObjTag.class), false);
+			unwrap(holder, "D", mv);
+			ta.getAnalyzer().setTopOfStackTagged();
+			break;
+		case Opcodes.F2I:
+			if (!ta.topCarriesTaint()) {
+				mv.visitInsn(opcode);
+				break;
+			}
+			holder = TaintUtils.getContainerReturnType("I");
+			mv.visitVarInsn(ALOAD, lvs.getPreAllocedReturnTypeVar(holder));
+			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "F2I", "(" + Configuration.TAINT_TAG_DESC + "F" + Type.getDescriptor(TaintedIntWithObjTag.class) + ")" + Type.getDescriptor(TaintedIntWithObjTag.class), false);
+			unwrap(holder, "I", mv);
+			ta.getAnalyzer().setTopOfStackTagged();
+			break;
+		case Opcodes.F2L:
+			if (!ta.topCarriesTaint()) {
+				mv.visitInsn(opcode);
+				break;
+			}
+			holder = TaintUtils.getContainerReturnType("J");
+			mv.visitVarInsn(ALOAD, lvs.getPreAllocedReturnTypeVar(holder));
+			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "F2L", "(" + Configuration.TAINT_TAG_DESC + "F" + Type.getDescriptor(TaintedLongWithObjTag.class) + ")" + Type.getDescriptor(TaintedLongWithObjTag.class), false);
+			unwrap(holder, "J", mv);
+			ta.getAnalyzer().setTopOfStackTagged();
+			break;
+		case Opcodes.F2D:
+			if (!ta.topCarriesTaint()) {
+				mv.visitInsn(opcode);
+				break;
+			}
+			holder = TaintUtils.getContainerReturnType("D");
+			mv.visitVarInsn(ALOAD, lvs.getPreAllocedReturnTypeVar(holder));
+			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "F2D", "(" + Configuration.TAINT_TAG_DESC + "F" + Type.getDescriptor(TaintedDoubleWithObjTag.class) + ")" + Type.getDescriptor(TaintedDoubleWithObjTag.class), false);
+			unwrap(holder, "D", mv);
+			ta.getAnalyzer().setTopOfStackTagged();
+			break;
+		case Opcodes.L2I:
+			if (!ta.topCarriesTaint()) {
+				mv.visitInsn(opcode);
+				break;
+			}
+			holder = TaintUtils.getContainerReturnType("I");
+			mv.visitVarInsn(ALOAD, lvs.getPreAllocedReturnTypeVar(holder));
+			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "L2I", "(" + Configuration.TAINT_TAG_DESC + "J" + Type.getDescriptor(TaintedIntWithObjTag.class) + ")" + Type.getDescriptor(TaintedIntWithObjTag.class), false);
+			unwrap(holder, "I", mv);
+			ta.getAnalyzer().setTopOfStackTagged();
+			break;
+		case Opcodes.L2F:
+			if (!ta.topCarriesTaint()) {
+				mv.visitInsn(opcode);
+				break;
+			}
+			holder = TaintUtils.getContainerReturnType("F");
+			mv.visitVarInsn(ALOAD, lvs.getPreAllocedReturnTypeVar(holder));
+			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "L2F", "(" + Configuration.TAINT_TAG_DESC + "J" + Type.getDescriptor(TaintedFloatWithObjTag.class) + ")" + Type.getDescriptor(TaintedFloatWithObjTag.class), false);
+			unwrap(holder, "F", mv);
+			ta.getAnalyzer().setTopOfStackTagged();
+			break;
+		case Opcodes.L2D:
+			if (!ta.topCarriesTaint()) {
+				mv.visitInsn(opcode);
+				break;
+			}
+			holder = TaintUtils.getContainerReturnType("D");
+			mv.visitVarInsn(ALOAD, lvs.getPreAllocedReturnTypeVar(holder));
+			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "L2D", "(" + Configuration.TAINT_TAG_DESC + "J" + Type.getDescriptor(TaintedDoubleWithObjTag.class) + ")" + Type.getDescriptor(TaintedDoubleWithObjTag.class), false);
+			unwrap(holder, "D", mv);
+			ta.getAnalyzer().setTopOfStackTagged();
+			break;
+		case Opcodes.D2I:
+			if (!ta.topCarriesTaint()) {
+				mv.visitInsn(opcode);
+				break;
+			}
+			holder = TaintUtils.getContainerReturnType("I");
+			mv.visitVarInsn(ALOAD, lvs.getPreAllocedReturnTypeVar(holder));
+			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "D2I", "(" + Configuration.TAINT_TAG_DESC + "D" + Type.getDescriptor(TaintedIntWithObjTag.class) + ")" + Type.getDescriptor(TaintedIntWithObjTag.class), false);
+			unwrap(holder, "I", mv);
+			ta.getAnalyzer().setTopOfStackTagged();
+			break;
+		case Opcodes.D2F:
+			if (!ta.topCarriesTaint()) {
+				mv.visitInsn(opcode);
+				break;
+			}
+			holder = TaintUtils.getContainerReturnType("F");
+			mv.visitVarInsn(ALOAD, lvs.getPreAllocedReturnTypeVar(holder));
+			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "D2F", "(" + Configuration.TAINT_TAG_DESC + "D" + Type.getDescriptor(TaintedFloatWithObjTag.class) + ")" + Type.getDescriptor(TaintedFloatWithObjTag.class), false);
+			unwrap(holder, "F", mv);
+			ta.getAnalyzer().setTopOfStackTagged();
+			break;
+		case Opcodes.D2L:
+			if (!ta.topCarriesTaint()) {
+				mv.visitInsn(opcode);
+				break;
+			}
+			holder = TaintUtils.getContainerReturnType("J");
+			mv.visitVarInsn(ALOAD, lvs.getPreAllocedReturnTypeVar(holder));
+			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "D2L", "(" + Configuration.TAINT_TAG_DESC + "D" + Type.getDescriptor(TaintedLongWithObjTag.class) + ")" + Type.getDescriptor(TaintedLongWithObjTag.class), false);
+			unwrap(holder, "J", mv);
 			ta.getAnalyzer().setTopOfStackTagged();
 			break;
 		case Opcodes.LCMP:

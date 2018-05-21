@@ -19,12 +19,14 @@ import edu.columbia.cs.psl.phosphor.org.objectweb.asm.util.Printer;
 import edu.columbia.cs.psl.phosphor.runtime.Taint;
 import edu.columbia.cs.psl.phosphor.struct.LazyArrayObjTags;
 import edu.columbia.cs.psl.phosphor.struct.TaintedBooleanWithObjTag;
+import edu.columbia.cs.psl.phosphor.struct.TaintedByteWithObjTag;
 import edu.columbia.cs.psl.phosphor.struct.TaintedCharWithObjTag;
 import edu.columbia.cs.psl.phosphor.struct.TaintedDoubleWithObjTag;
 import edu.columbia.cs.psl.phosphor.struct.TaintedFloatWithObjTag;
 import edu.columbia.cs.psl.phosphor.struct.TaintedIntWithObjTag;
 import edu.columbia.cs.psl.phosphor.struct.TaintedLongWithObjTag;
 import edu.columbia.cs.psl.phosphor.struct.TaintedPrimitiveWithObjTag;
+import edu.columbia.cs.psl.phosphor.struct.TaintedShortWithObjTag;
 import edu.columbia.cs.psl.phosphor.struct.TaintedWithObjTag;
 
 public class PathUtils {
@@ -557,6 +559,20 @@ public class PathUtils {
 
 	static Object lock = new Object();
 
+	public static TaintedByteWithObjTag I2B(Taint<Expression> val, int i, TaintedByteWithObjTag ret)
+	{
+		ret.val = (byte) i;
+
+		if (val != null) {
+			throw new UnsupportedOperationException();
+		}
+		else
+		{
+			ret.taint = null;
+		}
+
+		return ret;
+	}
 	public static TaintedCharWithObjTag I2C(Taint<Expression> val, int b, TaintedCharWithObjTag ret)
 	{
 		ret.val = (char) b;
@@ -572,6 +588,34 @@ public class PathUtils {
 
 		return ret;
 	}
+	public static TaintedShortWithObjTag I2S(Taint<Expression> val, int i, TaintedShortWithObjTag ret)
+	{
+		ret.val = (short) i;
+
+		if (val != null) {
+			throw new UnsupportedOperationException();
+		}
+		else
+		{
+			ret.taint = null;
+		}
+
+		return ret;
+	}
+	public static TaintedFloatWithObjTag I2F(Taint<Expression> val, int i, TaintedFloatWithObjTag ret)
+	{
+		ret.val = (float) i;
+
+		if (val != null) {
+			throw new UnsupportedOperationException();
+		}
+		else
+		{
+			ret.taint = null;
+		}
+
+		return ret;
+	}
 	public static TaintedLongWithObjTag I2L(Taint<Expression> val, int i, TaintedLongWithObjTag ret)
 	{
 		ret.val = (long) i;
@@ -579,6 +623,146 @@ public class PathUtils {
 		if (val != null) {
 			Expression i2l = new Operation(Operator.SIGN_EXT, 32, val.lbl);
 			ret.taint = new ExpressionTaint(i2l);
+		}
+		else
+		{
+			ret.taint = null;
+		}
+
+		return ret;
+	}
+	public static TaintedDoubleWithObjTag I2D(Taint<Expression> val, int i, TaintedDoubleWithObjTag ret)
+	{
+		ret.val = (double) i;
+
+		if (val != null) {
+			throw new UnsupportedOperationException();
+		}
+		else
+		{
+			ret.taint = null;
+		}
+
+		return ret;
+	}
+	public static TaintedIntWithObjTag F2I(Taint<Expression> val, float f, TaintedIntWithObjTag ret)
+	{
+		ret.val = (int) f;
+
+		if (val != null) {
+			throw new UnsupportedOperationException();
+		}
+		else
+		{
+			ret.taint = null;
+		}
+
+		return ret;
+	}
+	public static TaintedLongWithObjTag F2L(Taint<Expression> val, float f, TaintedLongWithObjTag ret)
+	{
+		ret.val = (long) f;
+
+		if (val != null) {
+			throw new UnsupportedOperationException();
+		}
+		else
+		{
+			ret.taint = null;
+		}
+
+		return ret;
+	}
+	public static TaintedDoubleWithObjTag F2D(Taint<Expression> val, float f, TaintedDoubleWithObjTag ret)
+	{
+		ret.val = (double) f;
+
+		if (val != null) {
+			throw new UnsupportedOperationException();
+		}
+		else
+		{
+			ret.taint = null;
+		}
+
+		return ret;
+	}
+	public static TaintedIntWithObjTag L2I(Taint<Expression> val, long l, TaintedIntWithObjTag ret)
+	{
+		ret.val = (int) l;
+
+		if (val != null) {
+			throw new UnsupportedOperationException();
+		}
+		else
+		{
+			ret.taint = null;
+		}
+
+		return ret;
+	}
+	public static TaintedFloatWithObjTag L2F(Taint<Expression> val, long l, TaintedFloatWithObjTag ret)
+	{
+		ret.val = (float) l;
+
+		if (val != null) {
+			throw new UnsupportedOperationException();
+		}
+		else
+		{
+			ret.taint = null;
+		}
+
+		return ret;
+	}
+	public static TaintedDoubleWithObjTag L2D(Taint<Expression> val, long l, TaintedDoubleWithObjTag ret)
+	{
+		ret.val = (double) l;
+
+		if (val != null) {
+			throw new UnsupportedOperationException();
+		}
+		else
+		{
+			ret.taint = null;
+		}
+
+		return ret;
+	}
+	public static TaintedIntWithObjTag D2I(Taint<Expression> val, double d, TaintedIntWithObjTag ret)
+	{
+		ret.val = (int) d;
+
+		if (val != null) {
+			throw new UnsupportedOperationException();
+		}
+		else
+		{
+			ret.taint = null;
+		}
+
+		return ret;
+	}
+	public static TaintedLongWithObjTag D2L(Taint<Expression> val, double d, TaintedLongWithObjTag ret)
+	{
+		ret.val = (long) d;
+
+		if (val != null) {
+			throw new UnsupportedOperationException();
+		}
+		else
+		{
+			ret.taint = null;
+		}
+
+		return ret;
+	}
+	public static TaintedFloatWithObjTag D2F(Taint<Expression> val, double d, TaintedFloatWithObjTag ret)
+	{
+		ret.val = (float) d;
+
+		if (val != null) {
+			throw new UnsupportedOperationException();
 		}
 		else
 		{
