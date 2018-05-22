@@ -157,6 +157,7 @@ public class TaintListener extends DerivedTaintListener {
 			throw new Error("Not implemented");
 		}
 
+		ret.taint = null;
 		return ret;
 	}
 

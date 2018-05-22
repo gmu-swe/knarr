@@ -738,7 +738,7 @@ public class PathUtils {
 		ret.val = (double) l;
 
 		if (val != null) {
-			throw new UnsupportedOperationException();
+			ret.taint = new ExpressionTaint(new Operation(Operator.I2R, val.lbl));
 		}
 		else
 		{

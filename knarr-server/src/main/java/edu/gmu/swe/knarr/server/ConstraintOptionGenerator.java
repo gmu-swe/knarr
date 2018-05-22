@@ -107,7 +107,16 @@ public class ConstraintOptionGenerator {
 			switch (exp.getFuncDecl().getDeclKind()) {
 			case Z3_OP_ANUM:
 				if(exp.isIntNum())
+					try {
 					return new IntConstant(((IntNum)exp).getInt64());
+					} catch (Z3Exception e) {
+						// Maybe it's a negative long?  Try again with BigInteger
+						// https://stackoverflow.com/questions/20383866/z3-modeling-java-twos-complement-overflow-and-underflow-in-z3-bit-vector-addit
+						BigInteger b = ((IntNum)exp).getBigInteger().negate();
+						if (b.bitLength() > 64)
+							throw e;
+						return new IntConstant(b.longValue());
+					}
 				return new IntVariable(exp.getSExpr(), 0, 0);
 			case Z3_OP_BNUM:
 				Parameter p[] = exp.getFuncDecl().getParameters();
@@ -192,6 +201,12 @@ public class ConstraintOptionGenerator {
 				op = Operator.SIGN_EXT;
 				Parameter[] p = exp.getFuncDecl().getParameters();
 				return new Operation(op, p[0].getInt(), createExpr(exp.getArgs()[0]));
+			case Z3_OP_TO_REAL:
+				op = Operator.I2R;
+				return new Operation(op, createExpr(exp.getArgs()[0]));
+			case Z3_OP_UMINUS:
+				op = Operator.NEG;
+				return new Operation(op, createExpr(exp.getArgs()[0]));
 			default:
 				throw new UnsupportedOperationException("Got: " + exp + " " + exp.getFuncDecl().getDeclKind());
 			}
@@ -242,8 +257,17 @@ public class ConstraintOptionGenerator {
 			case Z3_OP_BASHR:
 				op = Operator.SHIFTR;
 				break;
+			case Z3_OP_BLSHR:
+				op = Operator.SHIFTUR;
+				break;
 			case Z3_OP_BXOR:
 				op = Operator.BIT_XOR;
+				break;
+			case Z3_OP_DIV:
+				op = Operator.DIV;
+				break;
+			case Z3_OP_SUB:
+				op = Operator.SUB;
 				break;
 			default:
 				throw new UnsupportedOperationException("Got: " + exp);
