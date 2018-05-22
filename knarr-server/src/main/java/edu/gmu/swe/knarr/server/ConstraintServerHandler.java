@@ -1,5 +1,7 @@
 package edu.gmu.swe.knarr.server;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -187,110 +189,6 @@ public class ConstraintServerHandler extends Thread {
 		}, 1000,1000);
 		
 	}
-
-	private static Operation operationFromSet(Set<Operation> constraints)
-	{
-		Operation ret = null;
-		
-		for (Operation op: constraints)
-		{
-			if (ret == null)
-				ret = op;
-			else
-				ret = new Operation(Operator.AND, ret, op);
-		}
-		
-		return ret;
-	}
-
-	// Sort common expressions by variable name
-	private static TreeSet<Operation> sort(Set<Operation> constraints)
-	{
-		TreeSet<Operation> ret = new TreeSet<>(new Comparator<Operation>() {
-
-			private Variable getVarFromOperation(Operation op) {
-				{
-					Expression e1 = op.getOperand(0);
-					if (e1 instanceof Variable)
-					{
-						// var OP num
-						return (Variable) e1;
-					}
-					else if (e1 instanceof Operation)
-					{
-						Expression e2 = ((Operation)e1).getOperand(0);
-						if (e2 instanceof Variable)
-							// (var OP num) OP num
-							return (Variable) e2;
-					}
-				}
-				{
-					Expression e1 = op.getOperand(1);
-					if (e1 instanceof Variable)
-					{
-						// num OP var
-						return (Variable) e1;
-					}
-					else if (e1 instanceof Operation)
-					{
-						Expression e2 = ((Operation)e1).getOperand(0);
-						if (e2 instanceof Variable)
-							// num OP (var OP num)
-							return (Variable) e2;
-					}
-				}
-				
-				return null;
-			}
-
-			@Override
-			public int compare(Operation o1, Operation o2) {
-				Variable v1 = getVarFromOperation(o1);
-				Variable v2 = getVarFromOperation(o2);
-				
-				if (v1 != null && v2 != null) {
-					int ret = v1.getName().compareTo(v2.getName());
-					if (ret != 0)
-						return ret;
-					else return o1.toString().compareTo(o2.toString());
-				}
-				else if (v1 != null)
-					return -1;
-				else if (v2 != null)
-					return 1;
-				else
-					return o1.toString().compareTo(o2.toString());
-			}
-		});
-		
-		ret.addAll(constraints);
-		
-		return ret;
-	}
-	
-	// Remove duplicated expressions
-	private static Set<Operation> dedup(Expression constraints)
-	{
-		HashSet<Operation> ret = new HashSet<>();
-
-		// Expression has the form: ((((exp) AND exp) ...) AND  exp)
-		// Extract each individual expression
-		Expression e = constraints;
-		while (true)
-		{
-			Operation op = (Operation)e;
-			if (op.getOperator() == Operator.AND)
-			{
-				ret.add((Operation)op.getOperand(1));
-				e = op.getOperand(0);
-			} else {
-				ret.add(op);
-				break;
-			}
-		}
-		
-		return ret;
-	}
 	
 	public ConstraintServerHandler(Socket sock) {
 
@@ -302,15 +200,8 @@ public class ConstraintServerHandler extends Thread {
 
 			if (input instanceof Expression) {
 				
-				Set<Operation> dedup = dedup((Expression)input);
-				TreeSet<Operation> processed = sort(dedup);
-//				for (Operation op : processed)
-//					System.out.println(op);
-				
-				Operation processedInput = operationFromSet(processed);
-
 //				System.out.println("Received expression: " + input);
-				Instance in = new Instance(green, null, processedInput);
+				Instance in = new Instance(green, null, (Expression)input);
 				
 //				modeler.processRequest(in);
 				generateAndAddNewOptions(modeler.getUnderlyingExpr(in));
@@ -326,25 +217,28 @@ public class ConstraintServerHandler extends Thread {
 //						modeler.processRequest(k);
 						@SuppressWarnings("unchecked")
 						long start = System.currentTimeMillis();
+						
+						
+						try (FileOutputStream fos = new FileOutputStream(new File("z3.txt"))) {
+							HashMap<String, Object> sol = modeler.solve(newExp, fos);
+							inZ3 += (System.currentTimeMillis()-start);
+							nSolved++;
 
-						HashMap<String, Object> sol = modeler.solve(newExp);
-						inZ3 += (System.currentTimeMillis()-start);
-						nSolved++;
-
-						if (sol != null) {
-							nSat++;
-							System.out.println("SAT");
-//							System.out.println("SAT: " + sol);
-							for(String v : sol.keySet())	
-							{
-								if (v.startsWith(prefix))
-									ret.add(new SimpleEntry<String, Object>(v, sol.get(v)));
+							if (sol != null) {
+								nSat++;
+								System.out.println("SAT");
+//								System.out.println("SAT: " + sol);
+								for(String v : sol.keySet())	
+								{
+									if (v.startsWith(prefix))
+										ret.add(new SimpleEntry<String, Object>(v, sol.get(v)));
+								}
+							} else {
+								stateStore.addUnsat(newExp);
+								System.out.println("NOT SAT");
+								sat = false;
 							}
-						} else {
-							
-							stateStore.addUnsat(newExp);
-							System.out.println("NOT SAT");
-							sat = false;
+
 						}
 					}
 					catch(NotSatException ex)
