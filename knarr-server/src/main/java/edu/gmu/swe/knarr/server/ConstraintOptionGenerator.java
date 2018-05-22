@@ -16,6 +16,7 @@ import com.microsoft.z3.BoolSort;
 import com.microsoft.z3.Expr;
 import com.microsoft.z3.FuncDecl.Parameter;
 import com.microsoft.z3.IntNum;
+import com.microsoft.z3.RatNum;
 import com.microsoft.z3.SeqExpr;
 import com.microsoft.z3.Sort;
 import com.microsoft.z3.Z3Exception;
@@ -32,6 +33,7 @@ import za.ac.sun.cs.green.expr.IntVariable;
 import za.ac.sun.cs.green.expr.Operation;
 import za.ac.sun.cs.green.expr.StringConstant;
 import za.ac.sun.cs.green.expr.Operation.Operator;
+import za.ac.sun.cs.green.expr.RealConstant;
 import za.ac.sun.cs.green.expr.StringVariable;
 import za.ac.sun.cs.green.expr.Variable;
 import za.ac.sun.cs.green.expr.Visitor;
@@ -117,6 +119,12 @@ public class ConstraintOptionGenerator {
 							throw e;
 						return new IntConstant(b.longValue());
 					}
+				if (exp.isRatNum()) {
+					double num = (double) ((RatNum)exp).getNumerator().getInt64();
+					double den = (double) ((RatNum)exp).getDenominator().getInt64();
+					double val = num / den;
+					return new RealConstant(val);
+				}
 				return new IntVariable(exp.getSExpr(), 0, 0);
 			case Z3_OP_BNUM:
 				Parameter p[] = exp.getFuncDecl().getParameters();
