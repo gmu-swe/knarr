@@ -564,7 +564,12 @@ public class PathUtils {
 		ret.val = (byte) i;
 
 		if (val != null) {
-			throw new UnsupportedOperationException();
+			Expression exp;
+			// Truncate
+			exp = new Operation(Operator.EXTRACT, 7, 0, val.lbl);
+			// Sign-extend
+			exp = new Operation(Operator.SIGN_EXT, 24, exp);
+			ret.taint = new ExpressionTaint(exp);
 		}
 		else
 		{
@@ -580,6 +585,12 @@ public class PathUtils {
 		if (val != null) {
 			Expression i2c = new Operation(Operator.BIT_AND, val.lbl, new IntConstant(0x0000FFFF));
 			ret.taint = new ExpressionTaint(i2c);
+
+			Expression exp;
+			// Truncate
+			exp = new Operation(Operator.EXTRACT, 15, 0, val.lbl);
+			// Zero-extend
+			exp = new Operation(Operator.ZERO_EXT, 16, exp);
 		}
 		else
 		{
@@ -593,7 +604,14 @@ public class PathUtils {
 		ret.val = (short) i;
 
 		if (val != null) {
-			throw new UnsupportedOperationException();
+			Expression i2c = new Operation(Operator.BIT_AND, val.lbl, new IntConstant(0x0000FFFF));
+			ret.taint = new ExpressionTaint(i2c);
+
+			Expression exp;
+			// Truncate
+			exp = new Operation(Operator.EXTRACT, 15, 0, val.lbl);
+			// Sign-extend
+			exp = new Operation(Operator.SIGN_EXT, 16, exp);
 		}
 		else
 		{
