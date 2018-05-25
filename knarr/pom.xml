@@ -90,6 +90,7 @@
                     </execution>
                 </executions>
                 <configuration>
+                    <redirectTestOutputToFile>true</redirectTestOutputToFile>
                     <jvm>${project.build.directory}/jre-inst/bin/java</jvm>
                     <argLine>-Xbootclasspath/p:${project.build.directory}/${project.build.finalName}.jar
                         -javaagent:${project.build.directory}/${project.build.finalName}.jar</argLine>

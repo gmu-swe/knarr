@@ -167,8 +167,6 @@ public class Symbolicator {
 			firstLabel = null;
 			System.out.println(new String(array, StandardCharsets.UTF_8));
 			oos.close();
-			ois.close();
-			getSocket().close();
 			return solution;
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
