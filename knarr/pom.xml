@@ -32,6 +32,37 @@
         </resources>
         <plugins>
             <plugin>
+                <groupId>com.bazaarvoice.maven.plugins</groupId>
+                <artifactId>process-exec-maven-plugin</artifactId>
+                <version>0.7</version>
+                <executions>
+                    <execution>
+                        <id>start-jar</id>
+                        <phase>pre-integration-test</phase>
+                        <goals>
+                            <goal>start</goal>
+                        </goals>
+                        <configuration>
+                             <workingDir>../../knarr-server/</workingDir>
+                            <waitAfterLaunch>5</waitAfterLaunch>
+                            <arguments>
+                                <argument>java</argument>
+                                <!--<argument>-Djava.library.path=${basedir}/../knarr-server/</argument>-->
+                                <argument>-jar</argument>
+                                <argument>${basedir}/../knarr-server/target/Knarr-Server-0.0.2-SNAPSHOT.jar</argument>
+                            </arguments>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>stop-jar-process</id>
+                        <phase>post-integration-test</phase>
+                        <goals>
+                            <goal>stop-all</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+              <plugin>
                 <artifactId>exec-maven-plugin</artifactId>
                 <groupId>org.codehaus.mojo</groupId>
                 <executions>
@@ -45,39 +76,9 @@
                             <executable>${basedir}/instrumentJRE.sh</executable>
                         </configuration>
                     </execution>
-                    <!-- <execution> <id>run-dacapo</id> <phase>integration-test</phase> 
-                        <goals> <goal>exec</goal> </goals> <configuration> <skip>${dacapo.skip}</skip> 
+                    <!-- <execution> <id>run-dacapo</id> <phase>integration-test</phase>
+                        <goals> <goal>exec</goal> </goals> <configuration> <skip>${dacapo.skip}</skip>
                         <executable>${basedir}/runDacapo.sh</executable> </configuration> </execution> -->
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>com.bazaarvoice.maven.plugins</groupId>
-                <artifactId>process-exec-maven-plugin</artifactId>
-                <version>0.7</version>
-                <executions>
-                    <execution>
-                        <id>start-jar</id>
-                        <phase>pre-integration-test</phase>
-                        <goals>
-                            <goal>start</goal>
-                        </goals>
-                        <configuration>
-                            <!-- <workingDir>../../knarr-server/</workingDir> -->
-                            <waitAfterLaunch>5</waitAfterLaunch>
-                            <arguments>
-                                <argument>${basedir}/run-knarr-server.sh</argument>
-                                <argument>${basedir}/..</argument>
-                                <argument>${z3.location}</argument>
-                            </arguments>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>stop-jar-process</id>
-                        <phase>post-integration-test</phase>
-                        <goals>
-                            <goal>stop-all</goal>
-                        </goals>
-                    </execution>
                 </executions>
             </plugin>
             <plugin>
