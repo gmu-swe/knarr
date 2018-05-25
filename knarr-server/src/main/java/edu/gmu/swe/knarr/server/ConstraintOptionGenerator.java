@@ -34,6 +34,7 @@ import za.ac.sun.cs.green.expr.Operation;
 import za.ac.sun.cs.green.expr.StringConstant;
 import za.ac.sun.cs.green.expr.Operation.Operator;
 import za.ac.sun.cs.green.expr.RealConstant;
+import za.ac.sun.cs.green.expr.RealVariable;
 import za.ac.sun.cs.green.expr.StringVariable;
 import za.ac.sun.cs.green.expr.Variable;
 import za.ac.sun.cs.green.expr.Visitor;
@@ -81,6 +82,9 @@ public class ConstraintOptionGenerator {
 				op = Operator.BIT_CONCAT;
 				break;
 			case Z3_OP_AND:
+				op = Operator.AND;
+				break;
+			case Z3_OP_OR:
 				op = Operator.AND;
 				break;
 			case Z3_OP_ADD:
@@ -147,6 +151,10 @@ public class ConstraintOptionGenerator {
 					return new IntVariable(exp.getSExpr(), 0, 0);
 				else if (exp.isBV())
 					return new BVVariable(exp.getSExpr(), ((BitVecExpr)exp).getSortSize());
+				else if (exp.isReal())
+					return new RealVariable(exp.getSExpr());
+				else if (exp instanceof SeqExpr)
+					return new StringVariable(exp.getSExpr());
 				else if (exp.isArray()) {
 					ArrayExpr e = (ArrayExpr)exp;
 					ArraySort s = (ArraySort)e.getSort();
@@ -160,15 +168,17 @@ public class ConstraintOptionGenerator {
 								return new ArrayVariable(exp.getSExpr(), java.lang.Integer.TYPE);
 							case 64:
 								return new ArrayVariable(exp.getSExpr(), java.lang.Long.TYPE);
+							default:
+								throw new UnsupportedOperationException();
 						}
 					} else if (r instanceof BoolSort)
 					{
 						return new ArrayVariable(exp.getSExpr(), java.lang.Boolean.TYPE);
 					}
-					throw new Error("Not implemented!");
+					throw new UnsupportedOperationException();
 				}
 				else
-					throw new Error("Not implemented!");
+					throw new UnsupportedOperationException();
 //					return new StringVariable(exp.getSExpr());
 			case Z3_OP_INTERNAL:
 				return new StringConstant(exp.getSExpr().substring(1, exp.getSExpr().length() - 1));
@@ -208,6 +218,10 @@ public class ConstraintOptionGenerator {
 			case Z3_OP_SIGN_EXT:
 				op = Operator.SIGN_EXT;
 				Parameter[] p = exp.getFuncDecl().getParameters();
+				return new Operation(op, p[0].getInt(), createExpr(exp.getArgs()[0]));
+			case Z3_OP_ZERO_EXT:
+				op = Operator.ZERO_EXT;
+				p = exp.getFuncDecl().getParameters();
 				return new Operation(op, p[0].getInt(), createExpr(exp.getArgs()[0]));
 			case Z3_OP_TO_REAL:
 				op = Operator.I2R;
@@ -272,10 +286,19 @@ public class ConstraintOptionGenerator {
 				op = Operator.BIT_XOR;
 				break;
 			case Z3_OP_DIV:
+			case Z3_OP_BSDIV:
+			case Z3_OP_BSDIV_I:
 				op = Operator.DIV;
 				break;
 			case Z3_OP_SUB:
 				op = Operator.SUB;
+				break;
+			case Z3_OP_BSMOD:
+			case Z3_OP_BSMOD_I:
+				op = Operator.MOD;
+				break;
+			case Z3_OP_SEQ_CONCAT:
+				op = Operator.CONCAT;
 				break;
 			default:
 				throw new UnsupportedOperationException("Got: " + exp);

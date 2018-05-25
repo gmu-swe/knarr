@@ -33,6 +33,8 @@ public class PathUtils {
 	private static PathConditionWrapper curPC;
 	public static final boolean IGNORE_SHIFTS = true;
 	public static final String INTERNAL_NAME = "edu/gmu/swe/knarr/runtime/PathUtils";
+	
+	public static String interesting = ".*autoVar_15[^0-9].*47.*";
 
 	public static PathConditionWrapper getCurPC() {
 		if (curPC == null)
@@ -696,7 +698,9 @@ public class PathUtils {
 		ret.val = (double) f;
 
 		if (val != null) {
-			throw new UnsupportedOperationException();
+			// Both floats and doubles are represented using reals with the same precision
+			// Just propagate the taint here
+			ret.taint = new ExpressionTaint(val.lbl);
 		}
 		else
 		{
@@ -710,7 +714,10 @@ public class PathUtils {
 		ret.val = (int) l;
 
 		if (val != null) {
-			throw new UnsupportedOperationException();
+			Expression exp;
+			// Truncate
+			exp = new Operation(Operator.EXTRACT, 31, 0, val.lbl);
+			ret.taint = new ExpressionTaint(exp);
 		}
 		else
 		{
@@ -1035,6 +1042,8 @@ public class PathUtils {
 			return;
 		if (!JPFInited)
 			initJPF();
+		if (t.lbl.toString().matches(interesting))
+			System.out.print("");
 		Expression exp = t.lbl;
 		switch (opcode) {
 		case Opcodes.IFEQ:
@@ -1080,6 +1089,8 @@ public class PathUtils {
 			rExp = new IntConstant(v2);
 		else
 			rExp = r.lbl;
+		if (lExp.toString().matches(interesting) || rExp.toString().matches(interesting))
+			System.out.print("");
 		switch (opcode) {
 		case Opcodes.IF_ACMPEQ:
 		case Opcodes.IF_ACMPNE:
