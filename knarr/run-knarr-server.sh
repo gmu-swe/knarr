@@ -12,5 +12,5 @@ KNARR_DIR=$1
 KNARR_SERVER_JAR=`find $KNARR_DIR/knarr-server/target -maxdepth 1 -type f -name "Knarr-Server-*-SNAPSHOT.jar"`
 Z3_DIR=$2
 
-export LD_LIBRARY_PATH=$Z3_DIR/bin
-exec $JAVA_HOME/bin/java -Djava.library.path=$Z3_DIR/bin -Xmx10G -Xss1G -jar $KNARR_SERVER_JAR
+export LD_LIBRARY_PATH=$Z3_DIR
+exec $JAVA_HOME/bin/java -Djava.library.path=$Z3_DIR -jar $KNARR_SERVER_JAR
