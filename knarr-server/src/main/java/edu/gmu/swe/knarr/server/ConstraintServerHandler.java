@@ -230,7 +230,7 @@ public class ConstraintServerHandler extends Thread {
 //								System.out.println("SAT: " + sol);
 								for(String v : sol.keySet())	
 								{
-									if (v.startsWith(prefix))
+//									if (v.startsWith(prefix))
 										ret.add(new SimpleEntry<String, Object>(v, sol.get(v)));
 								}
 							} else {
