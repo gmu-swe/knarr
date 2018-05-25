@@ -17,7 +17,7 @@ public class PathConditionWrapper implements Serializable {
 	public PathConditionWrapper() {
 	}
 
-	public void _addDet(Operation op) {
+	public synchronized void _addDet(Operation op) {
 		if (constraints == null)
 			constraints = op;
 		else {
@@ -25,7 +25,7 @@ public class PathConditionWrapper implements Serializable {
 		}
 	}
 
-	public void _addDet(Operator op, Expression l, Expression r) {
+	public synchronized void _addDet(Operator op, Expression l, Expression r) {
 		Operation ret = new Operation(op, l, r);
 		if (constraints == null)
 			constraints = ret;
@@ -34,7 +34,7 @@ public class PathConditionWrapper implements Serializable {
 		}
 	}
 
-	public void _addDet(Operator op, Expression t1) {
+	public synchronized void _addDet(Operator op, Expression t1) {
 		Operation ret = new Operation(op, t1);
 		if (constraints == null)
 			constraints = ret;

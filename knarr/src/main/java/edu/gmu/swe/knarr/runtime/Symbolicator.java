@@ -105,7 +105,7 @@ public class Symbolicator {
 		System.out.println("Warning - array length constraints disabled?");
 	}
 
-	public static ArrayList<SimpleEntry<String, Object>> dumpConstraints() {
+	public static synchronized ArrayList<SimpleEntry<String, Object>> dumpConstraints() {
 		ObjectOutputStream oos;
 		collectArrayLenConstraints();
 		for (Entry<Object, Expression> e : TaintListener.arrayNames.entrySet()) {
@@ -167,6 +167,8 @@ public class Symbolicator {
 			firstLabel = null;
 			System.out.println(new String(array, StandardCharsets.UTF_8));
 			oos.close();
+			ois.close();
+			getSocket().close();
 			return solution;
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
