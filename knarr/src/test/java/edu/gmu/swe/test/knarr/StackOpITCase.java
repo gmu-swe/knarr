@@ -125,19 +125,20 @@ public class StackOpITCase {
 		assertFalse(ret.isEmpty());
 		for (SimpleEntry<String, Object> e : ret) {
 			switch (e.getKey()) {
-				case "d1":  assertEquals(e.getValue(), res1);  break;
-				case "d2":  assertEquals(e.getValue(), res2);  break;
-				case "d3":  assertEquals(e.getValue(), res3);  break;
-				case "d4":  assertEquals(e.getValue(), res4);  break;
-				case "d5":  assertEquals(e.getValue(), res5);  break;
-				case "d6":  assertEquals(e.getValue(), res6);  break;
-				case "d7":  assertEquals(e.getValue(), res7);  break;
-				case "d8":  assertEquals(e.getValue(), res8);  break;
-				case "d9":  assertEquals(e.getValue(), res9);  break;
-				case "d10": assertEquals(e.getValue(), res10); break;
-				case "d11": assertEquals(e.getValue(), res11); break;
+				case "d1":  assertEquals((long)res1 , e.getValue());  break;
+				case "d2":  assertEquals((long)res2 , e.getValue());  break;
+				case "d3":  assertEquals((long)res3 , e.getValue());  break;
+				case "d4":  assertEquals((long)res4 , e.getValue());  break;
+				case "d5":  assertEquals((long)res5 , e.getValue());  break;
+				case "d6":  assertEquals((long)res6 , e.getValue());  break;
+				case "d7":  assertEquals((long)res7 , e.getValue());  break;
+				case "d8":  assertEquals((long)res8 , e.getValue());  break;
+				case "d9":  assertEquals((long)res9 , e.getValue());  break;
+				case "d10": assertEquals((long)res10, e.getValue()); break;
+				case "d11": assertEquals((long)res11, e.getValue()); break;
 				default:
-					throw new Error();
+					// Do nothing
+					break;
 			}
 		}
 	}
