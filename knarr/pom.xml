@@ -4,6 +4,9 @@
     <groupId>edu.gmu.swe.knarr</groupId>
     <artifactId>Knarr</artifactId>
     <version>0.0.2-SNAPSHOT</version>
+    <properties>
+       <z3.location>/home/lganchin/repos/knarr/build/z3-4.6.0-x64-ubuntu-16.04</z3.location>
+    </properties>
     <repositories>
         <repository>
             <id>jb.snapshots</id>
@@ -59,12 +62,12 @@
                             <goal>start</goal>
                         </goals>
                         <configuration>
-                            <workingDir>../../knarr-server/</workingDir>
+                            <!-- <workingDir>../../knarr-server/</workingDir> -->
                             <waitAfterLaunch>5</waitAfterLaunch>
                             <arguments>
-                                <argument>java</argument>
-                                <argument>-jar</argument>
-                                <argument>${basedir}/../knarr-server/target/Knarr-Server-0.0.2-SNAPSHOT.jar</argument>
+                                <argument>${basedir}/run-knarr-server.sh</argument>
+                                <argument>${basedir}/..</argument>
+                                <argument>${z3.location}</argument>
                             </arguments>
                         </configuration>
                     </execution>
