@@ -165,6 +165,7 @@ public class Symbolicator {
 				array[i++] = b.byteValue();
 			}
 			firstLabel = null;
+			TaintListener.arrayNames.clear();
 			System.out.println(new String(array, StandardCharsets.UTF_8));
 			oos.close();
 			return solution;
