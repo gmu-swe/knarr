@@ -21,6 +21,22 @@ public class ArrayOpITCase {
 
 		assertFalse(Symbolicator.dumpConstraints().isEmpty());
 	}
+//	@Test
+	public void testArrayWriteTaintedIdx() throws Exception {
+		byte arr[] = new byte[2];
+
+		arr[0] = 'a';
+		arr[1] = 'b';
+		
+		int taintedIdx = Symbolicator.symbolic("idx", 0);
+		
+		if (arr[taintedIdx] == 'a')
+			arr[taintedIdx] = 'b';
+
+		assertNotEquals(arr[taintedIdx], 'a');
+
+		assertFalse(Symbolicator.dumpConstraints().isEmpty());
+	}
 	@Test
 	public void testArrayIndex(){
 		int idx = Symbolicator.symbolic("Aindex",5);
