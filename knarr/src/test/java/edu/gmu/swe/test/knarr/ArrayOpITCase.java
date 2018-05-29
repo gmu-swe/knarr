@@ -8,7 +8,7 @@ import edu.gmu.swe.knarr.runtime.Symbolicator;
 
 public class ArrayOpITCase {
 
-//	@Test
+	@Test
 	public void testArrayWrite() throws Exception {
 		byte tainted[] = new byte[1];
 
