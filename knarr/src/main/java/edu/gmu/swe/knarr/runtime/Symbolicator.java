@@ -108,35 +108,6 @@ public class Symbolicator {
 	public static synchronized ArrayList<SimpleEntry<String, Object>> dumpConstraints() {
 		ObjectOutputStream oos;
 		collectArrayLenConstraints();
-		for (Entry<Object, Expression> e : TaintListener.arrayNames.entrySet()) {
-			Class<?> c = e.getKey().getClass().getComponentType();
-			for (int i = 0 ; i < Array.getLength(e.getKey()) ; i++) {
-				Operation select = new Operation(Operator.SELECT, e.getValue(), new BVConstant(i, 32));
-				Constant val;
-				switch (c.getName()) {
-					case "boolean":
-						val = new BoolConstant(Array.getBoolean(e.getKey(), i));
-						break;
-					case "byte":
-						val = new BVConstant(Array.getByte(e.getKey(), i), 8);
-						break;
-					case "short":
-						val = new BVConstant(Array.getShort(e.getKey(), i), 16);
-					case "char":
-						val = new BVConstant(Array.getChar(e.getKey(), i), 16);
-						break;
-					case "int":
-						val = new BVConstant(Array.getInt(e.getKey(), i), 32);
-						break;
-					case "long":
-						val = new BVConstant(Array.getLong(e.getKey(), i), 64);
-						break;
-					default:
-						throw new Error("Array type not supported");
-				}
-				PathUtils.getCurPC()._addDet(Operator.EQ, select, val);
-			}
-		}
 		try {
 			// if (DEBUG)
 //			System.out.println("Constraints: " + PathUtils.getCurPC().constraints);

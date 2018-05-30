@@ -2,6 +2,7 @@ package edu.gmu.swe.knarr.runtime;
 
 import java.lang.reflect.Array;
 import java.util.IdentityHashMap;
+import java.util.LinkedList;
 
 import edu.columbia.cs.psl.phosphor.runtime.DerivedTaintListener;
 import edu.columbia.cs.psl.phosphor.runtime.Taint;
@@ -16,39 +17,39 @@ import za.ac.sun.cs.green.expr.Operation.Operator;
 
 public class TaintListener extends DerivedTaintListener {
 
-	public static IdentityHashMap<Object, Expression> arrayNames = new IdentityHashMap<>();
+	public static IdentityHashMap<Object, LinkedList<ArrayVariable>> arrayNames = new IdentityHashMap<>();
 
 	private Expression getArrayVar(Object arr)
 	{
 		synchronized (arrayNames)
 		{
-			Expression ret = arrayNames.get(arr);
+			LinkedList<ArrayVariable> ret = arrayNames.get(arr);
 			if (ret == null)
 			{
 				Class<?> t = arr.getClass().getComponentType().isPrimitive() ? arr.getClass().getComponentType() : Object.class;
+				LinkedList<ArrayVariable> ll = new LinkedList<>();
 				ArrayVariable var = new ArrayVariable("const_array_" + arrayNames.size(), t);
-				arrayNames.put(arr, var);
-				ret = var;
+				ll.add(var);
+				arrayNames.put(arr, ll);
+				ret = ll;
 
-				Expression init = var;
-
+				ArrayVariable arrVar = new ArrayVariable(var.getName() + "_" + ret.size(), var.getType());
 				for (int i = 0 ; i < Array.getLength(arr) ; i++)
 				{
-					BVConstant idx = new BVConstant(i, 32);
-					Expression val;
-					switch(arr.getClass().getComponentType().getName())
-					{
+					Operation select = new Operation(Operator.SELECT, arrVar, new BVConstant(i, 32));
+					Constant val;
+					switch(arr.getClass().getComponentType().getName()) {
 						case "boolean":
 							val = new BoolConstant(((boolean[])arr)[i]);
 							break;
 						case "byte":
-							val = new BVConstant(((byte[])arr)[i], 8);
+							val = new BVConstant(((byte[])arr)[i], 32);
 							break;
 						case "char":
-							val = new BVConstant(((char[])arr)[i], 16);
+							val = new BVConstant(((char[])arr)[i], 32);
 							break;
 						case "short":
-							val = new BVConstant(((short[])arr)[i], 16);
+							val = new BVConstant(((short[])arr)[i], 32);
 							break;
 						case "int":
 							val = new BVConstant(((int[])arr)[i], 32);
@@ -59,12 +60,34 @@ public class TaintListener extends DerivedTaintListener {
 						default:
 							throw new Error("Not supported");
 					}
-					init = new Operation(Operator.STORE, init, idx, val);
+					PathUtils.getCurPC()._addDet(Operator.EQ, select, val);
 				}
 			}
-			return ret;
+			return new ArrayVariable(ret.getLast().getName() + "_" + ret.size(), ret.getLast().getType());
 		}
 	}
+	
+	private Expression setArrayVar(Object arr, Expression idx, Constant val)
+	{
+		synchronized (arrayNames)
+		{
+			LinkedList<ArrayVariable> ret = arrayNames.get(arr);
+			if (ret != null)
+			{
+				Class<?> t = arr.getClass().getComponentType().isPrimitive() ? arr.getClass().getComponentType() : Object.class;
+				ArrayVariable var = ret.getLast();
+				
+				ArrayVariable oldVar = new ArrayVariable(var.getName() + "_" + ret.size(), var.getType());
+				ret.addLast(var);
+				ArrayVariable newVar = new ArrayVariable(var.getName() + "_" + ret.size(), var.getType());
+
+				Operation store = new Operation(Operator.STORE, oldVar, idx, val);
+				PathUtils.getCurPC()._addDet(Operator.EQ, store, newVar);
+			}
+			return ret.getLast();
+		}
+	}
+	
 	
 	private <B extends LazyArrayObjTags> Taint genericReadArray(B b, Taint idxTaint, int idx, Constant c) {
 		if(idxTaint != null && (b.taints != null && b.taints[idx] != null))
@@ -92,31 +115,59 @@ public class TaintListener extends DerivedTaintListener {
 		return null;
 	}
 	
+	private <B extends LazyArrayObjTags> void genericWriteArray(B b, Taint idxTaint, int idx, Constant c) {
+		if(idxTaint != null && (b.taints != null && b.taints[idx] != null))
+		{
+			throw new Error("Not implemented symbolic index on symbolic array");
+		}
+		else if(b.taints != null && b.taints[idx] != null)
+		{
+			setArrayVar(b.getVal(), new BVConstant(idx, 32), c);
+			b.taints[idx] = null;
+		}
+		else if(idxTaint != null)
+		{
+			setArrayVar(b.getVal(), (Expression)idxTaint.lbl, c);
+			
+			// Index is within the array bounds
+			PathUtils.getCurPC()._addDet(Operator.LT, (Expression)idxTaint.lbl, new BVConstant(b.getLength(), 32));
+			PathUtils.getCurPC()._addDet(Operator.GE, (Expression)idxTaint.lbl, new BVConstant(0, 32));
+		}
+	}
+	
 	@Override
 	public TaintedBooleanWithObjTag arrayGet(LazyBooleanArrayObjTags b, Taint idxTaint, int idx, TaintedBooleanWithObjTag ret, ControlTaintTagStack ctrl) {
 		ret.val = b.val[idx];
 		ret.taint = genericReadArray(b, idxTaint, idx, new BoolConstant(ret.val));
+		if (idxTaint != null && idxTaint.toString().matches(PathUtils.interesting))
+			System.out.print("");
 		return ret;
 	}
 	
 	@Override
 	public TaintedByteWithObjTag arrayGet(LazyByteArrayObjTags b, Taint idxTaint, int idx, TaintedByteWithObjTag ret, ControlTaintTagStack ctrl) {
 		ret.val = b.val[idx];
-		ret.taint = genericReadArray(b, idxTaint, idx, new BVConstant(ret.val, 8));
+		ret.taint = genericReadArray(b, idxTaint, idx, new BVConstant(ret.val, 32));
+		if (idxTaint != null && idxTaint.toString().matches(PathUtils.interesting))
+			System.out.print("");
 		return ret;
 	}
 	
 	@Override
 	public TaintedCharWithObjTag arrayGet(LazyCharArrayObjTags b, Taint idxTaint, int idx, TaintedCharWithObjTag ret, ControlTaintTagStack ctrl) {
 		ret.val = b.val[idx];
-		ret.taint = genericReadArray(b, idxTaint, idx, new BVConstant(ret.val, 16));
+		ret.taint = genericReadArray(b, idxTaint, idx, new BVConstant(ret.val, 32));
+		if (idxTaint != null && idxTaint.toString().matches(PathUtils.interesting))
+			System.out.print("");
 		return ret;
 	}
 	
 	@Override
 	public TaintedShortWithObjTag arrayGet(LazyShortArrayObjTags b, Taint idxTaint, int idx, TaintedShortWithObjTag ret, ControlTaintTagStack ctrl) {
 		ret.val = b.val[idx];
-		ret.taint = genericReadArray(b, idxTaint, idx, new BVConstant(ret.val, 16));
+		ret.taint = genericReadArray(b, idxTaint, idx, new BVConstant(ret.val, 32));
+		if (idxTaint != null && idxTaint.toString().matches(PathUtils.interesting))
+			System.out.print("");
 		return ret;
 	}
 	
@@ -124,6 +175,8 @@ public class TaintListener extends DerivedTaintListener {
 	public TaintedIntWithObjTag arrayGet(LazyIntArrayObjTags b, Taint idxTaint, int idx, TaintedIntWithObjTag ret, ControlTaintTagStack ctrl) {
 		ret.val = b.val[idx];
 		ret.taint = genericReadArray(b, idxTaint, idx, new BVConstant(ret.val, 32));
+		if (idxTaint != null && idxTaint.toString().matches(PathUtils.interesting))
+			System.out.print("");
 		return ret;
 	}
 	
@@ -131,6 +184,8 @@ public class TaintListener extends DerivedTaintListener {
 	public TaintedLongWithObjTag arrayGet(LazyLongArrayObjTags b, Taint idxTaint, int idx, TaintedLongWithObjTag ret, ControlTaintTagStack ctrl) {
 		ret.val = b.val[idx];
 		ret.taint = genericReadArray(b, idxTaint, idx, new BVConstant(ret.val, 64));
+		if (idxTaint != null && idxTaint.toString().matches(PathUtils.interesting))
+			System.out.print("");
 		return ret;
 	}
 	
@@ -163,41 +218,57 @@ public class TaintListener extends DerivedTaintListener {
 
 	@Override
 	public Taint arraySet(LazyShortArrayObjTags a, Taint idxTaint, int idx, Taint t, short v, ControlTaintTagStack ctrl) {
-		return super.arraySet(a, null, idx, t, v, ctrl);
+		if(idxTaint != null || a.taints != null)
+			throw new UnsupportedOperationException();
+		
+		return null;
 	}
 
 	@Override
 	public Taint arraySet(LazyIntArrayObjTags a, Taint idxTaint, int idx, Taint t, int v, ControlTaintTagStack ctrl) {
-		return super.arraySet(a, null, idx, t, v, ctrl);
+		if(idxTaint != null || a.taints != null)
+			throw new UnsupportedOperationException();
+		
+		return null;
 	}
 
 	@Override
 	public Taint arraySet(LazyByteArrayObjTags a, Taint idxTaint, int idx, Taint t, byte v, ControlTaintTagStack ctrl) {
-		return super.arraySet(a, null, idx, t, v, ctrl);
+		genericWriteArray(a, idxTaint, idx, new BVConstant(v, 32));
+		return null;
 	}
 
 	@Override
 	public Taint arraySet(LazyBooleanArrayObjTags a, Taint idxTaint, int idx, Taint t, boolean v, ControlTaintTagStack ctrl) {
-		return super.arraySet(a, null, idx, t, v, ctrl);
+		genericWriteArray(a, idxTaint, idx, new BoolConstant(v));
+		return null;
 	}
 
 	@Override
 	public Taint arraySet(LazyCharArrayObjTags a, Taint idxTaint, int idx, Taint t, char v, ControlTaintTagStack ctrl) {
-		return super.arraySet(a, null, idx, t, v, ctrl);
+		genericWriteArray(a, idxTaint, idx, new BVConstant(v, 32));
+		return null;
 	}
 
 	@Override
 	public Taint arraySet(LazyFloatArrayObjTags a, Taint idxTaint, int idx, Taint t, float v, ControlTaintTagStack ctrl) {
-		return super.arraySet(a, null, idx, t, v, ctrl);
+		if(idxTaint != null || a.taints != null)
+			throw new UnsupportedOperationException();
+		
+		return null;
 	}
 
 	@Override
 	public Taint arraySet(LazyDoubleArrayObjTags a, Taint idxTaint, int idx, Taint t, double v, ControlTaintTagStack ctrl) {
-		return super.arraySet(a, null, idx, t, v, ctrl);
+		if(idxTaint != null || a.taints != null)
+			throw new UnsupportedOperationException();
+		
+		return null;
 	}
 
 	@Override
 	public Taint arraySet(LazyLongArrayObjTags a, Taint idxTaint, int idx, Taint t, long v, ControlTaintTagStack ctrl) {
-		return super.arraySet(a, null, idx, t, v, ctrl);
+		genericWriteArray(a, idxTaint, idx, new BVConstant(v, 64));
+		return null;
 	}
 }

@@ -2,6 +2,9 @@ package edu.gmu.swe.test.knarr;
 
 import static org.junit.Assert.*;
 
+import java.util.AbstractMap.SimpleEntry;
+import java.util.ArrayList;
+
 import org.junit.Test;
 
 import edu.gmu.swe.knarr.runtime.Symbolicator;
@@ -21,7 +24,7 @@ public class ArrayOpITCase {
 
 		assertFalse(Symbolicator.dumpConstraints().isEmpty());
 	}
-//	@Test
+	@Test
 	public void testArrayWriteTaintedIdx() throws Exception {
 		byte arr[] = new byte[2];
 
@@ -35,7 +38,16 @@ public class ArrayOpITCase {
 
 		assertNotEquals(arr[taintedIdx], 'a');
 
-		assertFalse(Symbolicator.dumpConstraints().isEmpty());
+		ArrayList<SimpleEntry<String, Object>> solution = Symbolicator.dumpConstraints();
+		assertFalse(solution.isEmpty());
+		for (SimpleEntry<String, Object> e : solution) {
+			switch (e.getKey()) {
+				case "index":  assertEquals((int)0 , e.getValue());  break;
+				default:
+					// Do nothing
+					break;
+			}
+		}
 	}
 	@Test
 	public void testArrayIndex(){
