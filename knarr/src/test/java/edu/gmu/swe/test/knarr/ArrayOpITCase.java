@@ -11,7 +11,7 @@ import edu.gmu.swe.knarr.runtime.Symbolicator;
 
 public class ArrayOpITCase {
 	
-//	@Test
+	@Test
 	public void testArrayCopy() throws Exception {
 		byte tainted[] = new byte[1];
 		byte source[]  = new byte[1];
