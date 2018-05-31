@@ -125,6 +125,8 @@ public class Symbolicator {
 			int i = 0;
 			boolean found = false;
 			for (Entry<String, Object> e: solution) {
+				if (!e.getKey().startsWith("autoVar_"))
+					break;
 				if (!found && e.getKey().equals(firstLabel))
 					found = true;
 				else if (!found)
