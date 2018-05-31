@@ -10,7 +10,23 @@ import org.junit.Test;
 import edu.gmu.swe.knarr.runtime.Symbolicator;
 
 public class ArrayOpITCase {
+	
+//	@Test
+	public void testArrayCopy() throws Exception {
+		byte tainted[] = new byte[1];
+		byte source[]  = new byte[1];
 
+		tainted[0] = Symbolicator.symbolic("a2", (byte)'a');
+		source[0]  = 'b';
+		
+		assertEquals(tainted[0], 'a');
+		
+		System.arraycopy(source, 0, tainted, 0, 1);
+		
+		assertNotEquals(tainted[0], 'a');
+
+		assertFalse(Symbolicator.dumpConstraints().isEmpty());
+	}
 	@Test
 	public void testArrayWriteOnConstantIndex() throws Exception {
 		byte tainted[] = new byte[1];
