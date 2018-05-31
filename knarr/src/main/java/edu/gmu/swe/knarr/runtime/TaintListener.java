@@ -74,7 +74,8 @@ public class TaintListener extends DerivedTaintListener {
 			LinkedList<ArrayVariable> ret = arrayNames.get(arr);
 			if (ret == null)
 			{
-				throw new Error();
+				// Not interested in writes to arrays not yet read, right?
+				return null;
 			}
 
 			Class<?> t = arr.getClass().getComponentType().isPrimitive() ? arr.getClass().getComponentType() : Object.class;
