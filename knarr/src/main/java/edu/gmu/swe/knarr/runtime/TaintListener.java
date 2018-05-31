@@ -72,18 +72,20 @@ public class TaintListener extends DerivedTaintListener {
 		synchronized (arrayNames)
 		{
 			LinkedList<ArrayVariable> ret = arrayNames.get(arr);
-			if (ret != null)
+			if (ret == null)
 			{
-				Class<?> t = arr.getClass().getComponentType().isPrimitive() ? arr.getClass().getComponentType() : Object.class;
-				ArrayVariable var = ret.getLast();
-				
-				ArrayVariable oldVar = new ArrayVariable(var.getName() + "_" + ret.size(), var.getType());
-				ret.addLast(var);
-				ArrayVariable newVar = new ArrayVariable(var.getName() + "_" + ret.size(), var.getType());
-
-				Operation store = new Operation(Operator.STORE, oldVar, idx, val);
-				PathUtils.getCurPC()._addDet(Operator.EQ, store, newVar);
+				throw new Error();
 			}
+
+			Class<?> t = arr.getClass().getComponentType().isPrimitive() ? arr.getClass().getComponentType() : Object.class;
+			ArrayVariable var = ret.getLast();
+
+			ArrayVariable oldVar = new ArrayVariable(var.getName() + "_" + ret.size(), var.getType());
+			ret.addLast(var);
+			ArrayVariable newVar = new ArrayVariable(var.getName() + "_" + ret.size(), var.getType());
+
+			Operation store = new Operation(Operator.STORE, oldVar, idx, val);
+			PathUtils.getCurPC()._addDet(Operator.EQ, store, newVar);
 			return ret.getLast();
 		}
 	}
@@ -115,24 +117,38 @@ public class TaintListener extends DerivedTaintListener {
 		return null;
 	}
 	
-	private <B extends LazyArrayObjTags> void genericWriteArray(B b, Taint idxTaint, int idx, Constant c) {
-		if(idxTaint != null && (b.taints != null && b.taints[idx] != null))
+	private <B extends LazyArrayObjTags> Taint genericWriteArray(B b, Taint t, Taint idxTaint, int idx, Constant c) {
+		
+		boolean taintedArray = (b.taints != null && b.taints[idx] != null);
+		boolean taintedIndex = (idxTaint != null);
+		boolean taintedVal   = (t != null);
+		
+		if (!taintedArray && !taintedIndex && !taintedVal)
+			return null;
+		else if ((taintedArray || taintedVal) && taintedIndex)
+			throw new UnsupportedOperationException("Not implemented symbolic index on symbolic array");
+
+		if (taintedVal)
 		{
-			throw new Error("Not implemented symbolic index on symbolic array");
+			return t;
 		}
-		else if(b.taints != null && b.taints[idx] != null)
+		else if(taintedArray)
 		{
 			setArrayVar(b.getVal(), new BVConstant(idx, 32), c);
-			b.taints[idx] = null;
+			return null;
 		}
-		else if(idxTaint != null)
+		else if(taintedIndex)
 		{
 			setArrayVar(b.getVal(), (Expression)idxTaint.lbl, c);
 			
 			// Index is within the array bounds
 			PathUtils.getCurPC()._addDet(Operator.LT, (Expression)idxTaint.lbl, new BVConstant(b.getLength(), 32));
 			PathUtils.getCurPC()._addDet(Operator.GE, (Expression)idxTaint.lbl, new BVConstant(0, 32));
+			
+			return null;
 		}
+		
+		throw new UnsupportedOperationException("Dead code?");
 	}
 	
 	@Override
@@ -218,41 +234,32 @@ public class TaintListener extends DerivedTaintListener {
 
 	@Override
 	public Taint arraySet(LazyShortArrayObjTags a, Taint idxTaint, int idx, Taint t, short v, ControlTaintTagStack ctrl) {
-		if(idxTaint != null || a.taints != null)
-			throw new UnsupportedOperationException();
-		
-		return null;
+		return genericWriteArray(a, t, idxTaint, idx, new BVConstant(v, 32));
 	}
 
 	@Override
 	public Taint arraySet(LazyIntArrayObjTags a, Taint idxTaint, int idx, Taint t, int v, ControlTaintTagStack ctrl) {
-		if(idxTaint != null || a.taints != null)
-			throw new UnsupportedOperationException();
-		
-		return null;
+		return genericWriteArray(a, t, idxTaint, idx, new BVConstant(v, 32));
 	}
 
 	@Override
 	public Taint arraySet(LazyByteArrayObjTags a, Taint idxTaint, int idx, Taint t, byte v, ControlTaintTagStack ctrl) {
-		genericWriteArray(a, idxTaint, idx, new BVConstant(v, 32));
-		return null;
+		return genericWriteArray(a, t, idxTaint, idx, new BVConstant(v, 32));
 	}
 
 	@Override
 	public Taint arraySet(LazyBooleanArrayObjTags a, Taint idxTaint, int idx, Taint t, boolean v, ControlTaintTagStack ctrl) {
-		genericWriteArray(a, idxTaint, idx, new BoolConstant(v));
-		return null;
+		return genericWriteArray(a, t, idxTaint, idx, new BoolConstant(v));
 	}
 
 	@Override
 	public Taint arraySet(LazyCharArrayObjTags a, Taint idxTaint, int idx, Taint t, char v, ControlTaintTagStack ctrl) {
-		genericWriteArray(a, idxTaint, idx, new BVConstant(v, 32));
-		return null;
+		return genericWriteArray(a, t, idxTaint, idx, new BVConstant(v, 32));
 	}
 
 	@Override
 	public Taint arraySet(LazyFloatArrayObjTags a, Taint idxTaint, int idx, Taint t, float v, ControlTaintTagStack ctrl) {
-		if(idxTaint != null || a.taints != null)
+		if(idxTaint != null || a.taints != null || t != null)
 			throw new UnsupportedOperationException();
 		
 		return null;
@@ -260,7 +267,7 @@ public class TaintListener extends DerivedTaintListener {
 
 	@Override
 	public Taint arraySet(LazyDoubleArrayObjTags a, Taint idxTaint, int idx, Taint t, double v, ControlTaintTagStack ctrl) {
-		if(idxTaint != null || a.taints != null)
+		if(idxTaint != null || a.taints != null || t != null)
 			throw new UnsupportedOperationException();
 		
 		return null;
@@ -268,7 +275,6 @@ public class TaintListener extends DerivedTaintListener {
 
 	@Override
 	public Taint arraySet(LazyLongArrayObjTags a, Taint idxTaint, int idx, Taint t, long v, ControlTaintTagStack ctrl) {
-		genericWriteArray(a, idxTaint, idx, new BVConstant(v, 64));
-		return null;
+		return genericWriteArray(a, t, idxTaint, idx, new BVConstant(v, 64));
 	}
 }
