@@ -12,7 +12,7 @@ import edu.gmu.swe.knarr.runtime.Symbolicator;
 public class ArrayOpITCase {
 
 	@Test
-	public void testArrayWrite() throws Exception {
+	public void testArrayWriteOnConstantIndex() throws Exception {
 		byte tainted[] = new byte[1];
 
 		tainted[0] = Symbolicator.symbolic("a", (byte)'a');
@@ -23,6 +23,32 @@ public class ArrayOpITCase {
 		assertNotEquals(tainted[0], 'a');
 
 		assertFalse(Symbolicator.dumpConstraints().isEmpty());
+	}
+	@Test
+	public void testArrayWriteOnVariableIndex() throws Exception {
+		byte tainted[] = new byte[1];
+
+		tainted[0] = Symbolicator.symbolic("a1", (byte)'a');
+		
+		for (int i = 0 ; i < tainted.length ; i++)
+			tainted[i] = (byte) (((int)tainted[i]) ^ ((int)'b'));
+
+		if (tainted[0] != (((int)'a') ^ ((int)'b')))
+			throw new Error();
+
+		ArrayList<SimpleEntry<String, Object>> solution = Symbolicator.dumpConstraints();
+		assertFalse(solution.isEmpty());
+		for (SimpleEntry<String, Object> e : solution) {
+			switch (e.getKey()) {
+				case "a1":
+					assertNotEquals('a', e.getValue());
+					assertNotEquals('b', e.getValue());
+					break;
+				default:
+					// Do nothing
+					break;
+			}
+		}
 	}
 	@Test
 	public void testArrayWriteTaintedIdx() throws Exception {
@@ -49,6 +75,9 @@ public class ArrayOpITCase {
 			}
 		}
 	}
+
+	//TODO save negative char,byte,short in array and read it
+
 	@Test
 	public void testArrayIndex(){
 		int idx = Symbolicator.symbolic("Aindex",5);
@@ -60,6 +89,6 @@ public class ArrayOpITCase {
 	}
 	
 	public static void main(String[] args) throws Exception {
-		new ArrayOpITCase().testArrayWrite();
+		new ArrayOpITCase().testArrayWriteOnConstantIndex();
 	}
 }
