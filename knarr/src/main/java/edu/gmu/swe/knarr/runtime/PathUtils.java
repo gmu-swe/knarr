@@ -1660,4 +1660,16 @@ public class PathUtils {
 		} else
 			throw new IllegalArgumentException("Got: " + t.lbl);
 	}
+	
+	public static Taint registerNewString(String s, LazyArrayObjTags srcTags, Object src, Taint offset_t, int offset, Taint len_t, int len) {
+		
+		if (srcTags != null) {
+			if (offset_t != null || len_t != null)
+				throw new UnsupportedOperationException();
+			
+			// TODO Generate a new taint for the string from the array of whatevers
+		}
+		
+		return null;
+	}
 }

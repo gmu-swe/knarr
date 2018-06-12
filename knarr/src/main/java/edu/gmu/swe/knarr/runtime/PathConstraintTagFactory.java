@@ -13,6 +13,7 @@ import edu.columbia.cs.psl.phosphor.org.objectweb.asm.Type;
 import edu.columbia.cs.psl.phosphor.org.objectweb.asm.tree.FrameNode;
 import edu.columbia.cs.psl.phosphor.org.objectweb.asm.util.Printer;
 import edu.columbia.cs.psl.phosphor.runtime.Taint;
+import edu.columbia.cs.psl.phosphor.struct.LazyArrayObjTags;
 import edu.columbia.cs.psl.phosphor.struct.TaintedByteWithObjTag;
 import edu.columbia.cs.psl.phosphor.struct.TaintedCharWithObjTag;
 import edu.columbia.cs.psl.phosphor.struct.TaintedDoubleWithObjTag;
@@ -977,6 +978,21 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 			mv.visitVarInsn(ALOAD, 1);
 			getTaintField(mv);
 			registerSingleStringOp(mv, STR_CPY);
+			putTaintField(mv);
+		} else if (1 == 0 && args.length == 7 && args[1].getSort() == Type.ARRAY && args[3] == Type.INT_TYPE && args[5] == Type.INT_TYPE) {
+			mv.visitVarInsn(ALOAD, 0);
+			mv.visitVarInsn(ALOAD, 1);
+			mv.visitVarInsn(ALOAD, 2);
+			mv.visitVarInsn(ALOAD, 3);
+			mv.visitVarInsn(ILOAD, 4);
+			mv.visitVarInsn(ALOAD, 5);
+			mv.visitVarInsn(ILOAD, 6);
+			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "registerNewString", "(" +
+					Type.getType(String.class) +
+					Type.getType(LazyArrayObjTags.class) + Type.getType(Object.class).getDescriptor() + 
+					Configuration.TAINT_TAG_DESC + "I" +
+					Configuration.TAINT_TAG_DESC + "I)" +
+					Configuration.TAINT_TAG_DESC, false);
 			putTaintField(mv);
 		}
 	}
