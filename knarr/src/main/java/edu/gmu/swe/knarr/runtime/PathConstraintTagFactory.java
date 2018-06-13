@@ -979,7 +979,8 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 			getTaintField(mv);
 			registerSingleStringOp(mv, STR_CPY);
 			putTaintField(mv);
-		} else if (1 == 0 && args.length == 7 && args[1].getSort() == Type.ARRAY && args[3] == Type.INT_TYPE && args[5] == Type.INT_TYPE) {
+		} else if (args.length == 7 && args[1].getSort() == Type.ARRAY && args[3] == Type.INT_TYPE && args[5] == Type.INT_TYPE) {
+			mv.visitVarInsn(ALOAD, 0);
 			mv.visitVarInsn(ALOAD, 0);
 			mv.visitVarInsn(ALOAD, 1);
 			mv.visitVarInsn(ALOAD, 2);
