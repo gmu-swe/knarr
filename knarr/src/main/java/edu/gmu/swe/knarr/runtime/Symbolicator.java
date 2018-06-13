@@ -139,6 +139,7 @@ public class Symbolicator {
 			}
 			firstLabel = null;
 			TaintListener.arrayNames.clear();
+			PathUtils.stringName = 0;
 			System.out.println(new String(array, StandardCharsets.UTF_8));
 			oos.close();
 			return solution;

@@ -186,6 +186,8 @@ public class ConstraintOptionGenerator {
 				return new BoolConstant(false);
 			case Z3_OP_TRUE:
 				return new BoolConstant(true);
+			case Z3_OP_SEQ_EMPTY:
+				return new StringConstant("");
 			default:
 				throw new UnsupportedOperationException("Got: " + exp + " " + exp.getFuncDecl().getDeclKind());
 			}
@@ -229,6 +231,8 @@ public class ConstraintOptionGenerator {
 			case Z3_OP_UMINUS:
 				op = Operator.NEG;
 				return new Operation(op, createExpr(exp.getArgs()[0]));
+			case Z3_OP_SEQ_UNIT:
+				return new Operation(Operator.CONCAT, new StringConstant(""), createExpr(exp.getArgs()[0]));
 			default:
 				throw new UnsupportedOperationException("Got: " + exp + " " + exp.getFuncDecl().getDeclKind());
 			}
@@ -299,6 +303,9 @@ public class ConstraintOptionGenerator {
 				break;
 			case Z3_OP_SEQ_CONCAT:
 				op = Operator.CONCAT;
+				break;
+			case Z3_OP_SEQ_PREFIX:
+				op = Operator.STARTSWITH;
 				break;
 			default:
 				throw new UnsupportedOperationException("Got: " + exp);

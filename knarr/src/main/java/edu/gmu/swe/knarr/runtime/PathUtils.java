@@ -1285,34 +1285,18 @@ public class PathUtils {
 			t2 = new StringConstant((String) str2);
 		Operator strCmp;
 
-		if (res.val) // result is true
-		{
-			switch (op) {
-			case StringOpcodes.STR_EQUAL:
-				strCmp = Operator.EQUALS;
-				break;
-			case StringOpcodes.STR_START:
-				strCmp = Operator.STARTSWITH;
-				break;
-			default:
-				throw new IllegalArgumentException("Unkown op: " + op);
-			}
-		} else // result is false
-		{
-			switch (op) {
-			case StringOpcodes.STR_EQUAL:
-				strCmp = Operator.NOTEQUALS;
-				break;
-			case StringOpcodes.STR_START:
-				strCmp = Operator.NOTSTARTSWITH;
-				break;
-			default:
-				throw new IllegalArgumentException("Unkown op: " + op);
-			}
+		switch (op) {
+		case StringOpcodes.STR_EQUAL:
+			strCmp = Operator.EQUALS;
+			break;
+		case StringOpcodes.STR_START:
+			strCmp = Operator.STARTSWITH;
+			break;
+		default:
+			throw new IllegalArgumentException("Unkown op: " + op);
 		}
-		Expression lVal, rVal;
 
-		getCurPC()._addDet(strCmp, t1, t2);
+		res.taint = new Taint<>(new Operation(strCmp, t1, t2));
 	}
 
 	public static void registerStringBooleanOp(TaintedBooleanWithObjTag res, String str1, int op) {
@@ -1661,13 +1645,28 @@ public class PathUtils {
 			throw new IllegalArgumentException("Got: " + t.lbl);
 	}
 	
+	public static int stringName;
+	
 	public static Taint registerNewString(String s, LazyArrayObjTags srcTags, Object src, Taint offset_t, int offset, Taint len_t, int len) {
 		
-		if (srcTags != null) {
-			if (offset_t != null || len_t != null)
-				throw new UnsupportedOperationException();
+		if (srcTags != null && srcTags.taints != null) {
 			
-			// TODO Generate a new taint for the string from the array of whatevers
+			Expression exp = new StringVariable("string_var_" + (stringName++));
+			char[] arr = s.toCharArray();
+			for (int i = offset ; i < len ; i++) {
+				Taint t = srcTags.taints[i];
+				if (t == null) {
+					exp = new Operation(Operator.CONCAT, exp, new IntConstant(arr[i]));
+				} else {
+					exp = new Operation(Operator.CONCAT, exp, (Expression) t.lbl);
+					s.valuePHOSPHOR_TAG.taints[i] = null;
+				}
+			}
+			
+			
+			Taint ret = new Taint(exp);
+			
+			return ret;
 		}
 		
 		return null;
