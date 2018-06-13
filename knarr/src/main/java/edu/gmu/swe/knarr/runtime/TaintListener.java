@@ -93,15 +93,7 @@ public class TaintListener extends DerivedTaintListener {
 	
 	
 	private <B extends LazyArrayObjTags> Taint genericReadArray(B b, Taint idxTaint, int idx, Constant c) {
-		if(idxTaint != null && (b.taints != null && b.taints[idx] != null))
-		{
-			throw new Error("Not implemented symbolic index on symbolic array");
-		}
-		else if(b.taints != null && b.taints[idx] != null)
-		{
-			return b.taints[idx];
-		}
-		else if(idxTaint != null)
+		if(idxTaint != null)
 		{
 			Expression var = getArrayVar(b.getVal());
 			BVConstant idxBV = new BVConstant(idx, 32);
@@ -113,6 +105,10 @@ public class TaintListener extends DerivedTaintListener {
 			PathUtils.getCurPC()._addDet(Operator.LT, (Expression)idxTaint.lbl, new BVConstant(b.getLength(), 32));
 			PathUtils.getCurPC()._addDet(Operator.GE, (Expression)idxTaint.lbl, new BVConstant(0, 32));
 			return new ExpressionTaint(select);
+		}
+		else if(b.taints != null && b.taints[idx] != null)
+		{
+			return b.taints[idx];
 		}
 		
 		return null;
