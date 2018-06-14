@@ -4,12 +4,118 @@ import static org.junit.Assert.*;
 
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.junit.Test;
 
 import edu.gmu.swe.knarr.runtime.Symbolicator;
 
 public class StringOpITCase {
+
+	public void testLength() throws Exception {
+	}
+
+	public void testEndsWidth() throws Exception {
+	}
+
+	public void testSubstring() throws Exception {
+	}
+
+	@Test
+	public void testCharAt() throws Exception {
+		String test = "This is a test";
+		char tainted[] = new char[test.length()];
+		
+		for (int i = 0 ; i < tainted.length ; i++)
+			tainted[i] = Symbolicator.symbolic("charAt_" + i, test.charAt(i));
+
+		String taintedString = new String(tainted, 0, tainted.length);
+		
+		char c0 = taintedString.charAt(0);
+		char cN = taintedString.charAt(4);
+
+		assertTrue( (c0 <= 'Z' && c0 >= 'A') || (c0 <= 'z' && c0 >= 'a'));
+		assertFalse((cN <= 'Z' && cN >= 'A') || (cN <= 'z' && cN >= 'a'));
+
+		ArrayList<SimpleEntry<String, Object>> solution = Symbolicator.dumpConstraints();
+		
+		assertTrue(solution != null && !solution.isEmpty());
+		
+		for (SimpleEntry<String, Object> e : solution) {
+			char c = (char) (int) e.getValue();
+			switch (e.getKey()) {
+				case "charAt_0": 
+					assertTrue( (c <= 'Z' && c >= 'A') || (c <= 'z' && c >= 'a'));
+					break;
+				case "charAt_4": 
+					assertFalse( (c <= 'Z' && c >= 'A') || (c <= 'z' && c >= 'a'));
+					break;
+			}
+		}
+	}
+
+	@Test
+	public void testTaintedEquals() throws Exception {
+		String test = "This is a test";
+		char tainted[] = new char[test.length()];
+		
+		for (int i = 0 ; i < tainted.length ; i++)
+			tainted[i] = Symbolicator.symbolic("equals_" + i, test.charAt(i));
+
+		String taintedString = new String(tainted, 0, tainted.length);
+		
+		String same    = new String(test);
+		String notSame = "This is not a test";
+
+		assertEquals(taintedString, same);
+		assertNotEquals(taintedString, notSame);
+
+		ArrayList<SimpleEntry<String, Object>> solution = Symbolicator.dumpConstraints();
+		
+		assertTrue(solution != null && !solution.isEmpty());
+		
+		Pattern p = Pattern.compile("equals_([0-9][0-9]*)");
+
+		for (SimpleEntry<String, Object> e : solution) {
+			Matcher m = p.matcher(e.getKey());
+			if (m.matches()) {
+				int i = Integer.parseInt(m.group(1));
+				assertEquals(test.charAt(i), (char) (int) e.getValue());
+			}
+		}
+	}
+
+	@Test
+	public void testEqualsTainted() throws Exception {
+		String test = "This is a test";
+		char tainted[] = new char[test.length()];
+		
+		for (int i = 0 ; i < tainted.length ; i++)
+			tainted[i] = Symbolicator.symbolic("equalsT_" + i, test.charAt(i));
+
+		String taintedString = new String(tainted, 0, tainted.length);
+		
+		String same    = new String(test);
+		String notSame = "This is not a test";
+
+		assertEquals(same, taintedString);
+		assertNotEquals(notSame, taintedString);
+
+		ArrayList<SimpleEntry<String, Object>> solution = Symbolicator.dumpConstraints();
+		
+		assertTrue(solution != null && !solution.isEmpty());
+		
+		Pattern p = Pattern.compile("equalsT_([0-9][0-9]*)");
+
+		for (SimpleEntry<String, Object> e : solution) {
+			Matcher m = p.matcher(e.getKey());
+			if (m.matches()) {
+				int i = Integer.parseInt(m.group(1));
+				assertEquals(test.charAt(i), (char) (int) e.getValue());
+			}
+		}
+	}
 
 	@Test
 	public void testStartsWith() throws Exception {
@@ -26,8 +132,6 @@ public class StringOpITCase {
 		assertFalse(taintedString.startsWith("Those"));
 
 		ArrayList<SimpleEntry<String, Object>> solution = Symbolicator.dumpConstraints();
-		System.out.println(solution);
-		
 		assertTrue(solution != null && !solution.isEmpty());
 		
 		for (SimpleEntry<String, Object> e : solution) {
@@ -50,7 +154,7 @@ public class StringOpITCase {
 		Symbolicator.dumpConstraints();
 	}
 	
-	@Test
+//	@Test
 	public void testReferenceEq() throws Exception {
 		
 	}

@@ -307,6 +307,9 @@ public class ConstraintOptionGenerator {
 			case Z3_OP_SEQ_PREFIX:
 				op = Operator.STARTSWITH;
 				break;
+			case Z3_OP_SEQ_AT:
+				op = Operator.SELECT;
+				break;
 			default:
 				throw new UnsupportedOperationException("Got: " + exp);
 			}
