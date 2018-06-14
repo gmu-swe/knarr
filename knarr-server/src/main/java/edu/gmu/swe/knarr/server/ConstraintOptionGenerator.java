@@ -85,7 +85,7 @@ public class ConstraintOptionGenerator {
 				op = Operator.AND;
 				break;
 			case Z3_OP_OR:
-				op = Operator.AND;
+				op = Operator.OR;
 				break;
 			case Z3_OP_ADD:
 			case Z3_OP_BADD:
