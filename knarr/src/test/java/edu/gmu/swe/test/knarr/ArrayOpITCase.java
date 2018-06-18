@@ -4,6 +4,8 @@ import static org.junit.Assert.*;
 
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.junit.Test;
 
@@ -102,6 +104,57 @@ public class ArrayOpITCase {
 		assertEquals(10,ar[idx]);
 		assertFalse(Symbolicator.dumpConstraints().isEmpty());
 
+	}
+	
+//	@Test
+	public void testArrayReadSwitch() {
+		String test = "<b>\"test&go\"</b>";
+
+		byte[] tainted = new byte[test.length()];
+		
+		for (int i = 0 ; i < tainted.length ; i++)
+			tainted[i] = Symbolicator.symbolic("switch_" + i, (byte)test.charAt(i));
+		
+		StringBuffer result = new StringBuffer();
+		
+		for (int i = 0 ; i < tainted.length ; i++) {
+			switch (tainted[i]) {
+			case '<':
+				result.append("&lt;");
+				break;
+			case '>':
+				result.append("&gt;");
+				break;
+			case '&':
+				result.append("&amp;");
+				break;
+			case '"':
+				result.append("&quot;");
+				break;
+			default:
+				result.append(tainted[i]);
+			}
+		}
+		
+		ArrayList<SimpleEntry<String, Object>> solution = Symbolicator.dumpConstraints();
+		
+		assertNotNull(solution);
+		assertFalse(solution.isEmpty());
+		
+		Pattern p = Pattern.compile("switch_(\\d+)");
+
+		for (SimpleEntry<String, Object> e : solution) {
+			Matcher m = p.matcher(e.getKey());
+			
+			if (!m.matches())
+				continue;
+					
+			int i = Integer.parseInt(m.group(1));
+			
+			char c = test.charAt(i);
+			if (!Character.isLetter(c))
+				assertEquals(c, (char) (int) e.getValue());
+		}
 	}
 	
 	public static void main(String[] args) throws Exception {
