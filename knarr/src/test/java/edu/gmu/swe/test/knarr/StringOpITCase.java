@@ -7,8 +7,11 @@ import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
+import edu.gmu.swe.knarr.runtime.PathUtils;
 import edu.gmu.swe.knarr.runtime.Symbolicator;
 
 public class StringOpITCase {
@@ -21,9 +24,23 @@ public class StringOpITCase {
 
 	public void testSubstring() throws Exception {
 	}
+	
+	private static boolean stringsBefore;
+	
+	@BeforeClass
+	public static void setup() {
+		stringsBefore = PathUtils.USE_STRINGS;
+		PathUtils.USE_STRINGS = false;
+	}
+	
+	@AfterClass
+	public static void teardown() {
+		PathUtils.USE_STRINGS = stringsBefore;
+	}
 
 	@Test
 	public void testCharAt() throws Exception {
+		PathUtils.USE_STRINGS = true;
 		String test = "This is a test";
 		char tainted[] = new char[test.length()];
 		
@@ -116,6 +133,39 @@ public class StringOpITCase {
 			}
 		}
 	}
+
+//	@Test
+	public void testToLowerUpper() throws Exception {
+		String test = "This is a test";
+		char tainted[] = new char[test.length()];
+		
+		for (int i = 0 ; i < tainted.length ; i++)
+			tainted[i] = Symbolicator.symbolic("toUpperLowerVar_" + i, test.charAt(i));
+
+		String taintedString = new String(tainted, 0, tainted.length);
+		
+		String upper = taintedString.toUpperCase();
+		String lower = taintedString.toLowerCase();
+		
+		assertEquals(test.toUpperCase(), upper);
+		assertEquals(test.toLowerCase(), lower);
+
+		ArrayList<SimpleEntry<String, Object>> solution = Symbolicator.dumpConstraints();
+		System.out.println(solution);
+		
+		assertTrue(solution != null && !solution.isEmpty());
+		
+		Pattern p = Pattern.compile("toUpperLowerVar_([0-9][0-9]*)");
+
+		for (SimpleEntry<String, Object> e : solution) {
+			Matcher m = p.matcher(e.getKey());
+			if (m.matches()) {
+				int i = Integer.parseInt(m.group(1));
+				assertEquals(test.toLowerCase().charAt(i), e.getValue());
+			}
+		}
+	}
+		
 
 	@Test
 	public void testStartsWith() throws Exception {

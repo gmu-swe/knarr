@@ -325,6 +325,8 @@ public class ConstraintOptionGenerator {
 				return new Operation(Operator.ITE, createExpr(e[0]), createExpr(e[1]), createExpr(e[2]));
 			case Z3_OP_STORE:
 				return new Operation(Operator.STORE, createExpr(e[0]), createExpr(e[1]), createExpr(e[2]));
+			case Z3_OP_SEQ_REPLACE:
+				return new Operation(Operator.REPLACEFIRST, createExpr(e[0]), createExpr(e[1]), createExpr(e[2]));
 			default:
 				throw new UnsupportedOperationException("Got: " + exp);
 

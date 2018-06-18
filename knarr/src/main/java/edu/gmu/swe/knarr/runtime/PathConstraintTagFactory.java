@@ -999,8 +999,9 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 	}
 
 	private void registerSingleStringOp(MethodVisitor mv, int op) {
+		mv.visitVarInsn(ALOAD, 0);
 		mv.visitIntInsn(SIPUSH, op);
-		mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "registerStringOp", "(" + Configuration.TAINT_TAG_DESC + "I)" + Configuration.TAINT_TAG_DESC, false);
+		mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "registerStringOp", "(" + Configuration.TAINT_TAG_DESC + Type.getType(String.class).getDescriptor() + "I)" + Configuration.TAINT_TAG_DESC, false);
 	}
 
 	private void getTaintField(MethodVisitor mv) {

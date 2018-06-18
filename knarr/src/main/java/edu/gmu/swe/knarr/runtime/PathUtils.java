@@ -1418,7 +1418,7 @@ public class PathUtils {
 		return new ExpressionTaint(ret);
 	}
 
-	public static Taint<Expression> registerStringOp(Taint<Expression> rVal, int opcode) {
+	public static Taint<Expression> registerStringOp(Taint<Expression> rVal, String s, int opcode) {
 		if (rVal == null)
 			return null;
 		if (!JPFInited)
@@ -1435,10 +1435,38 @@ public class PathUtils {
 			ret = new Operation(Operator.TRIM, rVal.lbl);
 			break;
 		case StringOpcodes.STR_UCASE:
-			ret = new Operation(Operator.TOUPPERCASE, rVal.lbl);
+			// 'a' ^ ' ' == 'A'
+			ret = getFreshStringVar();
+			for (int i = 0 ; i < s.length() ; i++) {
+				Operation select = new Operation(Operator.SELECT, rVal.lbl, new IntConstant(i));
+				ret = new Operation(Operator.CONCAT, ret, toLower(select));
+//						new Operation(Operator.ITE,
+//								new Operation(Operator.AND,
+//										new Operation(Operator.GE, select, new IntConstant('a')),
+//										new Operation(Operator.LE, select, new IntConstant('z'))),
+//								new Operation(Operator.BIT_XOR,
+//										new Operation(Operator.SELECT, rVal.lbl, new IntConstant(i)),
+//										new IntConstant(' ')),
+//								select));
+			}
 			break;
 		case StringOpcodes.STR_LCASE:
-			ret = new Operation(Operator.TOLOWERCASE, rVal.lbl);
+//			ret = new Operation(Operator.TOLOWERCASE, rVal.lbl);
+			// 'A' ^ ' ' == 'a'
+			ret = getFreshStringVar();
+			for (int i = 0 ; i < s.length() ; i++) {
+				Operation select = new Operation(Operator.SELECT, rVal.lbl, new IntConstant(i));
+				ret = new Operation(Operator.CONCAT, ret, toUpper(select));
+//				ret = new Operation(Operator.CONCAT, ret,
+//						new Operation(Operator.ITE,
+//								new Operation(Operator.AND,
+//										new Operation(Operator.GE, select, new IntConstant('A')),
+//										new Operation(Operator.LE, select, new IntConstant('Z'))),
+//								new Operation(Operator.BIT_XOR,
+//										new Operation(Operator.SELECT, rVal.lbl, new IntConstant(i)),
+//										new IntConstant(' ')),
+//								select));
+			}
 			break;
 		case StringOpcodes.STR_TO_DOUBLE: // TODO support for str -> int/double
 			// ret = ((StringExpression) rVal)._RvalueOf();
@@ -1455,6 +1483,32 @@ public class PathUtils {
 		if (ret == null)
 			throw new IllegalArgumentException("Null exp returned?");
 		return new Taint<Expression>(ret);
+	}
+	
+	private static Expression toLower(Expression in) {
+		Expression ret = in;
+
+		for (char i = 'A' ; i <= 'Z' ; i++) {
+			ret = new Operation(Operator.ITE,
+					new Operation(Operator.EQ, in, new StringConstant(""+i)),
+					new StringConstant("" + Character.toLowerCase(i)),
+					ret);
+		}
+		
+		return ret;
+	}
+	
+	private static Expression toUpper(Expression in) {
+		Expression ret = in;
+
+		for (char i = 'a' ; i <= 'z' ; i++) {
+			ret = new Operation(Operator.ITE,
+					new Operation(Operator.EQ, in, new StringConstant(""+i)),
+					new StringConstant("" + Character.toUpperCase(i)),
+					ret);
+		}
+		
+		return ret;
 	}
 
 	public static Expression[] registerTaintOnArray(Object val, Object label) {
@@ -1647,11 +1701,17 @@ public class PathUtils {
 	
 	public static int stringName;
 	
+	private static StringVariable getFreshStringVar() {
+		return new StringVariable("string_var_" + (stringName++));
+	}
+	
+	public static boolean USE_STRINGS = false;
+	
 	public static Taint registerNewString(String s, LazyArrayObjTags srcTags, Object src, Taint offset_t, int offset, Taint len_t, int len) {
 		
-		if (srcTags != null && srcTags.taints != null) {
+		if (USE_STRINGS && srcTags != null && srcTags.taints != null) {
 			
-			Expression exp = new StringVariable("string_var_" + (stringName++));
+			Expression exp = getFreshStringVar();
 			char[] arr = s.toCharArray();
 			for (int i = offset ; i < len ; i++) {
 				Taint t = srcTags.taints[i];
