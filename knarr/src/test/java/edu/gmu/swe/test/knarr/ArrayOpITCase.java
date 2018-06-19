@@ -157,6 +157,59 @@ public class ArrayOpITCase {
 		}
 	}
 	
+	@Test
+	public void testArrayReadTableSwitch() {
+		int[] tainted = new int[20];
+		
+		for (int i = 0 ; i < tainted.length ; i++)
+			tainted[i] = Symbolicator.symbolic("tableSwitch_" + i, 1000 + i);
+		
+		StringBuffer result = new StringBuffer();
+		
+		for (int i = 0 ; i < tainted.length ; i++) {
+			switch (tainted[i]) {
+			case 1000:
+			case 1001:
+			case 1002:
+			case 1003:
+				result.append(0);
+				break;
+			case 1004:
+			case 1005:
+			case 1006:
+			case 1007:
+				result.append(8);
+				break;
+			default:
+				result.append(tainted[i]);
+				break;
+			}
+		}
+		
+		ArrayList<SimpleEntry<String, Object>> solution = Symbolicator.dumpConstraints();
+		
+		assertNotNull(solution);
+		assertTrue(solution.size() >= tainted.length);
+		
+		Pattern p = Pattern.compile("tableSwitch_(\\d+)");
+
+		for (SimpleEntry<String, Object> e : solution) {
+			Matcher m = p.matcher(e.getKey());
+			
+			if (!m.matches())
+				continue;
+					
+			int i = Integer.parseInt(m.group(1));
+			
+			if (i < 8) {
+				assertEquals(i + 1000, (int) e.getValue());
+			} else {
+				int val = (int) e.getValue();
+				assertFalse(val > 1000 && val < 1008);
+			}
+		}
+	}
+	
 	public static void main(String[] args) throws Exception {
 		new ArrayOpITCase().testArrayWriteOnConstantIndex();
 	}
