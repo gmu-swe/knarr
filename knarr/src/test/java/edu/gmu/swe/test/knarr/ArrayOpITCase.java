@@ -106,7 +106,7 @@ public class ArrayOpITCase {
 
 	}
 	
-//	@Test
+	@Test
 	public void testArrayReadSwitch() {
 		String test = "<b>\"test&go\"</b>";
 
@@ -152,7 +152,7 @@ public class ArrayOpITCase {
 			int i = Integer.parseInt(m.group(1));
 			
 			char c = test.charAt(i);
-			if (!Character.isLetter(c))
+			if (!Character.isLetter(c) && c != '/')
 				assertEquals(c, (char) (int) e.getValue());
 		}
 	}

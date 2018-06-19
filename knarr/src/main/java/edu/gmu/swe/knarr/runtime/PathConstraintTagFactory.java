@@ -794,11 +794,61 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 	}
 
 	@Override
-	public void lookupSwitch(Label dflt, int[] keys, Label[] labels, MethodVisitor mv, LocalVariableManager lvs, TaintPassingMV taintPassingMV) {
-		mv.visitInsn(SWAP);
-		mv.visitInsn(POP);
-		mv.visitLookupSwitchInsn(dflt, keys, labels);
-		// TODO record constraints through lookupswitch
+	public void lookupSwitch(Label dflt, int[] keys, Label[] labels, MethodVisitor mv, LocalVariableManager lvs, TaintPassingMV ta) {
+		FrameNode fn = ta.getCurrentFrameNode();
+
+		// Generate fresh labels
+		Label[] freshLabels = new Label[labels.length];
+		
+		for (int i = 0 ; i < freshLabels.length ; i++)
+			freshLabels[i] = new Label();
+		
+		Label freshDflt = new Label();
+		
+		// Duplicate value, needed for later
+		mv.visitInsn(DUP);
+		
+		// Issue switch
+		mv.visitLookupSwitchInsn(freshDflt, keys, freshLabels);
+
+
+		// Each fresh label registers the value switched on and jumps to the original label
+		for (int i = 0 ; i < freshLabels.length ; i++) {
+			mv.visitLabel(freshLabels[i]);
+			ta.acceptFn(fn);
+			// taint, value
+			mv.visitInsn(ACONST_NULL);
+			// taint, value, null
+			mv.visitInsn(SWAP);
+			// taint, null, value
+			mv.visitLdcInsn(keys[i]);
+			// taint, null, value, switch target
+			mv.visitLdcInsn(IF_ICMPEQ);
+			// taint, null, value, switch target, ==
+			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addConstraint", "(" + Configuration.TAINT_TAG_DESC + Configuration.TAINT_TAG_DESC + "III)V", false);
+			mv.visitJumpInsn(GOTO, labels[i]);
+		}
+		
+		// Default label is not equal to any of the above
+		mv.visitLabel(freshDflt);
+		ta.acceptFn(fn);
+		for (int i = 0 ; i < freshLabels.length ; i++) {
+			// taint, value, value, taint
+			mv.visitInsn(DUP2);
+			mv.visitInsn(ACONST_NULL);
+			// taint, value, taint, value, null
+			mv.visitInsn(SWAP);
+			// taint, value, taint, null, value
+			mv.visitLdcInsn(keys[i]);
+			// taint, value, taint, null, value, switch target
+			mv.visitLdcInsn(IF_ICMPNE);
+			// taint, value, taint, null, value, switch target, !=
+			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addConstraint", "(" + Configuration.TAINT_TAG_DESC + Configuration.TAINT_TAG_DESC + "III)V", false);
+			// taint, value
+		}
+
+		mv.visitInsn(POP2);
+		mv.visitJumpInsn(GOTO, dflt);
 	}
 
 	@Override
@@ -844,14 +894,11 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 
 	@Override
 	public void instrumentationStarting(int access, String methodName, String methodDesc) {
-		// TODO Auto-generated method stub
 
 	}
 
 	@Override
 	public void insnIndexVisited(int offset) {
-		// TODO Auto-generated method stub
-
 	}
 
 	private void handleSubstring(MethodVisitor mv) {
