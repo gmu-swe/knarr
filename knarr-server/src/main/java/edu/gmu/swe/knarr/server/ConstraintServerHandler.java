@@ -155,7 +155,7 @@ public class ConstraintServerHandler extends Thread {
 		// System.out.println(i.request("model"));
 	}
 
-	private void generateAndAddNewOptions(Z3GreenBridge data) {
+	private static void generateAndAddNewOptions(Z3GreenBridge data) {
 		int nAdded = 0;
 		for (Z3GreenBridge e : optionGenerator.generateOptions(data)) {
 			// Slice, then canonize, then try to add to list
@@ -197,73 +197,15 @@ public class ConstraintServerHandler extends Thread {
 			ois = new ObjectInputStream(sock.getInputStream());
 			oos = new ObjectOutputStream(sock.getOutputStream());
 			Object input = ois.readObject();
+			
+			Expression req = null;
+			boolean solve = false;
+			File save = null;
 
 			if (input instanceof Expression) {
-				
-//				System.out.println("Received expression: " + input);
-				Instance in = new Instance(green, null, (Expression)input);
-				
-//				modeler.processRequest(in);
-				generateAndAddNewOptions(modeler.getUnderlyingExpr(in));
-
-				Z3GreenBridge newExp = stateStore.getNewOption();
-				boolean sat = false;
-				ArrayList<SimpleEntry<String, Object>> ret = new ArrayList<>();
-				final String prefix = "autoVar_";
-				while (newExp != null && !sat) {
-					sat = true;
-//					System.out.println("Trying out new version: " + newExp);
-					try{
-//						modeler.processRequest(k);
-						@SuppressWarnings("unchecked")
-						long start = System.currentTimeMillis();
-						
-						
-						try (FileOutputStream fos = new FileOutputStream(new File("z3.txt"))) {
-							HashMap<String, Object> sol = modeler.solve(newExp, fos);
-							inZ3 += (System.currentTimeMillis()-start);
-							nSolved++;
-
-							if (sol != null) {
-								nSat++;
-								System.out.println("SAT");
-//								System.out.println("SAT: " + sol);
-								for(String v : sol.keySet())	
-								{
-//									if (v.startsWith(prefix))
-										ret.add(new SimpleEntry<String, Object>(v, sol.get(v)));
-								}
-							} else {
-								stateStore.addUnsat(newExp);
-								System.out.println("NOT SAT");
-								sat = false;
-							}
-
-						}
-					}
-					catch(NotSatException ex)
-					{
-						sat = false;
-						System.out.println("Not sat");
-					}
-					newExp = stateStore.getNewOption();
-				}
-
-				Collections.sort(ret, new Comparator<SimpleEntry<String, Object>>() {
-						@Override
-						public int compare(SimpleEntry<String, Object> o1, SimpleEntry<String, Object> o2) {
-							if (o1.getKey().startsWith(prefix) && o2.getKey().startsWith(prefix)) {
-								Integer i1 = Integer.valueOf(o1.getKey().substring(prefix.length()));
-								Integer i2 = Integer.valueOf(o2.getKey().substring(prefix.length()));
-								return i1.compareTo(i2);
-							}
-							
-							return o1.getKey().compareTo(o2.getKey());
-						}
-					});
-				oos.writeObject(ret);
-				oos.close();
-
+				req   = (Expression) input;
+				solve = ois.readBoolean();
+				save  = (File) ois.readObject();
 			} else if (input.equals("REGISTER")) // wow this is a great idea
 			{
 				if (ConstraintServer.STATELESS) {
@@ -278,15 +220,103 @@ public class ConstraintServerHandler extends Thread {
 				// oos.writeObject("Remaining input combs: " +
 				// solutionsToTry.size());
 			}
+				
+			if (req != null) {
+//				System.out.println("Received expression: " + req.getConstraints());
+				
+				if (save != null) {
+					System.out.println("Saving to file: " + save);
+					ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(save));
+					oos.writeObject(req);
+					oos.close();
+				}
+				
+				if (solve) {
+					ArrayList<SimpleEntry<String, Object>> solution = solve(req);
+					oos.writeObject(solution);
+				}
+			}
+
+			oos.close();
+
 		} catch (Throwable e) {
 			e.printStackTrace();
 		}
+
 		try {
 			this.sock.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+			
+	}
+				
+	public static ArrayList<SimpleEntry<String, Object>> solve(Expression req) {
+		Instance in = new Instance(green, null, req);
+		
+//				modeler.processRequest(in);
+		generateAndAddNewOptions(modeler.getUnderlyingExpr(in));
 
+		Z3GreenBridge newExp = stateStore.getNewOption();
+		boolean sat = false;
+		ArrayList<SimpleEntry<String, Object>> ret = new ArrayList<>();
+		final String prefix = "autoVar_";
+		while (newExp != null && !sat) {
+			sat = true;
+//					System.out.println("Trying out new version: " + newExp);
+			try{
+//						modeler.processRequest(k);
+				@SuppressWarnings("unchecked")
+				long start = System.currentTimeMillis();
+				
+				
+				try (FileOutputStream fos = new FileOutputStream(new File("z3.txt"))) {
+					HashMap<String, Object> sol = modeler.solve(newExp, fos);
+					inZ3 += (System.currentTimeMillis()-start);
+					nSolved++;
+
+					if (sol != null) {
+						nSat++;
+						System.out.println("SAT");
+//								System.out.println("SAT: " + sol);
+						for(String v : sol.keySet())	
+						{
+//									if (v.startsWith(prefix))
+								ret.add(new SimpleEntry<String, Object>(v, sol.get(v)));
+						}
+					} else {
+						stateStore.addUnsat(newExp);
+						System.out.println("NOT SAT");
+						sat = false;
+					}
+
+				} catch (IOException e) {
+					// Unable to write to file
+					e.printStackTrace();
+				}
+			}
+			catch(NotSatException ex)
+			{
+				sat = false;
+				System.out.println("Not sat");
+			}
+			newExp = stateStore.getNewOption();
+		}
+
+		Collections.sort(ret, new Comparator<SimpleEntry<String, Object>>() {
+				@Override
+				public int compare(SimpleEntry<String, Object> o1, SimpleEntry<String, Object> o2) {
+					if (o1.getKey().startsWith(prefix) && o2.getKey().startsWith(prefix)) {
+						Integer i1 = Integer.valueOf(o1.getKey().substring(prefix.length()));
+						Integer i2 = Integer.valueOf(o2.getKey().substring(prefix.length()));
+						return i1.compareTo(i2);
+					}
+					
+					return o1.getKey().compareTo(o2.getKey());
+				}
+			});
+		
+		return ret;
 	}
 
 }

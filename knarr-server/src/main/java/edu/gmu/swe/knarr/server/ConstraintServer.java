@@ -8,6 +8,12 @@ public class ConstraintServer {
 	public static boolean STATELESS = Boolean.valueOf(System.getProperty("STATELESS","false"));
 	public static ConstraintNode rootConstraintNode = new ConstraintNode(null);
     public static void main(String[] args) throws Exception {
+		
+	if (args.length != 0) {
+		ConstraintFileUtil.main(args);
+		return;
+	}
+
     	 ServerSocket listener = new ServerSocket(9090);
     	 System.out.println(ConstraintServerHandler.inZ3);
     	 while (true) {

@@ -1,5 +1,6 @@
 package edu.gmu.swe.knarr.runtime;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -104,6 +105,8 @@ public class Symbolicator {
 		// }
 		System.out.println("Warning - array length constraints disabled?");
 	}
+	
+	private static int n = 0;
 
 	public static synchronized ArrayList<SimpleEntry<String, Object>> dumpConstraints() {
 		ObjectOutputStream oos;
@@ -117,6 +120,10 @@ public class Symbolicator {
 			ObjectInputStream ois = new ObjectInputStream(getSocket().getInputStream());
 
 			oos.writeObject(PathUtils.getCurPC().constraints);
+			oos.writeBoolean(true);
+//			oos.writeObject(new File("constraints." + n + ".dat"));
+			oos.writeObject(null);
+			n++;
 			PathUtils.getCurPC().constraints = null;
 			serverConnection = null;
 			ArrayList<SimpleEntry<String, Object>> solution = (ArrayList<SimpleEntry<String,Object>>) ois.readObject();
