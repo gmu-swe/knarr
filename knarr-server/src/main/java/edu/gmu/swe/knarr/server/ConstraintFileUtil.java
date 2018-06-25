@@ -42,7 +42,7 @@ public class ConstraintFileUtil {
 
 					if (o instanceof Expression) {
 						start = System.currentTimeMillis();
-						solution = ConstraintServerHandler.solve((Expression)o);
+						solution = ConstraintServerHandler.solve((Expression)o, false);
 						end = System.currentTimeMillis();
 					} else if (o instanceof Canonizer) {
 						Canonizer c = (Canonizer) o;
@@ -66,7 +66,7 @@ public class ConstraintFileUtil {
 						convertToExpressionTime = end - start;
 
 						start = System.currentTimeMillis();
-						solution = ConstraintServerHandler.solve(res);
+						solution = ConstraintServerHandler.solve(res, false);
 						end = System.currentTimeMillis();
 						
 					} else throw new UnsupportedOperationException();

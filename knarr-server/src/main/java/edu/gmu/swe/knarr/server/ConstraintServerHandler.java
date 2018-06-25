@@ -5,52 +5,30 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.Serializable;
 import java.net.Socket;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import com.microsoft.z3.BoolExpr;
-import com.microsoft.z3.Expr;
 
 import za.ac.sun.cs.green.Green;
 import za.ac.sun.cs.green.Instance;
-import za.ac.sun.cs.green.expr.ArrayVariable;
 import za.ac.sun.cs.green.expr.Expression;
 import za.ac.sun.cs.green.expr.IntConstant;
-import za.ac.sun.cs.green.expr.IntVariable;
 import za.ac.sun.cs.green.expr.Operation;
-import za.ac.sun.cs.green.expr.RealConstant;
-import za.ac.sun.cs.green.expr.RealVariable;
 import za.ac.sun.cs.green.expr.StringConstant;
 import za.ac.sun.cs.green.expr.StringVariable;
 import za.ac.sun.cs.green.expr.Variable;
-import za.ac.sun.cs.green.expr.Visitor;
-import za.ac.sun.cs.green.expr.VisitorException;
 import za.ac.sun.cs.green.expr.Operation.Operator;
-import za.ac.sun.cs.green.parser.klee.ParseException;
-import za.ac.sun.cs.green.parser.klee.Parser;
-import za.ac.sun.cs.green.parser.klee.Scanner;
-import za.ac.sun.cs.green.service.ModelService;
-import za.ac.sun.cs.green.service.SATService;
 import za.ac.sun.cs.green.service.canonizer.ModelCanonizerService;
-import za.ac.sun.cs.green.service.choco3.ModelChoco3Service;
-import za.ac.sun.cs.green.service.choco3.SATChoco3Service;
 import za.ac.sun.cs.green.service.factorizer.ModelFactorizerService;
-import za.ac.sun.cs.green.service.factorizer.SATFactorizerService;
-import za.ac.sun.cs.green.service.slicer.SATSlicerService;
 import za.ac.sun.cs.green.service.z3.ModelZ3JavaService;
 import za.ac.sun.cs.green.service.z3.Z3JavaTranslator.Z3GreenBridge;
 import za.ac.sun.cs.green.util.Configuration;
@@ -232,7 +210,7 @@ public class ConstraintServerHandler extends Thread {
 				}
 				
 				if (solve) {
-					ArrayList<SimpleEntry<String, Object>> solution = solve(req);
+					ArrayList<SimpleEntry<String, Object>> solution = solve(req, true);
 					oos.writeObject(solution);
 				}
 			}
@@ -251,10 +229,20 @@ public class ConstraintServerHandler extends Thread {
 			
 	}
 				
-	public static ArrayList<SimpleEntry<String, Object>> solve(Expression req) {
-		Instance in = new Instance(green, null, req);
+	public static ArrayList<SimpleEntry<String, Object>> solve(Expression req, boolean dedup) {
 		
 //				modeler.processRequest(in);
+
+		Instance in;
+
+		if (dedup) {
+			Canonizer c = new Canonizer();
+			c.canonize(req);
+			in = new Instance(green, null, c.getExpression());
+		} else {
+			in = new Instance(green, null, req);
+		}
+
 		generateAndAddNewOptions(modeler.getUnderlyingExpr(in));
 
 		Z3GreenBridge newExp = stateStore.getNewOption();
@@ -270,29 +258,23 @@ public class ConstraintServerHandler extends Thread {
 				long start = System.currentTimeMillis();
 				
 				
-				try (FileOutputStream fos = new FileOutputStream(new File("z3.txt"))) {
-					HashMap<String, Object> sol = modeler.solve(newExp, fos);
-					inZ3 += (System.currentTimeMillis()-start);
-					nSolved++;
+				HashMap<String, Object> sol = modeler.solve(newExp);
+				inZ3 += (System.currentTimeMillis()-start);
+				nSolved++;
 
-					if (sol != null) {
-						nSat++;
-						System.out.println("SAT");
+				if (sol != null) {
+					nSat++;
+					System.out.println("SAT");
 //								System.out.println("SAT: " + sol);
-						for(String v : sol.keySet())	
-						{
+					for(String v : sol.keySet())	
+					{
 //									if (v.startsWith(prefix))
-								ret.add(new SimpleEntry<String, Object>(v, sol.get(v)));
-						}
-					} else {
-						stateStore.addUnsat(newExp);
-						System.out.println("NOT SAT");
-						sat = false;
+							ret.add(new SimpleEntry<String, Object>(v, sol.get(v)));
 					}
-
-				} catch (IOException e) {
-					// Unable to write to file
-					e.printStackTrace();
+				} else {
+					stateStore.addUnsat(newExp);
+					System.out.println("NOT SAT");
+					sat = false;
 				}
 			}
 			catch(NotSatException ex)

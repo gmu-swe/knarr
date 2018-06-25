@@ -20,6 +20,7 @@ import java.util.regex.Pattern;
 
 import za.ac.sun.cs.green.expr.ArrayVariable;
 import za.ac.sun.cs.green.expr.BVConstant;
+import za.ac.sun.cs.green.expr.BoolConstant;
 import za.ac.sun.cs.green.expr.Constant;
 import za.ac.sun.cs.green.expr.Expression;
 import za.ac.sun.cs.green.expr.Operation;
@@ -86,7 +87,7 @@ public class Canonizer implements Serializable {
 					s.add(ret.expr);
 					break;
 				case NOT_CAN:
-					notCanonical.add(op.getOperand(1));
+					notCanonical.add(toCanon);
 					break;
 				case CAN_VAR:
 					s = canonical.get(ret.varName);
@@ -122,6 +123,25 @@ public class Canonizer implements Serializable {
 	public Set<Variable> getVariables() {
 		return variables;
 	}
+	
+	public Expression getExpression() {
+		Expression expr = new BoolConstant(true);
+
+		for (HashSet<Expression> es : constArrayInits.values()) {
+			for (Expression e : es)
+				expr = new Operation(Operator.AND, e, expr);
+		}
+
+		for (HashSet<Expression> es : canonical.values()) {
+			for (Expression e : es)
+				expr = new Operation(Operator.AND, e, expr);
+		}
+
+		for (Expression e : notCanonical)
+			expr = new Operation(Operator.AND, e, expr);
+		
+		return expr;
+	}
 
 	private CanonizeReturn doCanonize(Expression exp) {
 		for (CanonicalForm c : forms) {
@@ -130,12 +150,12 @@ public class Canonizer implements Serializable {
 			if (varName != null) {
 				if (c.isCanonical(exp))
 					if (c instanceof ConstArrayInit) {
-						if (!varName.startsWith("const_array"))
-							throw new Error();
+//						if (!varName.startsWith("const_array"))
+//							throw new Error();
 						return new CanonizeReturn(varName, c.canonize(exp), CanonizeReturn.Type.ARRAY_INIT);
 					} else {
-						if (!varName.startsWith("autoVar"))
-							throw new Error();
+//						if (!varName.startsWith("autoVar"))
+//							throw new Error();
 						return new CanonizeReturn(varName, c.canonize(exp), CanonizeReturn.Type.CAN_VAR);
 					}
 			}
