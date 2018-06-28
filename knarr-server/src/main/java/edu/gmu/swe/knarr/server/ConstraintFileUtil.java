@@ -1,10 +1,14 @@
 package edu.gmu.swe.knarr.server;
 
+import java.io.BufferedOutputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.net.SocketException;
 import java.nio.charset.StandardCharsets;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
@@ -20,8 +24,8 @@ import za.ac.sun.cs.green.expr.Expression;
 import za.ac.sun.cs.green.expr.Operation;
 import za.ac.sun.cs.green.expr.Operation.Operator;
 import za.ac.sun.cs.green.expr.Variable;
-import za.ac.sun.cs.green.service.z3.Z3JavaTranslator;
 import za.ac.sun.cs.green.expr.VisitorException;
+import za.ac.sun.cs.green.service.z3.Z3JavaTranslator;
 
 public class ConstraintFileUtil {
 
@@ -331,7 +335,43 @@ public class ConstraintFileUtil {
 //					oos.writeObject(b);
 //				}
 				
-				return;
+				break;
+				
+			case "serve-compare":
+				// serve-compare address port
+				
+				 ServerSocket listener = new ServerSocket(9090);
+				 System.out.println(ConstraintServerHandler.inZ3);
+				 while (true) {
+					 try {
+						 ConstraintServerHandler csh = new ConstraintServerHandler(listener.accept());
+						 ArrayList<SimpleEntry<String, Object>> solution = csh.getSolution();
+						 
+						 byte[] solBytes = new byte[solution.size()];
+						 int i = 0;
+						 
+						 for (SimpleEntry<String, Object> e : solution) {
+							 if (e.getKey().startsWith("autoVar_"))
+								 solBytes[i++] = (byte) (int) e.getValue();
+						 }
+						 
+						 try (Socket s = new Socket(args[1], Integer.parseInt(args[2]))) {
+							 try (BufferedOutputStream bos = new BufferedOutputStream(s.getOutputStream())) {
+								 bos.write(solBytes);
+							 }
+						 }
+
+						 new ConstraintServerHandler(listener.accept());
+					 }catch(SocketException e)
+					 {
+						 //nop
+					 }
+					 catch (Throwable e) {
+						 System.err.println("Fatal exception in handler!!!");
+						 e.printStackTrace();
+						 listener.close();
+					 }
+				 }
 			default:
 				System.out.println("Unknown action: " + args[0]);
 				return;

@@ -167,6 +167,9 @@ public class ConstraintServerHandler extends Thread {
 		}, 1000,1000);
 		
 	}
+
+	private ArrayList<SimpleEntry<String, Object>> solution = null;
+	private Expression req = null;
 	
 	public ConstraintServerHandler(Socket sock) {
 
@@ -176,7 +179,6 @@ public class ConstraintServerHandler extends Thread {
 			oos = new ObjectOutputStream(sock.getOutputStream());
 			Object input = ois.readObject();
 			
-			Expression req = null;
 			boolean solve = false;
 			File save = null;
 
@@ -210,7 +212,7 @@ public class ConstraintServerHandler extends Thread {
 				}
 				
 				if (solve) {
-					ArrayList<SimpleEntry<String, Object>> solution = solve(req, true);
+					solution = solve(req, true);
 					oos.writeObject(solution);
 				}
 			}
@@ -299,6 +301,13 @@ public class ConstraintServerHandler extends Thread {
 			});
 		
 		return ret;
+	}
+
+	public ArrayList<SimpleEntry<String, Object>> getSolution() {
+		if (solution == null)
+			solution = solve(req, true);
+
+		return solution;
 	}
 
 }
