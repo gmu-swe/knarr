@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -20,6 +21,7 @@ import java.util.regex.Pattern;
 
 import za.ac.sun.cs.green.expr.ArrayVariable;
 import za.ac.sun.cs.green.expr.BVConstant;
+import za.ac.sun.cs.green.expr.BVVariable;
 import za.ac.sun.cs.green.expr.BoolConstant;
 import za.ac.sun.cs.green.expr.Constant;
 import za.ac.sun.cs.green.expr.Expression;
@@ -164,6 +166,148 @@ public class Canonizer implements Serializable {
 		return new CanonizeReturn(null, exp, CanonizeReturn.Type.NOT_CAN);
 	}
 	
+	private static Expression anonymizeVars(Expression e) {
+		
+		if (e instanceof Variable)
+			return AnyVariable.any;
+		
+		if (e instanceof Operation) {
+			Operation op = (Operation) e;
+			
+			Expression[] operands = new Expression[op.getArity()];
+			
+			for (int i = 0 ; i < operands.length ; i++)
+				operands[i] = anonymizeVars(op.getOperand(i));
+			
+			return new Operation(op.getOperator(), operands);
+		}
+		
+		return e;
+	}
+	
+	private static Expression rewriteVars(Expression e, Map<String, String> rewrites) {
+		
+		if (e instanceof Variable) {
+			Variable v = (Variable) e;
+			
+			if (rewrites.containsKey(v.getName())) {
+				Variable ret;
+				
+				if (v.getClass() == BVVariable.class)
+					ret = new BVVariable(rewrites.get(v.getName()), ((BVVariable)v).getSize());
+				else
+					throw new UnsupportedOperationException(v.getClass().getName());
+			}
+		}
+		
+		if (e instanceof Operation) {
+			Operation op = (Operation) e;
+			
+			Expression[] operands = new Expression[op.getArity()];
+			
+			for (int i = 0 ; i < operands.length ; i++)
+				operands[i] = rewriteVars(op.getOperand(i), rewrites);
+			
+			return new Operation(op.getOperator(), operands);
+		}
+		
+		return e;
+	}
+	
+	public static Canonizer compare(Canonizer a, Canonizer b) {
+		Canonizer common = new Canonizer();
+		TreeMap<String, String> matchBtoA = new TreeMap<>();
+
+		HashMap<String, String> aToB = new HashMap<>();
+		HashMap<String, String> bToA = new HashMap<>();
+
+		for (Entry<String, HashSet<Expression>> ea : a.getCanonical().entrySet()) {
+			String maxB = null;
+			HashSet<Expression> max = new HashSet<>();
+
+			HashSet<Expression> aa = new HashSet<>();
+
+			HashMap<Expression, Expression> aaToEa = new HashMap<>();
+			
+			
+			for (Expression e : ea.getValue()) {
+				Expression anonymous = anonymizeVars(e);
+				aa.add(anonymous);
+				aaToEa.put(anonymous, e);
+			}
+
+			for (Entry<String, HashSet<Expression>> eb : b.getCanonical().entrySet()) {
+
+				if (matchBtoA.containsKey(eb.getKey()))
+					continue;
+
+				HashSet<Expression> s = new HashSet<>(aa);
+				
+				HashSet<Expression> bb = new HashSet<>();
+				
+				for (Expression e : eb.getValue())
+					bb.add(anonymizeVars(e));
+
+				s.retainAll(bb);
+
+				int ms = max.size();
+				int ss = s.size();
+				
+				if (s.size() > max.size()) {
+					max.clear();
+					for (Expression e : s)
+						max.add(aaToEa.get(e));
+
+					maxB = eb.getKey();
+				}
+			}
+			
+			if (maxB != null)  {
+				// Only happens when a is bigger than b and we run out of a constraints
+				matchBtoA.put(maxB, ea.getKey());
+				common.getCanonical().put(ea.getKey(), max);
+
+				aToB.put(ea.getKey(), maxB);
+				bToA.put(maxB, ea.getKey());
+
+				System.out.println(ea.getKey() + " -> " + maxB + " (" + max.size() + ")");
+
+				continue;
+			}
+		}
+		
+		for (Variable v : a.getVariables()) {
+			if (common.getCanonical().containsKey(v.getName()))
+				common.getVariables().add(v);
+		}
+		
+		// TODO something about the const array inits?
+		common.getConstArrayInits().putAll(a.getConstArrayInits());
+
+		{
+			HashSet<Expression> aa = new HashSet<>();
+			HashSet<Expression> bb = new HashSet<>();
+
+			// Rewrite variables in notCanonical b according to previous match
+			for (Expression e : b.getNotCanonical()) {
+				bb.add(rewriteVars(e, bToA));
+			}
+			
+			// Keep the matching constraints
+			aa.addAll(a.getNotCanonical());
+			aa.retainAll(bb);
+
+			common.getNotCanonical().addAll(aa);
+			
+			System.out.println(common.getNotCanonical().size());
+
+//			aa.removeAll(s);
+//			bb.removeAll(s);
+		}
+		
+		return common;
+	}
+	
 	private static class CanonizeReturn {
 		final String varName;
 		final Expression expr;
@@ -222,6 +366,32 @@ public class Canonizer implements Serializable {
 		}
 	}
 
+	private static class AnyVariable extends Variable {
+		private static AnyVariable any = new AnyVariable();
+
+		private AnyVariable() {
+			super("");
+		}
+	
+		@Override
+		public void accept(Visitor visitor) throws VisitorException {
+			throw new UnsupportedOperationException();
+		}
+	
+		@Override
+		public String toString() {
+			return "*";
+		}
+		
+		private void writeObject(ObjectOutputStream oos) throws IOException {
+			throw new UnsupportedOperationException();
+		}
+		
+		private void readObject(ObjectInputStream ois) throws IOException, ClassNotFoundException {
+			throw new UnsupportedOperationException();
+		}
+	}
+
 	private abstract class CanonicalForm {
 		Expression pattern;
 		
@@ -256,7 +426,7 @@ public class Canonizer implements Serializable {
 				
 				return varName;
 
-			} else if (pattern instanceof AnyVariable) {
+			} else if (pattern == AnyVariable.any) {
 				if (! (exp instanceof Variable))
 					return null;
 				
@@ -335,13 +505,13 @@ public class Canonizer implements Serializable {
 
 	private class OpVarConstant extends CanonicalForm {
 		OpVarConstant() {
-			pattern = new Operation(null, new AnyVariable(), new BVConstant(0, 0));
+			pattern = new Operation(null, AnyVariable.any, new BVConstant(0, 0));
 		}
 	}
 	
 	private class OpConstantVar extends OpVarConstant {
 		OpConstantVar() {
-			pattern = new Operation(null, new BVConstant(0, 0), new AnyVariable());
+			pattern = new Operation(null, new BVConstant(0, 0), AnyVariable.any);
 		}
 
 		@Override
@@ -358,14 +528,14 @@ public class Canonizer implements Serializable {
 		OpOpVarConstantConstant() {
 			pattern = new Operation(
 					null,
-					new Operation(null, new AnyVariable(), new BVConstant(0, 0)),
+					new Operation(null, AnyVariable.any, new BVConstant(0, 0)),
 					new BVConstant(0, 0));
 		}
 	}
 	
 	private class OpOpConstantVarConstant extends CanonicalForm {
 		OpOpConstantVarConstant() {
-			pattern = new Operation(null, new Operation(null, new BVConstant(0, 0), new AnyVariable()), new BVConstant(0, 0));
+			pattern = new Operation(null, new Operation(null, new BVConstant(0, 0), AnyVariable.any), new BVConstant(0, 0));
 		}
 
 		@Override
@@ -388,7 +558,7 @@ public class Canonizer implements Serializable {
 					null,
 					new Operation(
 							null,
-							new Operation(null, new AnyVariable(), new BVConstant(0, 0)),
+							new Operation(null, AnyVariable.any, new BVConstant(0, 0)),
 							new BVConstant(0, 0)),
 					new BVConstant(0, 0));
 		}
@@ -401,7 +571,7 @@ public class Canonizer implements Serializable {
 					new Operation(
 							null,
 							new Operation(null,
-									new Operation(null, new AnyVariable(), new BVConstant(0, 0)),
+									new Operation(null, AnyVariable.any, new BVConstant(0, 0)),
 									new BVConstant(0, 0)),
 							new BVConstant(0, 0)),
 					new BVConstant(0, 0));
@@ -416,7 +586,7 @@ public class Canonizer implements Serializable {
 							null,
 							new Operation(null,
 									new Operation(null,
-											new Operation(null, new AnyVariable(), new BVConstant(0, 0)),
+											new Operation(null, AnyVariable.any, new BVConstant(0, 0)),
 											new BVConstant(0, 0)),
 									new BVConstant(0, 0)),
 							new BVConstant(0, 0)),
@@ -424,30 +594,6 @@ public class Canonizer implements Serializable {
 		}
 	}
 	
-	private class AnyVariable extends Variable {
-		public AnyVariable() {
-			super("");
-		}
-
-		@Override
-		public void accept(Visitor visitor) throws VisitorException {
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public String toString() {
-			throw new UnsupportedOperationException();
-		}
-		
-		private void writeObject(ObjectOutputStream oos) throws IOException {
-			throw new UnsupportedOperationException();
-		}
-		
-		private void readObject(ObjectInputStream ois) throws IOException, ClassNotFoundException {
-			throw new UnsupportedOperationException();
-		}
-	}
-
 	private class ConstArrayInit extends CanonicalForm {
 		ConstArrayInit() {
 			pattern = new Operation(
@@ -467,7 +613,7 @@ public class Canonizer implements Serializable {
 					new Operation(
 							Operator.SELECT,
 							new ArrayVariable(null, null),
-							new AnyVariable()),
+							AnyVariable.any),
 					new BVConstant(0, 0));
 		}
 	}
@@ -480,7 +626,7 @@ public class Canonizer implements Serializable {
 					new Operation(
 							Operator.SELECT,
 							new ArrayVariable(null, null),
-							new AnyVariable()));
+							AnyVariable.any));
 		}
 
 		@Override

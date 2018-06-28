@@ -295,6 +295,43 @@ public class ConstraintFileUtil {
 
 					return;
 				}
+			case "compare":
+				// compare a b common a-rest b-rest
+				Canonizer a = null, b = null;
+				try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(args[1]))) {
+					Object o = ois.readObject();
+
+					if (o instanceof Expression)
+						throw new UnsupportedOperationException("Please dedup file " +  args[1]);
+					else if (o instanceof Canonizer)
+						a = (Canonizer) o;
+				}
+
+				try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(args[2]))) {
+					Object o = ois.readObject();
+
+					if (o instanceof Expression)
+						throw new UnsupportedOperationException("Please dedup file " +  args[2]);
+					else if (o instanceof Canonizer)
+						b = (Canonizer) o;
+				}
+
+				Canonizer common = Canonizer.compare(a, b);
+				
+
+				try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(args[3]))) {
+					oos.writeObject(common);
+				}
+				
+//				try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(args[4]))) {
+//					oos.writeObject(a);
+//				}
+//
+//				try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(args[5]))) {
+//					oos.writeObject(b);
+//				}
+				
+				return;
 			default:
 				System.out.println("Unknown action: " + args[0]);
 				return;
