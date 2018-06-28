@@ -371,6 +371,8 @@ public class Canonizer implements Serializable {
 
 		private AnyVariable() {
 			super("");
+			if (any != null)
+				throw new Error();
 		}
 	
 		@Override
@@ -391,6 +393,24 @@ public class Canonizer implements Serializable {
 			throw new UnsupportedOperationException();
 		}
 	}
+	
+	private static class Canonical extends Expression {
+
+		@Override
+		public void accept(Visitor visitor) throws VisitorException {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public boolean equals(Object object) {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public String toString() {
+			return "CAN";
+		}
+	}
 
 	private abstract class CanonicalForm {
 		Expression pattern;
@@ -403,6 +423,16 @@ public class Canonizer implements Serializable {
 			
 			if (pattern == null) {
 				return varName;
+			} else if (pattern instanceof Canonical) {
+				CanonizeReturn cr = doCanonize(exp);
+				
+				switch (cr.type) {
+					case CAN_VAR:
+						return cr.varName;
+					default:
+						return null;
+				}
+				
 			} else if (pattern instanceof Operation) {
 				if (! (exp instanceof Operation))
 					return null;
@@ -474,33 +504,15 @@ public class Canonizer implements Serializable {
 			Operator.BIT_OR,
 			Operator.BIT_XOR,
 			Operator.EQ,
+			Operator.NE,
 			Operator.EQUALS,
 			Operator.NOTEQUALS
 			));
 	
 	private class NotOp extends CanonicalForm {
-		private CanonizeReturn cache = null;
-
 		NotOp() {
-			pattern = new Operation(Operator.NOT, new Expression[] {null});
+			pattern = new Operation(Operator.NOT, new Canonical());
 		}
-
-		@Override
-		public boolean isCanonical(Expression exp) {
-			Operation op = (Operation) exp;
-			cache = doCanonize(op.getOperand(0));
-			
-			return cache.type != CanonizeReturn.Type.NOT_CAN;
-		}
-
-		@Override
-		public Expression canonize(Expression exp) {
-			if (cache.type != CanonizeReturn.Type.NOT_CAN)
-				return new Operation(Operator.NOT, cache.expr);
-			else
-				return exp;
-		}
-		
 	}
 
 	private class OpVarConstant extends CanonicalForm {
@@ -508,89 +520,26 @@ public class Canonizer implements Serializable {
 			pattern = new Operation(null, AnyVariable.any, new BVConstant(0, 0));
 		}
 	}
-	
-	private class OpConstantVar extends OpVarConstant {
-		OpConstantVar() {
-			pattern = new Operation(null, new BVConstant(0, 0), AnyVariable.any);
+
+	private class OpConstantCanonical extends CanonicalForm {
+		OpConstantCanonical() {
+			pattern = new Operation(null, new BVConstant(0, 0), new Canonical());
 		}
 
 		@Override
 		public Expression canonize(Expression exp) {
 			Operation op = (Operation) exp;
+			
 			if (commutative.contains(op.getOperator()))
 				return new Operation(op.getOperator(), op.getOperand(1), op.getOperand(0));
 			else
-				return exp;
+				return op;
 		}
 	}
-	
-	private class OpOpVarConstantConstant extends CanonicalForm {
-		OpOpVarConstantConstant() {
-			pattern = new Operation(
-					null,
-					new Operation(null, AnyVariable.any, new BVConstant(0, 0)),
-					new BVConstant(0, 0));
-		}
-	}
-	
-	private class OpOpConstantVarConstant extends CanonicalForm {
-		OpOpConstantVarConstant() {
-			pattern = new Operation(null, new Operation(null, new BVConstant(0, 0), AnyVariable.any), new BVConstant(0, 0));
-		}
 
-		@Override
-		public Expression canonize(Expression exp) {
-			Operation op = (Operation) exp;
-			Operation op2 = (Operation) op.getOperand(0);
-			if (commutative.contains(op2.getOperator()))
-				return new Operation(
-						op.getOperator(),
-						new Operation(op2.getOperator(), op2.getOperand(1), op2.getOperand(0)),
-						op.getOperand(1));
-			else
-				return exp;
-		}
-	}
-	
-	private class OpOpOpVarConstantConstantConstant extends CanonicalForm {
-		OpOpOpVarConstantConstantConstant() {
-			pattern = new Operation(
-					null,
-					new Operation(
-							null,
-							new Operation(null, AnyVariable.any, new BVConstant(0, 0)),
-							new BVConstant(0, 0)),
-					new BVConstant(0, 0));
-		}
-	}
-	
-	private class OpOpOpOpVarConstantConstantConstant extends CanonicalForm {
-		OpOpOpOpVarConstantConstantConstant() {
-			pattern = new Operation(
-					null,
-					new Operation(
-							null,
-							new Operation(null,
-									new Operation(null, AnyVariable.any, new BVConstant(0, 0)),
-									new BVConstant(0, 0)),
-							new BVConstant(0, 0)),
-					new BVConstant(0, 0));
-		}
-	}
-	
-	private class OpOpOpOpOpVarConstantConstantConstant extends CanonicalForm {
-		OpOpOpOpOpVarConstantConstantConstant() {
-			pattern = new Operation(
-					null,
-					new Operation(
-							null,
-							new Operation(null,
-									new Operation(null,
-											new Operation(null, AnyVariable.any, new BVConstant(0, 0)),
-											new BVConstant(0, 0)),
-									new BVConstant(0, 0)),
-							new BVConstant(0, 0)),
-					new BVConstant(0, 0));
+	private class OpCanonicalConstant extends CanonicalForm {
+		OpCanonicalConstant() {
+			pattern = new Operation(null, new Canonical(), new BVConstant(0, 0));
 		}
 	}
 	
@@ -606,157 +555,21 @@ public class Canonizer implements Serializable {
 		}
 	}
 
-	private class ConstArrayAccessOp extends CanonicalForm {
-		ConstArrayAccessOp() {
+	private class ConstArrayAccessVar extends CanonicalForm {
+		ConstArrayAccessVar() {
 			pattern = new Operation(
-					null,
-					new Operation(
-							Operator.SELECT,
-							new ArrayVariable(null, null),
-							AnyVariable.any),
-					new BVConstant(0, 0));
+					Operator.SELECT,
+					new ArrayVariable(null, null),
+					AnyVariable.any);
 		}
 	}
 
-	private class ConstArrayAccessOp2 extends CanonicalForm {
-		ConstArrayAccessOp2() {
+	private class ConstArrayAccessCan extends CanonicalForm {
+		ConstArrayAccessCan() {
 			pattern = new Operation(
-					null,
-					new BVConstant(0, 0),
-					new Operation(
-							Operator.SELECT,
-							new ArrayVariable(null, null),
-							AnyVariable.any));
+					Operator.SELECT,
+					new ArrayVariable(null, null),
+					new Canonical());
 		}
-
-		@Override
-		public Expression canonize(Expression exp) {
-			Operation op = (Operation)exp;
-			
-			if (commutative.contains(op.getOperator()))
-				return new Operation(op.getOperator(), op.getOperand(1), op.getOperand(0));
-
-			return exp;
-		}
-		
-		
-	}
-
-	private class ConstArrayAccessComplexOp extends CanonicalForm {
-		private CanonizeReturn cache;
-
-		ConstArrayAccessComplexOp() {
-			pattern = new Operation(
-					null,
-					new Operation(
-							Operator.SELECT,
-							new ArrayVariable(null, null),
-							null),
-					new BVConstant(0, 0));
-		}
-		
-		@Override
-		public String matches(Expression exp) {
-			if (super.matches(exp) != null) {
-				Operation op  = (Operation)exp;
-				Operation op2 = (Operation)op.getOperand(0);
-				
-				cache = doCanonize(op2.getOperand(1));
-				return cache.varName;
-			}
-
-			return null;
-		}
-
-		@Override
-		public boolean isCanonical(Expression exp) {
-			return cache.type != CanonizeReturn.Type.NOT_CAN;
-		}
-		
-	}
-
-	private class ConstArrayAccessComplexOp2 extends CanonicalForm {
-		private CanonizeReturn cache;
-
-		ConstArrayAccessComplexOp2() {
-			pattern = new Operation(
-					null,
-					new BVConstant(0, 0),
-					new Operation(
-							Operator.SELECT,
-							new ArrayVariable(null, null),
-							null));
-		}
-		
-		@Override
-		public String matches(Expression exp) {
-			if (super.matches(exp) != null) {
-				Operation op  = (Operation)exp;
-				Operation op2 = (Operation)op.getOperand(1);
-				
-				cache = doCanonize(op2.getOperand(1));
-				return cache.varName;
-			}
-
-			return null;
-		}
-
-		@Override
-		public boolean isCanonical(Expression exp) {
-			return cache.type != CanonizeReturn.Type.NOT_CAN;
-		}
-
-		@Override
-		public Expression canonize(Expression exp) {
-			Operation op  = (Operation)exp;
-			
-			if (commutative.contains(op.getOperator()))
-				return new Operation(op.getOperator(), op.getOperand(1), op.getOperand(0));
-			else
-				return exp;
-		}
-	}
-
-	private class ConstArrayAccessComplexOpOp extends CanonicalForm {
-		private CanonizeReturn cache;
-
-		ConstArrayAccessComplexOpOp() {
-			pattern = new Operation(
-					null,
-					new Operation(
-							null,
-							new Operation(
-									Operator.SELECT,
-									new ArrayVariable(null, null),
-									null),
-							new BVConstant(0, 0)),
-						new BVConstant(0, 0));
-		}
-		
-		@Override
-		public String matches(Expression exp) {
-			if (super.matches(exp) != null) {
-				Operation op  = (Operation)exp;
-				Operation op2 = (Operation)op.getOperand(0);
-				Operation op3 = (Operation)op2.getOperand(0);
-
-				cache = doCanonize(op3.getOperand(1));
-				return cache.varName;
-			}
-
-			return null;
-		}
-		
-		@Override
-		public boolean isCanonical(Expression exp) {
-			Operation op  = (Operation)exp;
-			Operation op2 = (Operation)op.getOperand(0);
-			Operation op3 = (Operation)op2.getOperand(0);
-			
-			CanonizeReturn ret = doCanonize(op3.getOperand(1));
-			
-			return ret.type != CanonizeReturn.Type.NOT_CAN;
-		}
-		
 	}
 }
