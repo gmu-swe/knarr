@@ -14,6 +14,7 @@ import za.ac.sun.cs.green.expr.Constant;
 import za.ac.sun.cs.green.expr.Expression;
 import za.ac.sun.cs.green.expr.Operation;
 import za.ac.sun.cs.green.expr.Operation.Operator;
+import za.ac.sun.cs.green.expr.RealConstant;
 
 public class TaintListener extends DerivedTaintListener {
 
@@ -57,6 +58,12 @@ public class TaintListener extends DerivedTaintListener {
 						case "long":
 							val = new BVConstant(((long[])arr)[i], 64);
 							break;
+						case "float":
+							val = new RealConstant(((float[])arr)[i]);
+							break;
+						case "double":
+							val = new RealConstant(((double[])arr)[i]);
+							break;
 						default:
 							throw new Error("Not supported");
 					}
@@ -67,7 +74,7 @@ public class TaintListener extends DerivedTaintListener {
 		}
 	}
 	
-	private Expression setArrayVar(Object arr, Expression idx, Constant val)
+	private Expression setArrayVar(Object arr, Expression idx, Expression val)
 	{
 		synchronized (arrayNames)
 		{
@@ -122,21 +129,21 @@ public class TaintListener extends DerivedTaintListener {
 		
 		if (!taintedArray && !taintedIndex && !taintedVal)
 			return null;
-		else if ((taintedArray || taintedVal) && taintedIndex)
-			throw new UnsupportedOperationException("Not implemented symbolic index on symbolic array");
+//		else if (taintedVal && taintedIndex)
+//			throw new UnsupportedOperationException("Not implemented symbolic index on symbolic array");
 
 		if (taintedVal)
 		{
 			return t;
 		}
-		else if(taintedArray)
+		else if(taintedArray && !taintedIndex &&!taintedVal)
 		{
 			setArrayVar(b.getVal(), new BVConstant(idx, 32), c);
 			return null;
 		}
 		else if(taintedIndex)
 		{
-			setArrayVar(b.getVal(), (Expression)idxTaint.lbl, c);
+			setArrayVar(b.getVal(), (Expression)idxTaint.lbl, taintedVal ? (Expression) t.lbl : c);
 			
 			// Index is within the array bounds
 			PathUtils.getCurPC()._addDet(Operator.LT, (Expression)idxTaint.lbl, new BVConstant(b.getLength(), 32));
@@ -221,11 +228,8 @@ public class TaintListener extends DerivedTaintListener {
 		ret.val = b.val[idx];
 		
 		// Adjust taint
-		if(idxTaint != null || b.taints != null) {
-			throw new Error("Not implemented");
-		}
+		ret.taint = genericReadArray(b, idxTaint, idx, new RealConstant(ret.val));
 
-		ret.taint = null;
 		return ret;
 	}
 
@@ -256,18 +260,12 @@ public class TaintListener extends DerivedTaintListener {
 
 	@Override
 	public Taint arraySet(LazyFloatArrayObjTags a, Taint idxTaint, int idx, Taint t, float v, ControlTaintTagStack ctrl) {
-		if(idxTaint != null || a.taints != null || t != null)
-			throw new UnsupportedOperationException();
-		
-		return null;
+		return genericWriteArray(a, t, idxTaint, idx, new RealConstant(v));
 	}
 
 	@Override
 	public Taint arraySet(LazyDoubleArrayObjTags a, Taint idxTaint, int idx, Taint t, double v, ControlTaintTagStack ctrl) {
-		if(idxTaint != null || a.taints != null || t != null)
-			throw new UnsupportedOperationException();
-		
-		return null;
+		return genericWriteArray(a, t, idxTaint, idx, new RealConstant(v));
 	}
 
 	@Override

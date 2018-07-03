@@ -52,7 +52,8 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 
 	@Override
 	public boolean isIgnoredClass(String classname) {
-		return classname.startsWith("edu/gmu/swe/knarr") || classname.startsWith("gov/nasa/jpf/");
+		return !classname.equals(Type.getType(JunitAssert.class).getInternalName())
+				&& (classname.startsWith("edu/gmu/swe/knarr") || classname.startsWith("gov/nasa/jpf/"));
 	}
 
 	@Override

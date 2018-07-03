@@ -211,13 +211,13 @@ public class ConstraintServerHandler extends Thread {
 					oos.close();
 				}
 				
-				if (solve) {
+				if (solve)
 					solution = solve(req, true);
-					oos.writeObject(solution);
-				}
-			}
+				else
+					solution = new ArrayList<>();
 
-			oos.close();
+				oos.writeObject(solution);
+			}
 
 		} catch (Throwable e) {
 			e.printStackTrace();

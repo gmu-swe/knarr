@@ -3,6 +3,7 @@ package edu.gmu.swe.knarr;
 import edu.columbia.cs.psl.phosphor.Configuration;
 import edu.columbia.cs.psl.phosphor.Instrumenter;
 import edu.columbia.cs.psl.phosphor.PreMain;
+import edu.gmu.swe.knarr.runtime.JunitTestAdapter;
 import edu.gmu.swe.knarr.runtime.PathConstraintTagFactory;
 
 public class Main {
@@ -18,6 +19,8 @@ public class Main {
 		Configuration.PREALLOC_STACK_OPS = true;
 		Configuration.WITH_TAGS_FOR_JUMPS = true;
 		Configuration.WITH_HEAVY_OBJ_EQUALS_HASHCODE = true;
+		
+		Configuration.extensionMethodVisitor = JunitTestAdapter.class;
 		
 		Configuration.ignoredMethods.add(new Configuration.Method("parseDouble", "java/lang/Double"));
 		System.out.println(Configuration.ignoredMethods);

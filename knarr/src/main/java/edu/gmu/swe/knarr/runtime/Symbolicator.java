@@ -108,24 +108,31 @@ public class Symbolicator {
 	
 	private static int n = 0;
 
-	public static synchronized ArrayList<SimpleEntry<String, Object>> dumpConstraints() {
-		ObjectOutputStream oos;
+	public static ArrayList<SimpleEntry<String, Object>> dumpConstraints() {
+		return dumpConstraints(null);
+	}
+
+	public static synchronized ArrayList<SimpleEntry<String, Object>> dumpConstraints(String name) {
 		collectArrayLenConstraints();
-		try {
 			// if (DEBUG)
 //			System.out.println("Constraints: " + PathUtils.getCurPC().constraints);
-			if(PathUtils.getCurPC().constraints == null)
-				return null;
-			oos = new ObjectOutputStream(getSocket().getOutputStream());
+		if(PathUtils.getCurPC().constraints == null)
+			return null;
+
+		try (ObjectOutputStream oos = new ObjectOutputStream(getSocket().getOutputStream())) {
 			ObjectInputStream ois = new ObjectInputStream(getSocket().getInputStream());
 
 			oos.writeObject(PathUtils.getCurPC().constraints);
 			oos.writeBoolean(true);
-//			oos.writeObject(new File("constraints." + n + ".dat"));
-			oos.writeObject(null);
+			oos.writeObject(name != null ? new File(name + ".dat") : null);
 			n++;
 			PathUtils.getCurPC().constraints = null;
 			serverConnection = null;
+			firstLabel = null;
+			TaintListener.arrayNames.clear();
+			PathUtils.stringName = 0;
+			PathUtils.usedLabels.clear();
+			autoLblr.set(0);
 			ArrayList<SimpleEntry<String, Object>> solution = (ArrayList<SimpleEntry<String,Object>>) ois.readObject();
 //			System.out.println("Solution received: " + solution);
 			byte[] array = new byte[solution.size()];
@@ -144,9 +151,6 @@ public class Symbolicator {
 
 				array[i++] = b.byteValue();
 			}
-			firstLabel = null;
-			TaintListener.arrayNames.clear();
-			PathUtils.stringName = 0;
 			System.out.println(new String(array, StandardCharsets.UTF_8));
 			oos.close();
 			return solution;
@@ -155,6 +159,8 @@ public class Symbolicator {
 			e.printStackTrace();
 		} catch (ClassNotFoundException e) {
 			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (StackOverflowError e) {
 			e.printStackTrace();
 		}
 		return null;
@@ -197,6 +203,10 @@ public class Symbolicator {
 	}
 
 	public static byte[] symbolic(String label, byte[] in) {
+		return in;
+	}
+
+	public static String symbolic(String label, String in) {
 		return in;
 	}
 
