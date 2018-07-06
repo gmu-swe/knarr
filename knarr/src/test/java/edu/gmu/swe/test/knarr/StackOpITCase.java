@@ -26,6 +26,30 @@ public class StackOpITCase {
 //			CheckpointRollbackAgent.rollbackAllRoots(false);
 	}
 	@Test
+	public void testIinc() {
+		
+		int sum = Symbolicator.symbolic("sum", 0);
+		
+		for (int i = Symbolicator.symbolic("inc", 0) ; i < 4 ; i++)
+			sum += i;
+		
+		assertEquals(6, sum);
+
+		ArrayList<SimpleEntry<String, Object>> ret = Symbolicator.dumpConstraints("lol");
+		assertFalse(ret.isEmpty());
+
+		for (SimpleEntry<String, Object> e : ret) {
+			switch (e.getKey()) {
+				case "inc": assertEquals(0 , e.getValue());  break;
+				case "sum": assertEquals(0, e.getValue()); break;
+				default:
+					// Do nothing
+					break;
+			}
+		}
+	}
+
+	@Test
 	public void testInt() {
 		int a;
 		int b = 6; // Symbolicator.symbolic("b", 6);

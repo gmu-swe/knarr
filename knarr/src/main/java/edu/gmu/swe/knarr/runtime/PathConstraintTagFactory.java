@@ -758,7 +758,21 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 
 	@Override
 	public void iincOp(int var, int increment, MethodVisitor mv, LocalVariableManager lvs, TaintPassingMV ta) {
-
+		int shadowVar = 0;
+		if (var < ta.lastArg && TaintUtils.getShadowTaintType(ta.paramTypes[var].getDescriptor()) != null) {
+			//accessing an arg; remap it
+			Type localType = ta.paramTypes[var];
+			if (TaintUtils.getShadowTaintType(localType.getDescriptor()) != null)
+				shadowVar = var - 1;
+			else
+				return;
+		} else {
+			shadowVar = lvs.varToShadowVar.get(var);
+		}
+		
+		mv.visitVarInsn(ALOAD, shadowVar);
+		mv.visitLdcInsn(increment);
+		mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addIincConstraint", "(" + Configuration.TAINT_TAG_DESC + "I)V", false);
 	}
 
 	@Override

@@ -1036,6 +1036,13 @@ public class PathUtils {
 
 		}
 	}
+	
+	public static void addIincConstraint(Taint<Expression> t, int inc) {
+		if (t == null)
+			return;
+		
+		t.lbl = new Operation(Operator.ADD, t.lbl, new IntConstant(inc));
+	}
 
 	public static void addConstraint(Taint<Expression> t, int opcode) {
 		if (t == null)
