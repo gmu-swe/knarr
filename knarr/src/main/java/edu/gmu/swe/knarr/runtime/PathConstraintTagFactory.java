@@ -425,47 +425,6 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 		default:
 			throw new UnsupportedOperationException();
 		}
-		if (inStringClass) {
-			System.out.println("instr... " + this.name + " " + Printer.OPCODES[opcode]);
-			switch (opcode) {
-			case RETURN:
-			case IRETURN:
-			case FRETURN:
-			case ARETURN:
-			case LRETURN:
-			case DRETURN:
-				if (this.name.equals("<init>"))
-					handleConstructor(mv);
-				else if (this.name.equals("toUpperCase"))
-					handleUpperLower(mv, STR_UCASE);
-				else if (this.name.equals("toLowerCase"))
-					handleUpperLower(mv, STR_LCASE);
-				else if (this.name.equals("concat"))
-					handleConcat(mv);
-				else if (this.name.equals("trim"))
-					handleTrim(mv);
-				else if (this.name.equals("length$$PHOSPHORTAGGED"))
-					handleLength(mv);
-				else if (this.name.equals("equals$$PHOSPHORTAGGED"))
-					handleEquals(mv);
-				else if (this.name.equals("isEmpty$$PHOSPHORTAGGED"))
-					handleEmpty(mv);
-				else if (this.name.equals("startsWith$$PHOSPHORTAGGED"))
-					handleStartsWith(mv);
-				else if (this.name.equals("split"))
-					handleSplit(mv);
-				else if (this.name.equals("replaceAll"))
-					handleReplaceAll(mv);
-				else if (this.name.equals("replace"))
-					handleReplace(mv);
-				else if (this.name.equals("substring$$PHOSPHORTAGGED"))
-					handleSubstring(mv);
-				else if(this.name.equals("charAt$$PHOSPHORTAGGED"))
-					handleCharAt(mv);
-				// TODO: make sustring not break jvm
-				break;
-			}
-		}
 	}
 
 	static int invertOpcode(int opcode) {
@@ -792,7 +751,6 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 	@Override
 	public void methodEntered(String owner, String name, String desc, MethodVisitor mv, LocalVariableManager lvs, TaintPassingMV ta) {
 		inStringClass = "java/lang/String".equals(owner);
-		// System.out.println(owner + "."+name+desc);
 
 		this.name = name;
 		this.args = Type.getArgumentTypes(desc);
@@ -963,150 +921,6 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 
 	@Override
 	public void insnIndexVisited(int offset) {
-	}
-
-	private void handleSubstring(MethodVisitor mv) {
-		mv.visitInsn(DUP);
-		mv.visitVarInsn(ALOAD, 0);
-		mv.visitVarInsn(ALOAD, 1);
-		mv.visitVarInsn(ILOAD, 2);
-		if (args.length == 4) {
-			mv.visitVarInsn(ALOAD, 1);
-			mv.visitVarInsn(ILOAD, 4);
-			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addSubstringConstraint", "(Ljava/lang/String;Ljava/lang/String;" + Configuration.TAINT_TAG_DESC + "I" + Configuration.TAINT_TAG_DESC + "I)V", false);
-		} else // TODO: Fix so initiation does not fail
-		{
-			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addSubstringConstraint", "(Ljava/lang/String;Ljava/lang/String;" + Configuration.TAINT_TAG_DESC + "I)V", false);
-		}
-	}
-	private void handleCharAt(MethodVisitor mv) {
-		mv.visitInsn(DUP);
-		mv.visitVarInsn(ALOAD, 0);
-		mv.visitVarInsn(ALOAD, 1);
-		mv.visitVarInsn(ILOAD, 2);
-		mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addCharAtConstraint", "(Ledu/columbia/cs/psl/phosphor/struct/TaintedCharWithObjTag;Ljava/lang/String;" + Configuration.TAINT_TAG_DESC + "I)V", false);
-	}
-
-	private void handleSplit(MethodVisitor mv) {
-		// super.visitInsn(DUP);
-		// super.visitVarInsn(ALOAD,0);
-		// super.visitVarInsn(ALOAD,1);
-		// super.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME,
-		// "addSplitConstraint",
-		// "([Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V", false);
-	}
-
-	private void handleReplace(MethodVisitor mv) {
-		if (!args[1].getInternalName().equals("C")) // Not char
-		{
-			mv.visitInsn(DUP);
-			mv.visitVarInsn(ALOAD, 1);
-			mv.visitVarInsn(ALOAD, 2);
-			mv.visitVarInsn(ALOAD, 0);
-			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addReplaceConstraint", "(Ljava/lang/String;Ljava/lang/CharSequence;Ljava/lang/CharSequence;Ljava/lang/String;)V", false);
-		}
-	}
-
-	private void handleReplaceAll(MethodVisitor mv) {
-		mv.visitInsn(DUP);
-		mv.visitVarInsn(ALOAD, 1); // From
-		mv.visitVarInsn(ALOAD, 2); // To
-		mv.visitVarInsn(ALOAD, 0); // Orig
-		mv.visitIntInsn(SIPUSH, STR_REPLACEALL);
-		mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addReplaceAllConstraint", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;I)V", false);
-	}
-
-	private void handleEmpty(MethodVisitor mv) {
-		mv.visitInsn(DUP);
-		mv.visitVarInsn(ALOAD, 0);
-		mv.visitIntInsn(SIPUSH, STR_EMPTY);
-		mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "registerStringBooleanOp", "(Ledu/columbia/cs/psl/phosphor/struct/TaintedBooleanWithObjTag;Ljava/lang/String;I)V", false);
-	}
-
-	private void handleStartsWith(MethodVisitor mv) {
-		if (args.length == 2) // Only handle starting at 0 as this moment.
-		{
-			mv.visitInsn(DUP);
-			mv.visitVarInsn(ALOAD, 1);
-			mv.visitVarInsn(ALOAD, 0);
-			mv.visitIntInsn(SIPUSH, STR_START);
-			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "registerStringBooleanOp", "(Ledu/columbia/cs/psl/phosphor/struct/TaintedBooleanWithObjTag;Ljava/lang/String;Ljava/lang/Object;I)V", false);
-		}
-	}
-
-	private void handleEquals(MethodVisitor mv) {
-		mv.visitInsn(DUP);
-		mv.visitVarInsn(ALOAD, 0);
-		mv.visitVarInsn(ALOAD, 1);
-		mv.visitIntInsn(SIPUSH, STR_EQUAL);
-		mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "registerStringBooleanOp", "(Ledu/columbia/cs/psl/phosphor/struct/TaintedBooleanWithObjTag;Ljava/lang/String;Ljava/lang/Object;I)V", false);
-	}
-
-	private void handleLength(MethodVisitor mv) {
-		mv.visitInsn(DUP);
-		mv.visitVarInsn(ALOAD, 0);
-		getTaintField(mv);
-		mv.visitIntInsn(SIPUSH, STR_LEN);
-		mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "registerUnaryToTaint", "(Ledu/columbia/cs/psl/phosphor/struct/TaintedPrimitiveWithObjTag;" + Configuration.TAINT_TAG_DESC + "I)V", false);
-	}
-
-	private void handleTrim(MethodVisitor mv) {
-		mv.visitInsn(DUP);
-		mv.visitVarInsn(ALOAD, 0);
-		getTaintField(mv);
-		registerSingleStringOp(mv, STR_TRIM);
-		putTaintField(mv);
-	}
-
-	private void handleUpperLower(MethodVisitor mv, int opcode) {
-		if (args.length == 1) {
-			mv.visitInsn(DUP);
-			mv.visitVarInsn(ALOAD, 0);
-			getTaintField(mv);
-			registerSingleStringOp(mv, opcode);
-			putTaintField(mv);
-		}
-	}
-
-	private void handleConcat(MethodVisitor mv) {
-		mv.visitInsn(DUP);
-		mv.visitVarInsn(ALOAD, 0);
-		mv.visitVarInsn(ALOAD, 1);
-		mv.visitIntInsn(SIPUSH, STR_CONCAT);
-		mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "registerBinaryStringOp", "(Ljava/lang/String;Ljava/lang/String;I)" + Configuration.TAINT_TAG_DESC, false);
-		putTaintField(mv);
-	}
-
-	/**
-	 * Inserts code just before a constructor returns to initialize the taint to
-	 * a fresh taint representing this value
-	 */
-	private void handleConstructor(MethodVisitor mv) {
-		if (args.length == 1 && args[0].getInternalName().equals("java/lang/String")) {
-			// Create a string that is a copy of the previous string. So copy
-			// all constraints.
-			mv.visitVarInsn(ALOAD, 0);
-			mv.visitVarInsn(ALOAD, 1);
-			getTaintField(mv);
-			registerSingleStringOp(mv, STR_CPY);
-			putTaintField(mv);
-		} else if (args.length == 7 && args[1].getSort() == Type.ARRAY && args[3] == Type.INT_TYPE && args[5] == Type.INT_TYPE) {
-			mv.visitVarInsn(ALOAD, 0);
-			mv.visitVarInsn(ALOAD, 0);
-			mv.visitVarInsn(ALOAD, 1);
-			mv.visitVarInsn(ALOAD, 2);
-			mv.visitVarInsn(ALOAD, 3);
-			mv.visitVarInsn(ILOAD, 4);
-			mv.visitVarInsn(ALOAD, 5);
-			mv.visitVarInsn(ILOAD, 6);
-			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "registerNewString", "(" +
-					Type.getType(String.class) +
-					Type.getType(LazyArrayObjTags.class) + Type.getType(Object.class).getDescriptor() + 
-					Configuration.TAINT_TAG_DESC + "I" +
-					Configuration.TAINT_TAG_DESC + "I)" +
-					Configuration.TAINT_TAG_DESC, false);
-			putTaintField(mv);
-		}
 	}
 
 	private void registerSingleStringOp(MethodVisitor mv, int op) {

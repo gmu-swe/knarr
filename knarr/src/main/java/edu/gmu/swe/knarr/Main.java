@@ -5,6 +5,7 @@ import edu.columbia.cs.psl.phosphor.Instrumenter;
 import edu.columbia.cs.psl.phosphor.PreMain;
 import edu.gmu.swe.knarr.runtime.JunitTestAdapter;
 import edu.gmu.swe.knarr.runtime.PathConstraintTagFactory;
+import edu.gmu.swe.knarr.runtime.StringTagFactory;
 
 public class Main {
 	public static void main(String[] _args) {
@@ -21,6 +22,7 @@ public class Main {
 		Configuration.WITH_HEAVY_OBJ_EQUALS_HASHCODE = true;
 		
 		Configuration.extensionMethodVisitor = JunitTestAdapter.class;
+		Configuration.extensionClassVisitor = StringTagFactory.class;
 		
 		Configuration.ignoredMethods.add(new Configuration.Method("parseDouble", "java/lang/Double"));
 		System.out.println(Configuration.ignoredMethods);

@@ -7,11 +7,8 @@ import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
-import edu.gmu.swe.knarr.runtime.PathUtils;
 import edu.gmu.swe.knarr.runtime.Symbolicator;
 
 public class StringOpITCase {
@@ -25,22 +22,8 @@ public class StringOpITCase {
 	public void testSubstring() throws Exception {
 	}
 	
-	private static boolean stringsBefore;
-	
-	@BeforeClass
-	public static void setup() {
-		stringsBefore = PathUtils.USE_STRINGS;
-		PathUtils.USE_STRINGS = false;
-	}
-	
-	@AfterClass
-	public static void teardown() {
-		PathUtils.USE_STRINGS = stringsBefore;
-	}
-
 	@Test
 	public void testCharAt() throws Exception {
-		PathUtils.USE_STRINGS = true;
 		String test = "This is a test";
 		char tainted[] = new char[test.length()];
 		
@@ -134,7 +117,7 @@ public class StringOpITCase {
 		}
 	}
 
-//	@Test
+	@Test
 	public void testToLowerUpper() throws Exception {
 		String test = "This is a test";
 		char tainted[] = new char[test.length()];
@@ -161,7 +144,7 @@ public class StringOpITCase {
 			Matcher m = p.matcher(e.getKey());
 			if (m.matches()) {
 				int i = Integer.parseInt(m.group(1));
-				assertEquals(test.toLowerCase().charAt(i), e.getValue());
+				assertEquals(test.toLowerCase().charAt(i), Character.toLowerCase((char) (int) e.getValue()));
 			}
 		}
 	}

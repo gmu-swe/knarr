@@ -130,7 +130,7 @@ public class Symbolicator {
 			serverConnection = null;
 			firstLabel = null;
 			TaintListener.arrayNames.clear();
-			PathUtils.stringName = 0;
+			StringUtils.stringName = 0;
 			PathUtils.usedLabels.clear();
 			autoLblr.set(0);
 			ArrayList<SimpleEntry<String, Object>> solution = (ArrayList<SimpleEntry<String,Object>>) ois.readObject();
