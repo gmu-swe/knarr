@@ -7,6 +7,7 @@ import edu.columbia.cs.psl.phosphor.struct.LazyArrayObjTags;
 import edu.columbia.cs.psl.phosphor.struct.LazyCharArrayObjTags;
 import edu.columbia.cs.psl.phosphor.struct.TaintedBooleanWithObjTag;
 import edu.columbia.cs.psl.phosphor.struct.TaintedCharWithObjTag;
+import edu.columbia.cs.psl.phosphor.struct.TaintedIntWithObjTag;
 import za.ac.sun.cs.green.expr.BVVariable;
 import za.ac.sun.cs.green.expr.Expression;
 import za.ac.sun.cs.green.expr.IntConstant;
@@ -198,6 +199,11 @@ public class StringUtils {
 			ret.PHOSPHOR_TAG = new ExpressionTaint(newExp);
 			ret.valuePHOSPHOR_TAG.taints = newTaints;
 		}
+	}
+	
+	public static void length$$PHOSPHORTAGGED(TaintedIntWithObjTag ret, String s, TaintedIntWithObjTag ret2) {
+		if (s.PHOSPHOR_TAG != null && s.PHOSPHOR_TAG.lbl != null)
+			ret.taint = new ExpressionTaint(new Operation(Operator.LENGTH, (Expression) s.PHOSPHOR_TAG.lbl));
 	}
 	
 }

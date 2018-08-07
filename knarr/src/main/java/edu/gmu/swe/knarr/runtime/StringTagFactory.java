@@ -27,6 +27,7 @@ public class StringTagFactory extends ClassVisitor implements Opcodes {
 			"charAt$$PHOSPHORTAGGED",
 			"toLowerCase",
 			"toUpperCase",
+			"length$$PHOSPHORTAGGED",
 	}));
 
 	public StringTagFactory(ClassVisitor classVisitor, boolean skipFrames) {

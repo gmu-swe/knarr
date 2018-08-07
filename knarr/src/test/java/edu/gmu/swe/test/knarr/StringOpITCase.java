@@ -13,7 +13,23 @@ import edu.gmu.swe.knarr.runtime.Symbolicator;
 
 public class StringOpITCase {
 
+	@Test
 	public void testLength() throws Exception {
+		String test = "This is a test";
+		char tainted[] = new char[test.length()];
+		
+		for (int i = 0 ; i < tainted.length ; i++)
+			tainted[i] = Symbolicator.symbolic("length_" + i, test.charAt(i));
+
+		String taintedString = new String(tainted, 0, tainted.length);
+		
+		for (int i = 0 ; i < taintedString.length() ; i++) {
+			assertNotEquals(20, i);
+		}
+
+		ArrayList<SimpleEntry<String, Object>> solution = Symbolicator.dumpConstraints("lol");
+		
+		assertTrue(solution != null && !solution.isEmpty());
 	}
 
 	public void testEndsWidth() throws Exception {
