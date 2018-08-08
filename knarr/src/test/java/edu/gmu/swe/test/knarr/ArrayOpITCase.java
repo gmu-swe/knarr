@@ -210,6 +210,27 @@ public class ArrayOpITCase {
 		}
 	}
 	
+	public void testNullArray() {
+		SimpleEntry<String, String> untaintedTable[] = new SimpleEntry[10];
+		untaintedTable[4] = new SimpleEntry<>("one", "two");
+		
+		int taintedHash = Symbolicator.symbolic("taintedHash", (int)3);
+		
+		SimpleEntry<String, String> node = untaintedTable[taintedHash];
+		
+		String value;
+		if (node == null)
+			value = null;
+		else
+			value = node.getValue();
+		
+		assertNotEquals("two", value);
+
+		ArrayList<SimpleEntry<String, Object>> solution = Symbolicator.dumpConstraints();
+		
+		assertNotNull(solution);
+	}
+	
 	public static void main(String[] args) throws Exception {
 		new ArrayOpITCase().testArrayWriteOnConstantIndex();
 	}
