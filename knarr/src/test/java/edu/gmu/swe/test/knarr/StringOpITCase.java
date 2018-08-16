@@ -7,12 +7,28 @@ import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
+import edu.gmu.swe.knarr.runtime.StringUtils;
 import edu.gmu.swe.knarr.runtime.Symbolicator;
 
 public class StringOpITCase {
-
+	
+	private static boolean isStringUtilsEnabled;
+	
+	@BeforeClass
+	public static void setup() {
+		isStringUtilsEnabled = StringUtils.enabled;
+		StringUtils.enabled = true;
+	}
+	
+	@AfterClass
+	public static void teardown() {
+		StringUtils.enabled = isStringUtilsEnabled;
+	}
+	
 	@Test
 	public void testLength() throws Exception {
 		String test = "This is a test";

@@ -17,6 +17,7 @@ import za.ac.sun.cs.green.expr.StringConstant;
 import za.ac.sun.cs.green.expr.StringVariable;
 
 public class StringUtils {
+	public static boolean enabled = false;
 	public static void setTaints(LazyCharArrayObjTags tags, Object tag) {
 //		if (tags.val.length == 0)
 //			return;
@@ -55,16 +56,10 @@ public class StringUtils {
 //				handleCharAt(mv);
 //			 // TODO: make sustring not break jvm
 //		}
-	
-	public static int stringName;
-	
-	private static StringVariable getFreshStringVar() {
-		return new StringVariable("string_var_" + (stringName++));
-	}
 
 	public static void registerNewString(String s, LazyArrayObjTags srcTags, Object src, Taint offset_t, int offset, Taint len_t, int len) {
-		if (srcTags != null && srcTags.taints != null) {
-			StringVariable var = getFreshStringVar();
+		if (enabled && srcTags != null && srcTags.taints != null) {
+			StringVariable var = Symbolicator.getFreshStringVar();
 			Expression exp = var;
 			char[] arr = s.toCharArray();
 			for (int i = offset ; i < len ; i++) {
@@ -83,7 +78,7 @@ public class StringUtils {
 	
 	public static void startsWith$$PHOSPHORTAGGED(TaintedBooleanWithObjTag ret, String s, String pref, Taint tStart, int start, TaintedBooleanWithObjTag ret2) {
 		Expression tPref;
-		if (s.PHOSPHOR_TAG != null && s.PHOSPHOR_TAG.lbl != null) {
+		if (enabled && s.PHOSPHOR_TAG != null && s.PHOSPHOR_TAG.lbl != null) {
 			if (pref.PHOSPHOR_TAG != null && pref.PHOSPHOR_TAG.lbl != null)
 				tPref = (Expression)pref.PHOSPHOR_TAG.lbl;
 			else
@@ -107,7 +102,7 @@ public class StringUtils {
 	
 
 	public static void equals$$PHOSPHORTAGGED(TaintedBooleanWithObjTag ret, String s, Object o, TaintedBooleanWithObjTag ret2) {
-		if (o != null && o instanceof String && s.PHOSPHOR_TAG != null && s.PHOSPHOR_TAG.lbl != null) {
+		if (enabled && o != null && o instanceof String && s.PHOSPHOR_TAG != null && s.PHOSPHOR_TAG.lbl != null) {
 			String s2 = (String)o;
 
 			Expression tO;
@@ -123,7 +118,7 @@ public class StringUtils {
 	
 	
 	public static void charAt$$PHOSPHORTAGGED(TaintedCharWithObjTag ret, String s, Taint tIndex, int index, TaintedCharWithObjTag ret2) {
-		if (s.PHOSPHOR_TAG != null && s.PHOSPHOR_TAG.lbl != null) {
+		if (enabled && s.PHOSPHOR_TAG != null && s.PHOSPHOR_TAG.lbl != null) {
 			Expression eIndex;
 			if (tIndex != null && tIndex.lbl != null)
 				eIndex = (Expression) tIndex.lbl;
@@ -165,7 +160,7 @@ public class StringUtils {
 	}
 	
 	private static void changeCase(String ret, String s, boolean toUpper) {
-		if (s.PHOSPHOR_TAG != null && s.PHOSPHOR_TAG.lbl != null) {
+		if (enabled && s.PHOSPHOR_TAG != null && s.PHOSPHOR_TAG.lbl != null) {
 			
 			Expression newExp = new StringConstant("");
 			Taint newTaints[] = new Taint[s.length()];
@@ -202,7 +197,7 @@ public class StringUtils {
 	}
 	
 	public static void length$$PHOSPHORTAGGED(TaintedIntWithObjTag ret, String s, TaintedIntWithObjTag ret2) {
-		if (s.PHOSPHOR_TAG != null && s.PHOSPHOR_TAG.lbl != null)
+		if (enabled && s.PHOSPHOR_TAG != null && s.PHOSPHOR_TAG.lbl != null)
 			ret.taint = new ExpressionTaint(new Operation(Operator.LENGTH, (Expression) s.PHOSPHOR_TAG.lbl));
 	}
 	
