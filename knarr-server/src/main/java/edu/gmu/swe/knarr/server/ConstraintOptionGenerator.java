@@ -3,8 +3,11 @@ package edu.gmu.swe.knarr.server;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import com.microsoft.z3.ArrayExpr;
 import com.microsoft.z3.ArraySort;
@@ -69,6 +72,16 @@ public class ConstraintOptionGenerator {
 			}
 			super.postVisit(operation);
 		}
+	}
+
+	Map<String, Expression> createExpr(Map<String, BoolExpr> exp) {
+		
+		HashMap<String, Expression> ret = new HashMap<>();
+		
+		for (Entry<String, BoolExpr> entry : exp.entrySet())
+			ret.put(entry.getKey(), createExpr(entry.getValue()));
+		
+		return ret;
 	}
 
 	Expression createExpr(Expr exp) {
@@ -338,7 +351,7 @@ public class ConstraintOptionGenerator {
 
 	public LinkedList<Z3GreenBridge> generateOptions(Z3GreenBridge data) {
 		LinkedList<Z3GreenBridge> ret = new LinkedList<Z3GreenBridge>();
-		OperatorCollector ctr = new OperatorCollector();
+//		OperatorCollector ctr = new OperatorCollector();
 //		System.out.println("Working from: " + data.constraints_int);
 		data.constraints = createExpr(data.constraints_int);
 //		System.out.println("=> becomes " + data.constraints);
@@ -349,12 +362,12 @@ public class ConstraintOptionGenerator {
 			else
 				data.metaConstraints = new Operation(Operator.AND,data.metaConstraints,createExpr(b));
 		}
-		try {
-			data.constraints.accept(ctr);
-		} catch (VisitorException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+//		try {
+//			data.constraints.accept(ctr);
+//		} catch (VisitorException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
 //		System.out.println(data.constraints);
 //		System.out.println(data.metaConstraints);
 

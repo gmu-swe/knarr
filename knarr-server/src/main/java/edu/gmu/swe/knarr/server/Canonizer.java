@@ -145,6 +145,24 @@ public class Canonizer implements Serializable {
 		return expr;
 	}
 
+	public Map<String, Expression> getExpressionMap() {
+		HashMap<String, Expression> ret = new HashMap<>();
+		
+		for (HashSet<Expression> es : this.canonical.values())
+			for (Expression e : es)
+				ret.put(e.toString(), e);
+		
+		for (Expression e : this.notCanonical)
+			ret.put(e.toString(), e);
+		
+		for (HashSet<Expression> es : this.constArrayInits.values())
+			for (Expression e : es)
+				ret.put(e.toString(), e);
+
+		return ret;
+	}
+
+
 	private CanonizeReturn doCanonize(Expression exp) {
 		for (CanonicalForm c : forms) {
 			String varName = c.matches(exp);

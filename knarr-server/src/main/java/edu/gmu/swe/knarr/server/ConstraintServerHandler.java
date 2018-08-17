@@ -30,6 +30,7 @@ import za.ac.sun.cs.green.expr.Operation.Operator;
 import za.ac.sun.cs.green.service.canonizer.ModelCanonizerService;
 import za.ac.sun.cs.green.service.factorizer.ModelFactorizerService;
 import za.ac.sun.cs.green.service.z3.ModelZ3JavaService;
+import za.ac.sun.cs.green.service.z3.ModelZ3JavaService.Solution;
 import za.ac.sun.cs.green.service.z3.Z3JavaTranslator.Z3GreenBridge;
 import za.ac.sun.cs.green.util.Configuration;
 import za.ac.sun.cs.green.util.NotSatException;
@@ -244,7 +245,19 @@ public class ConstraintServerHandler extends Thread {
 		} else {
 			in = new Instance(green, null, req);
 		}
+		
+		return solve(in);
+	}
+				
+	public static ArrayList<SimpleEntry<String, Object>> solve(Map<String, Expression> expressions) {
+		
+//				modeler.processRequest(in);
 
+		Instance in = new Instance(green, null, expressions);
+		return solve(in);
+	}
+
+	private static ArrayList<SimpleEntry<String, Object>> solve(Instance in) {
 		generateAndAddNewOptions(modeler.getUnderlyingExpr(in));
 
 		Z3GreenBridge newExp = stateStore.getNewOption();
@@ -260,18 +273,18 @@ public class ConstraintServerHandler extends Thread {
 				long start = System.currentTimeMillis();
 				
 				
-				HashMap<String, Object> sol = modeler.solve(newExp);
+				Solution sol = modeler.solve(newExp);
 				inZ3 += (System.currentTimeMillis()-start);
 				nSolved++;
 
-				if (sol != null) {
+				if (sol.sat) {
 					nSat++;
 					System.out.println("SAT");
 //								System.out.println("SAT: " + sol);
-					for(String v : sol.keySet())	
+					for(String v : sol.data.keySet())	
 					{
 //									if (v.startsWith(prefix))
-							ret.add(new SimpleEntry<String, Object>(v, sol.get(v)));
+							ret.add(new SimpleEntry<String, Object>(v, sol.data.get(v)));
 					}
 				} else {
 					stateStore.addUnsat(newExp);
