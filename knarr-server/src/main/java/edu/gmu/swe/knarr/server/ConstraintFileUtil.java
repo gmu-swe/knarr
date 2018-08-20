@@ -214,10 +214,48 @@ public class ConstraintFileUtil {
 								System.out.println("(declare-const " + v + " " + s + ")");
 							}
 						}
+						
+						LinkedList<Expression> exprs = new LinkedList<>();
+						
+						{
+							Expression e = (Expression) o;
+							while (true) {
+								Operation op;
+								if (e instanceof Operation && (op = (Operation)e).getOperator() == Operator.AND) {
+									exprs.addLast(op.getOperand(1));
+									e = op.getOperand(0);
+								} else {
+									exprs.addLast(e);
+									break;
+								}
+							}
+						}
+						
+						{
+							int i = 0;
+							for (Expression e : exprs) {
+								Z3JavaTranslator t = new Z3JavaTranslator(ctx);
+								try {
+									e.accept(t);
+								} catch (VisitorException e1) {
+									throw new Error(e1);
+								}
+
+								// Print constraint number as a comment
+								System.out.println("; c" + (++i));
+
+								// Print Knarr constraint as comment
+								System.out.println("; " + e.toString());
+
+								System.out.println("(assert (!" + t.getTranslation() + " :named c" + i + "))");
+								System.out.println();
+							}
+						}
+
 
 						// Print constraints
-						System.out.println("(assert " + translator.getTranslation().toString() + " )");
-						System.out.println("\n\n");
+//						System.out.println("(assert " + translator.getTranslation().toString() + " )");
+//						System.out.println("\n\n");
 					} else if (o instanceof Canonizer) {
 
 						Canonizer c = (Canonizer) o;
