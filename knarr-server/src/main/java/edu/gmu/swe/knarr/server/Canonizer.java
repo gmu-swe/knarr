@@ -42,6 +42,8 @@ public class Canonizer implements Serializable {
 	private HashSet<Expression> notCanonical = new HashSet<>();
 
 	private TreeSet<Variable> variables = new TreeSet<>(new VariableComparator());
+	
+	private LinkedList<Expression> order = new LinkedList<>();
 
 	public Canonizer() {
 		Class<?>[] cs = Canonizer.class.getDeclaredClasses();
@@ -87,9 +89,11 @@ public class Canonizer implements Serializable {
 						constArrayInits.put(ret.varName, s);
 					}
 					s.add(ret.expr);
+					order.addFirst(ret.expr);
 					break;
 				case NOT_CAN:
 					notCanonical.add(toCanon);
+					order.addFirst(toCanon);
 					break;
 				case CAN_VAR:
 					s = canonical.get(ret.varName);
@@ -98,6 +102,7 @@ public class Canonizer implements Serializable {
 						canonical.put(ret.varName, s);
 					}
 					s.add(ret.expr);
+					order.addFirst(ret.expr);
 					break;
 				default:
 					throw new UnsupportedOperationException();
@@ -108,6 +113,10 @@ public class Canonizer implements Serializable {
 			else
 				break;
 		}
+	}
+	
+	public LinkedList<Expression> getOrder() {
+		return order;
 	}
 	
 	public Map<String, HashSet<Expression>> getConstArrayInits() {
