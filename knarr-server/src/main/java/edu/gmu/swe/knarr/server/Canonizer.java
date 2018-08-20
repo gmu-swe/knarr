@@ -131,7 +131,7 @@ public class Canonizer implements Serializable {
 		return notCanonical;
 	}
 	
-	public Set<Variable> getVariables() {
+	public TreeSet<Variable> getVariables() {
 		return variables;
 	}
 	

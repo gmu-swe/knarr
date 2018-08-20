@@ -13,14 +13,19 @@ import java.nio.charset.StandardCharsets;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Map;
 import java.util.Map.Entry;
 
 import com.microsoft.z3.Context;
 import com.microsoft.z3.Expr;
 import com.microsoft.z3.Sort;
 
+import za.ac.sun.cs.green.expr.BVConstant;
+import za.ac.sun.cs.green.expr.BVVariable;
 import za.ac.sun.cs.green.expr.BoolConstant;
 import za.ac.sun.cs.green.expr.Expression;
+import za.ac.sun.cs.green.expr.IntConstant;
 import za.ac.sun.cs.green.expr.Operation;
 import za.ac.sun.cs.green.expr.Operation.Operator;
 import za.ac.sun.cs.green.expr.Variable;
@@ -28,7 +33,7 @@ import za.ac.sun.cs.green.expr.VisitorException;
 import za.ac.sun.cs.green.service.z3.Z3JavaTranslator;
 
 public class ConstraintFileUtil {
-
+	
 	public static void main(String[] args) throws IOException, ClassNotFoundException {
 		
 		switch (args[0]) {
@@ -42,35 +47,23 @@ public class ConstraintFileUtil {
 					
 					deserialTime = end - start;
 					
-					ArrayList<SimpleEntry<String, Object>> solution;
+					ArrayList<SimpleEntry<String, Object>> solution = new ArrayList<>();
 
 					if (o instanceof Expression) {
 						start = System.currentTimeMillis();
-						solution = ConstraintServerHandler.solve((Expression)o, false);
+						ConstraintServerHandler.solve((Expression)o, false, solution, new HashSet<String>());
 						end = System.currentTimeMillis();
 					} else if (o instanceof Canonizer) {
 						Canonizer c = (Canonizer) o;
 						
 						start = System.currentTimeMillis();
-						Expression res = new Operation(Operator.NOT, new BoolConstant(false));
-						
-						for (HashSet<Expression> s : c.getCanonical().values())
-							for (Expression e : s)
-								res = new Operation(Operator.AND, res, e);
-						
-						for (Expression e : c.getNotCanonical())
-							res = new Operation(Operator.AND, res, e);
-						
-						for (HashSet<Expression> s : c.getConstArrayInits().values())
-							for (Expression e : s)
-								res = new Operation(Operator.AND, res, e);
-
+						Expression res = ((Canonizer) o).getExpression();
 						end = System.currentTimeMillis();
 						
 						convertToExpressionTime = end - start;
 
 						start = System.currentTimeMillis();
-						solution = ConstraintServerHandler.solve(res, false);
+						ConstraintServerHandler.solve(res, false, solution, new HashSet<String>());
 						end = System.currentTimeMillis();
 						
 					} else throw new UnsupportedOperationException();
@@ -301,6 +294,7 @@ public class ConstraintFileUtil {
 				}
 			case "compare":
 				// compare a b common a-rest b-rest
+			{
 				Canonizer a = null, b = null;
 				try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(args[1]))) {
 					Object o = ois.readObject();
@@ -336,6 +330,7 @@ public class ConstraintFileUtil {
 //				}
 				
 				break;
+			}
 				
 			case "serve-compare":
 				// serve-compare address port
@@ -372,6 +367,122 @@ public class ConstraintFileUtil {
 						 listener.close();
 					 }
 				 }
+			case "gen-input":
+				try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(args[1]))) {
+					Object o = ois.readObject();
+					
+					if (o instanceof Expression) {
+						throw new Error("Please canonize/dedup constraints first");
+					} else if (! (o instanceof Canonizer)) {
+						throw new UnsupportedOperationException();
+					}
+					
+					Canonizer c = (Canonizer) o;
+					
+					int inputToNegate = Integer.parseInt(args[2]);
+
+					Map<String, Expression> res = c.getExpressionMap();
+					ArrayList<SimpleEntry<String, Object>> sat = new ArrayList<>();
+					HashSet<String> unsat = new HashSet<>();
+					ConstraintServerHandler.solve(res, sat, unsat);
+					
+					if (sat.isEmpty())
+						throw new Error("UNSAT constraints to start with");
+					
+					for (int ii = 0 ; ii < Integer.parseInt(args[3]) ; ii++) {
+						// Find variable holding input to negate
+						Variable varToNegate = null;
+						{
+							int i = 0;
+							for (Variable v : c.getVariables()) {
+								if (i++ == inputToNegate) {
+									varToNegate = v;
+									break;
+								}
+							}
+						}
+
+						if (varToNegate == null)
+							throw new Error("Var to negate not found");
+
+						// Find value to negate
+						Object valueToNegate = null;
+						for (SimpleEntry<String, Object> e : sat) {
+							if (e.getKey().equals(varToNegate.getName())) {
+								valueToNegate = e.getValue();
+								break;
+							}
+						}
+
+						if (valueToNegate == null)
+							throw new Error("Value to negate not found in solution");
+
+						// Add negated input to constraints
+						Expression negatedInput = new Operation(
+								Operator.NOT,
+								new Operation(Operator.EQUALS, varToNegate, new BVConstant((int)valueToNegate, ((BVVariable)varToNegate).getSize()))
+								);
+
+						c.getCanonical().get(varToNegate.getName()).add(negatedInput);
+						c.getOrder().addLast(negatedInput);
+						res.put(negatedInput.toString(), negatedInput);
+
+						// Solve again
+						while (true) {
+							sat.clear();
+							unsat.clear();
+							ConstraintServerHandler.solve(res, sat, unsat);
+
+							if (!sat.isEmpty()) {
+								// SAT -> generate input
+								byte[] buf = new byte[sat.size()];
+								int i = 0;
+								for (Entry<String, Object> e: sat) {
+									if (!e.getKey().startsWith("autoVar_"))
+										break;
+									Integer b = (Integer) e.getValue();
+									if (b == null)
+										break;
+
+									buf[i++] = b.byteValue();
+								}
+
+								System.out.println(new String(buf, StandardCharsets.UTF_8));
+								break;
+							} else {
+								// UNSAT
+
+								// Find latest constraint in UNSAT core
+								boolean found = false;
+								LinkedList<Expression> newOrder = new LinkedList<>();
+								LinkedList<Expression> toRemove = new LinkedList<>();
+								for (Expression e : c.getOrder()) {
+									if (unsat.contains(e.toString())) {
+										System.out.println(e);
+										found = true;
+									}
+
+									(!found ? newOrder : toRemove).addLast(e);
+								}
+
+								// Remove it and all later constraints
+								for (HashSet<Expression> es : c.getCanonical().values())
+									es.removeAll(toRemove);
+
+								for (HashSet<Expression> es : c.getConstArrayInits().values())
+									es.removeAll(toRemove);
+
+								c.getNotCanonical().removeAll(toRemove);
+
+								// Try again
+								res = c.getExpressionMap();
+								continue;
+							}
+						}
+
+					}
+				}
+				break;
 			default:
 				System.out.println("Unknown action: " + args[0]);
 				return;

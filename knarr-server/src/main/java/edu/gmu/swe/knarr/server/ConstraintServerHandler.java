@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -213,7 +214,7 @@ public class ConstraintServerHandler extends Thread {
 				}
 				
 				if (solve)
-					solution = solve(req, true);
+					solve(req, true, solution, new HashSet<String>());
 				else
 					solution = new ArrayList<>();
 
@@ -232,7 +233,7 @@ public class ConstraintServerHandler extends Thread {
 			
 	}
 				
-	public static ArrayList<SimpleEntry<String, Object>> solve(Expression req, boolean dedup) {
+	public static void solve(Expression req, boolean dedup, ArrayList<SimpleEntry<String, Object>> sat, Set<String> unsat) {
 		
 //				modeler.processRequest(in);
 
@@ -246,26 +247,25 @@ public class ConstraintServerHandler extends Thread {
 			in = new Instance(green, null, req);
 		}
 		
-		return solve(in);
+		solve(in, sat, unsat);
 	}
 				
-	public static ArrayList<SimpleEntry<String, Object>> solve(Map<String, Expression> expressions) {
+	public static void solve(Map<String, Expression> expressions,  ArrayList<SimpleEntry<String, Object>> sat, Set<String> unsat) {
 		
 //				modeler.processRequest(in);
 
 		Instance in = new Instance(green, null, expressions);
-		return solve(in);
+		solve(in, sat, unsat);
 	}
 
-	private static ArrayList<SimpleEntry<String, Object>> solve(Instance in) {
+	private static void solve(Instance in,  ArrayList<SimpleEntry<String, Object>> sat, Set<String> unsat) {
 		generateAndAddNewOptions(modeler.getUnderlyingExpr(in));
 
 		Z3GreenBridge newExp = stateStore.getNewOption();
-		boolean sat = false;
-		ArrayList<SimpleEntry<String, Object>> ret = new ArrayList<>();
+		boolean issat = false;
 		final String prefix = "autoVar_";
-		while (newExp != null && !sat) {
-			sat = true;
+		while (newExp != null && !issat) {
+			issat = true;
 //					System.out.println("Trying out new version: " + newExp);
 			try{
 //						modeler.processRequest(k);
@@ -284,23 +284,26 @@ public class ConstraintServerHandler extends Thread {
 					for(String v : sol.data.keySet())	
 					{
 //									if (v.startsWith(prefix))
-							ret.add(new SimpleEntry<String, Object>(v, sol.data.get(v)));
+							sat.add(new SimpleEntry<String, Object>(v, sol.data.get(v)));
 					}
 				} else {
 					stateStore.addUnsat(newExp);
 					System.out.println("NOT SAT");
-					sat = false;
+					for (String k : sol.data.keySet()) {
+						unsat.add(k);
+					}
+					issat = false;
 				}
 			}
 			catch(NotSatException ex)
 			{
-				sat = false;
+				issat = false;
 				System.out.println("Not sat");
 			}
 			newExp = stateStore.getNewOption();
 		}
 
-		Collections.sort(ret, new Comparator<SimpleEntry<String, Object>>() {
+		Collections.sort(sat, new Comparator<SimpleEntry<String, Object>>() {
 				@Override
 				public int compare(SimpleEntry<String, Object> o1, SimpleEntry<String, Object> o2) {
 					if (o1.getKey().startsWith(prefix) && o2.getKey().startsWith(prefix)) {
@@ -312,13 +315,11 @@ public class ConstraintServerHandler extends Thread {
 					return o1.getKey().compareTo(o2.getKey());
 				}
 			});
-		
-		return ret;
 	}
 
 	public ArrayList<SimpleEntry<String, Object>> getSolution() {
 		if (solution == null)
-			solution = solve(req, true);
+			solve(req, true, solution, new HashSet<String>());
 
 		return solution;
 	}
