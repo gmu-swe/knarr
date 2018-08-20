@@ -213,10 +213,12 @@ public class ConstraintServerHandler extends Thread {
 					oos.close();
 				}
 				
-				if (solve)
-					solve(req, true, solution, new HashSet<String>());
-				else
+				if (solve) {
 					solution = new ArrayList<>();
+					solve(req, true, solution, new HashSet<String>());
+				} else {
+					solution = new ArrayList<>();
+				}
 
 				oos.writeObject(solution);
 			}
