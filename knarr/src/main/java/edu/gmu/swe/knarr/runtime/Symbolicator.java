@@ -26,6 +26,7 @@ import za.ac.sun.cs.green.expr.IntVariable;
 import za.ac.sun.cs.green.expr.Operation;
 import za.ac.sun.cs.green.expr.Operation.Operator;
 import za.ac.sun.cs.green.expr.RealVariable;
+import za.ac.sun.cs.green.expr.StringConstant;
 import za.ac.sun.cs.green.expr.StringVariable;
 import edu.columbia.cs.psl.phosphor.org.objectweb.asm.Type;
 import edu.columbia.cs.psl.phosphor.runtime.Taint;
@@ -123,6 +124,7 @@ public class Symbolicator {
 			ObjectInputStream ois = new ObjectInputStream(getSocket().getInputStream());
 
 			oos.writeObject(PathUtils.getCurPC().constraints);
+//			oos.writeBoolean(false);
 			oos.writeBoolean(true);
 			oos.writeObject(name != null ? new File(name + ".dat") : null);
 			n++;
