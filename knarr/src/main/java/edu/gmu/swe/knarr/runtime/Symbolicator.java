@@ -207,6 +207,21 @@ public class Symbolicator {
 	}
 
 	public static String symbolic(String label, String in) {
+		byte[] b = in.getBytes();
+		in.valuePHOSPHOR_TAG.taints = new Taint[b.length];
+
+		Expression t = new StringConstant("");
+		
+		for (int i = 0 ; i < b.length ; i++) {
+			String name = label + "_c" + i;
+			Expression c = new BVVariable(name, 32);
+			in.valuePHOSPHOR_TAG.taints[i] = new ExpressionTaint(c);
+			t = new Operation(Operator.CONCAT, t, c);
+			PathUtils.getCurPC()._addDet(Operator.EQ, new Operation(Operator.BIT_AND, new BVVariable(name, 32), new IntConstant(0xFFFFFF00)), new IntConstant(0));
+		}
+		
+		in.PHOSPHOR_TAG = new ExpressionTaint(t);
+		
 		return in;
 	}
 

@@ -59,7 +59,7 @@ public class StringUtils {
 
 	public static void registerNewString(String s, LazyArrayObjTags srcTags, Object src, Taint offset_t, int offset, Taint len_t, int len) {
 		if (enabled && srcTags != null && srcTags.taints != null) {
-			StringVariable var = Symbolicator.getFreshStringVar();
+			StringVariable var = getFreshStringVar();
 			Expression exp = var;
 			char[] arr = s.toCharArray();
 			for (int i = offset ; i < len ; i++) {
@@ -199,6 +199,12 @@ public class StringUtils {
 	public static void length$$PHOSPHORTAGGED(TaintedIntWithObjTag ret, String s, TaintedIntWithObjTag ret2) {
 		if (enabled && s.PHOSPHOR_TAG != null && s.PHOSPHOR_TAG.lbl != null)
 			ret.taint = new ExpressionTaint(new Operation(Operator.LENGTH, (Expression) s.PHOSPHOR_TAG.lbl));
+	}
+	
+	public static int stringName;
+	
+	public static StringVariable getFreshStringVar() {
+		return new StringVariable("string_var_" + (stringName++));
 	}
 	
 }
