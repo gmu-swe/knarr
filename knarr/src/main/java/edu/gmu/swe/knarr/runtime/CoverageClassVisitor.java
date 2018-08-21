@@ -7,20 +7,40 @@ import edu.columbia.cs.psl.phosphor.org.objectweb.asm.Opcodes;
 import edu.columbia.cs.psl.phosphor.org.objectweb.asm.Type;
 
 import java.lang.reflect.Array;
-import java.util.BitSet;
-import java.util.Random;
+import java.util.*;
 
 public class CoverageClassVisitor extends ClassVisitor implements Opcodes {
     private BitSet used = new BitSet(Coverage.SIZE*32);
     private Random r = new Random();
+
+    private static final String[] blacklist = new String[]{
+            "org/apache/maven/surefire"
+    };
+
+    private boolean enabled;
 
     public CoverageClassVisitor(ClassVisitor classVisitor, boolean what) {
         super(ASM6, classVisitor);
     }
 
     @Override
+    public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+        super.visit(version, access, name, signature, superName, interfaces);
+
+        for (String s : blacklist) {
+            if (name.startsWith(s)) {
+                enabled = false;
+                return;
+            }
+        }
+
+        enabled = true;
+    }
+
+    @Override
     public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
-        return new CoverageMethodVisitor(super.visitMethod(access, name, descriptor, signature, exceptions));
+        MethodVisitor mv = super.visitMethod(access, name, descriptor, signature, exceptions);
+        return (enabled ? new CoverageMethodVisitor(mv) : mv);
     }
 
     private int getNewLocationId() {
