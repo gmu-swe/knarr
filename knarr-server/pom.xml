@@ -75,6 +75,11 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>edu.gmu.swe.knarr</groupId>
+            <artifactId>Knarr</artifactId>
+            <version>0.0.2-SNAPSHOT</version>
+        </dependency>
+        <dependency>
             <groupId>greensolver</groupId>
             <artifactId>green</artifactId>
             <version>SNAPSHOT</version>

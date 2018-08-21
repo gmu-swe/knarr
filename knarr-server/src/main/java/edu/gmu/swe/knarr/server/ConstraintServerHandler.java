@@ -19,6 +19,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import edu.gmu.swe.knarr.runtime.Coverage;
 import za.ac.sun.cs.green.Green;
 import za.ac.sun.cs.green.Instance;
 import za.ac.sun.cs.green.expr.Expression;
@@ -171,7 +172,8 @@ public class ConstraintServerHandler extends Thread {
 	}
 
 	private ArrayList<SimpleEntry<String, Object>> solution = null;
-	private Expression req = null;
+	public Expression req = null;
+	public Coverage cov = null;
 	
 	public ConstraintServerHandler(Socket sock) {
 
@@ -188,6 +190,7 @@ public class ConstraintServerHandler extends Thread {
 				req   = (Expression) input;
 				solve = ois.readBoolean();
 				save  = (File) ois.readObject();
+				cov = (Coverage) ois.readObject();
 			} else if (input.equals("REGISTER")) // wow this is a great idea
 			{
 				if (ConstraintServer.STATELESS) {

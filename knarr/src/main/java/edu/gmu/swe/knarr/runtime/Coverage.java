@@ -3,9 +3,9 @@ package edu.gmu.swe.knarr.runtime;
 import java.io.Serializable;
 
 public class Coverage implements Serializable {
-    public static Coverage instance = new Coverage();
+    public static transient Coverage instance = new Coverage();
 
-    public static int SIZE = 1 << 20; // Don't make it final to avoid stupid javac constant propagation
+    public static transient int SIZE = 1 << 20; // Don't make it final to avoid stupid javac constant propagation
     public final int[] coverage = new int[SIZE];
 
     public void print() {
