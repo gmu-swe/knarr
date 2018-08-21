@@ -22,8 +22,6 @@ public class PreMain {
 		// DependencyTrackingClassVisitor.class;
 		edu.columbia.cs.psl.phosphor.PreMain.DEBUG = true;
 
-		Main.useCoverage = true;
-
 		Configuration.extensionClassVisitor = CoverageClassVisitor.class;
 
 		Configuration.init();
