@@ -134,6 +134,7 @@ public class Symbolicator {
 			TaintListener.arrayNames.clear();
 			StringUtils.stringName = 0;
 			PathUtils.usedLabels.clear();
+			Coverage.instance.reset();
 			autoLblr.set(0);
 			ArrayList<SimpleEntry<String, Object>> solution = (ArrayList<SimpleEntry<String,Object>>) ois.readObject();
 //			System.out.println("Solution received: " + solution);

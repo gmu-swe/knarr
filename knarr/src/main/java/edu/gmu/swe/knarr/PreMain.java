@@ -3,6 +3,7 @@ package edu.gmu.swe.knarr;
 import java.lang.instrument.Instrumentation;
 
 import edu.columbia.cs.psl.phosphor.Configuration;
+import edu.gmu.swe.knarr.runtime.CoverageClassVisitor;
 import edu.gmu.swe.knarr.runtime.PathConstraintTagFactory;
 import edu.gmu.swe.knarr.runtime.TaintListener;
 
@@ -20,6 +21,10 @@ public class PreMain {
 		// Configuration.extensionClassVisitor =
 		// DependencyTrackingClassVisitor.class;
 		edu.columbia.cs.psl.phosphor.PreMain.DEBUG = true;
+
+		Main.useCoverage = true;
+
+		Configuration.extensionClassVisitor = CoverageClassVisitor.class;
 
 		Configuration.init();
 		edu.columbia.cs.psl.phosphor.PreMain.premain(args, inst);
