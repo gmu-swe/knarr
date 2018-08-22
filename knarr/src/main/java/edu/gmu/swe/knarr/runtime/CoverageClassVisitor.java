@@ -14,7 +14,9 @@ public class CoverageClassVisitor extends ClassVisitor implements Opcodes {
     private Random r = new Random();
 
     private static final String[] blacklist = new String[]{
-            "org/apache/maven/surefire"
+            "org/apache/maven/surefire",
+            "za/ac/sun/cs/green",
+            "com/sun",
     };
 
     private boolean enabled;
@@ -110,7 +112,7 @@ public class CoverageClassVisitor extends ClassVisitor implements Opcodes {
              *  Add instrumentation after the jump.
              *  Instrumentation for the if-branch is handled by visitLabel().
              */
-            instrumentLocation();
+//            instrumentLocation();
         }
 
         @Override
@@ -120,7 +122,7 @@ public class CoverageClassVisitor extends ClassVisitor implements Opcodes {
             /**
              * Since there is a label, we most probably (surely?) jump to this location. Instrument.
              */
-            instrumentLocation();
+//            instrumentLocation();
         }
 
     }
