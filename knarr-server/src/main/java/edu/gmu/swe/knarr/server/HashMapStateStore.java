@@ -73,9 +73,9 @@ public class HashMapStateStore extends StateStore {
 	}
 	@Override
 	public boolean addOption(Z3GreenBridge factoredExpressions) {
-		if(seenSets.add(factoredExpressions.constraints.toString()))
-		{
-			optionsAdded++;
+//		if(seenSets.add(factoredExpressions.constraints.toString()))
+//		{
+//			optionsAdded++;
 			toSolve.add(factoredExpressions);
 //			synchronized (toSolve) {
 //				try {
@@ -84,9 +84,9 @@ public class HashMapStateStore extends StateStore {
 //				}
 //			}
 			return true;
-		}
-		optionsIgnored++;
-		return false;
+//		}
+//		optionsIgnored++;
+//		return false;
 	}
 
 	@Override
