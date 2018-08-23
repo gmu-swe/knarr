@@ -30,4 +30,9 @@ public class Coverage implements Serializable {
         for (int i = 0 ; i < SIZE ; i++)
             coverage[i] = 0;
     }
+
+    public void merge(Coverage c) {
+        for (int i = 0 ; i < SIZE ; i++)
+            coverage[i] |= c.coverage[i];
+    }
 }

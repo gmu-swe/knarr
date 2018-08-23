@@ -108,25 +108,27 @@ public class HashMapStateStore extends StateStore {
 			completed.add(r);
 			iter.remove();
 
-			String t = r.constraints.toString();
-			boolean unsat = false;
-			//Check for unsat
-			for(String s : unsats)
-			{
-				if(t.contains(s))
-				{
-					unsat = true;
-					break;
-				}
-			}
-			if(unsat)
-			{
-				optionsFoundUnsat++;
-			}
-			else
-			{
-				return r;
-			}
+			return r;
+
+//			String t = r.constraints.toString();
+//			boolean unsat = false;
+//			//Check for unsat
+//			for(String s : unsats)
+//			{
+//				if(t.contains(s))
+//				{
+//					unsat = true;
+//					break;
+//				}
+//			}
+//			if(unsat)
+//			{
+//				optionsFoundUnsat++;
+//			}
+//			else
+//			{
+//				return r;
+//			}
 		}
 		return null;
 	}

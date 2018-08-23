@@ -11,8 +11,11 @@ import za.ac.sun.cs.green.expr.Variable;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -27,16 +30,16 @@ public class Concolic {
 
         c.startConstraintServer();
 
-        c.addInitialInput(new File(args[0]));
+        c.addInitialInput(new File(args[0]), new File(args[1]));
 
-        c.loop();
+        c.loop(new File(args[1]));
     }
 
     private Coverage master = new Coverage();
     private LinkedList<Input> inputs = new LinkedList<>();
     private ServerSocket listener;
 
-    private void addInitialInput(File f) throws IOException {
+    private void addInitialInput(File f, File dirToSave) throws IOException {
         byte[] data = Files.readAllBytes(f.toPath());
 
         ConstraintServerHandler server = driver(data);
@@ -46,28 +49,59 @@ public class Concolic {
         in.constraints = new Canonizer();
         in.constraints.canonize(server.req);
         in.coverage = server.cov;
+        in.input = data;
 
         inputs.add(in);
+
+        in.toFiles(dirToSave, 0);
     }
 
-    private void loop() {
+    private void loop(File dirToSave) {
+
+        int n = 0;
 
         while (true) {
             Input in = pickInput();
+            Input toMutate = in;
+            System.out.println("Picking new input");
 
-            Input mutated = mutateInput(in);
+            int maxTries = 10;
+            int tries = 0;
+            int var = 0;
 
-            executeInput(mutated);
+            while (var < 40) {
+                n++;
+                Input mutated = mutateInput(toMutate, var);
 
-            // Better coverage?
-            saveInput(in, mutated);
+                if (mutated == null) {
+                    tries  = 0;
+                    var++;
+                    toMutate = in;
+                    System.out.println("Moving to var " + var);
+                    continue;
+                }
+
+                executeInput(mutated);
+
+                // Better coverage?
+                if (saveInput(mutated, dirToSave)) {
+                    tries = 0;
+                    toMutate = mutated;
+                } else if (tries == maxTries) {
+                    tries  = 0;
+                    var++;
+                    toMutate = in;
+                    System.out.println("Moving to var " + var);
+                } else {
+                    toMutate = mutated;
+                    tries++;
+                }
+            }
         }
 
     }
 
     private void startConstraintServer() throws IOException {
-        System.out.println(ConstraintServerHandler.inZ3);
-
         try {
             listener = new ServerSocket(9090);
         } catch (IOException e) {
@@ -81,10 +115,24 @@ public class Concolic {
         return ret;
     }
 
-    private Input mutateInput(Input in) {
+    private Input mutateInput(Input in, int inputToNegate) {
 
         // Make a copy of the input so we can modify it
-        Map<String, Expression> res = in.constraints.getExpressionMap();
+        Canonizer c = new Canonizer();
+        for (Entry<String, HashSet<Expression>> entry : in.constraints.getCanonical().entrySet())
+            c.getCanonical().put(entry.getKey(), new HashSet<>(entry.getValue()));
+
+        for (Entry<String, HashSet<Expression>> entry : in.constraints.getConstArrayInits().entrySet())
+            c.getConstArrayInits().put(entry.getKey(), new HashSet<>(entry.getValue()));
+
+        c.getNotCanonical().addAll(in.constraints.getNotCanonical());
+        c.getVariables().addAll(in.constraints.getVariables());
+        c.getExpressionMap().putAll(in.constraints.getExpressionMap());
+        c.getOrder().addAll(in.constraints.getOrder());
+
+        in = null;
+
+        Map<String, Expression> res = c.getExpressionMap();
         ArrayList<SimpleEntry<String, Object>> sat = new ArrayList<>();
         HashSet<String> unsat = new HashSet<>();
         ConstraintServerHandler.solve(res, sat, unsat);
@@ -96,10 +144,9 @@ public class Concolic {
 
         // Find variable holding input to negate
         Variable varToNegate = null;
-        int inputToNegate = 0; // TODO Make argument or field
         {
             int i = 0;
-            for (Variable v : in.constraints.getVariables()) {
+            for (Variable v : c.getVariables()) {
                 if (i++ == inputToNegate) {
                     varToNegate = v;
                     break;
@@ -108,7 +155,7 @@ public class Concolic {
         }
 
         if (varToNegate == null)
-            throw new Error("Var to negate not found");
+            return null;
 
         // Find value to negate
         Object valueToNegate = null;
@@ -120,7 +167,7 @@ public class Concolic {
         }
 
         if (valueToNegate == null)
-            throw new Error("Value to negate not found in solution");
+            return null;
 
         // Add negated input to constraints
         Expression negatedInput = new Operation(
@@ -128,23 +175,14 @@ public class Concolic {
                 new Operation(Operator.EQUALS, varToNegate, new BVConstant((int)valueToNegate, ((BVVariable)varToNegate).getSize()))
         );
 
-        // Copy constraints
-        Canonizer c = new Canonizer();
-        c.getCanonical().putAll(in.constraints.getCanonical());
-        c.getConstArrayInits().putAll(in.constraints.getConstArrayInits());
-        c.getNotCanonical().addAll(in.constraints.getNotCanonical());
-        c.getVariables().addAll(in.constraints.getVariables());
-        c.getExpressionMap().putAll(in.constraints.getExpressionMap());
-        c.getOrder().addAll(in.constraints.getOrder());
-
-        c.getCanonical().get(varToNegate.getName()).add(negatedInput);
-        c.getOrder().addLast(negatedInput);
-        res.put(negatedInput.toString(), negatedInput);
-
-        System.out.println(c.getOrder());
-
-        // Solve again
+        // Solve
         while (true) {
+            c.getCanonical().get(varToNegate.getName()).add(negatedInput);
+            c.getOrder().addLast(negatedInput);
+            c.getExpressionMap().put(negatedInput.toString(), negatedInput);
+
+            res = c.getExpressionMap();
+
             sat.clear();
             unsat.clear();
             ConstraintServerHandler.solve(res, sat, unsat);
@@ -163,11 +201,10 @@ public class Concolic {
                     buf[i++] = b.byteValue();
                 }
 
-                System.out.println(new String(buf, StandardCharsets.UTF_8));
                 Input ret = new Input();
                 ret.input = buf;
                 return ret;
-            } else {
+            } else if (!unsat.isEmpty()) {
                 // UNSAT
 
                 // Find latest constraint in UNSAT core
@@ -176,7 +213,6 @@ public class Concolic {
                 LinkedList<Expression> toRemove = new LinkedList<>();
                 for (Expression e : c.getOrder()) {
                     if (unsat.contains(e.toString())) {
-                        System.out.println(e);
                         found = true;
                     }
 
@@ -193,8 +229,9 @@ public class Concolic {
                 c.getNotCanonical().removeAll(toRemove);
 
                 // Try again
-                res = c.getExpressionMap();
                 continue;
+            } else {
+                return null;
             }
         }
     }
@@ -209,7 +246,6 @@ public class Concolic {
         // Get the constraints and coverage from the server
         in.constraints = new Canonizer();
         in.constraints.canonize(server.req);
-        server.cov.print();
         in.coverage = server.cov;
     }
 
@@ -239,7 +275,6 @@ public class Concolic {
 
             String res = br.readLine();
             // TODO do something with the result
-            System.out.println(res);
 
             return ret;
         } catch (IOException e) {
@@ -247,12 +282,20 @@ public class Concolic {
         }
     }
 
-    private void saveInput(Input original, Input candidate) {
-        if (!original.coverage.coversTheSameAs(candidate.coverage)) {
-            System.out.println("Added input");
+    private boolean saveInput(Input candidate, File dirToSave) {
+        if (!master.coversTheSameAs(candidate.coverage)) {
+            System.out.println("Added input!");
             inputs.addLast(candidate);
+
+            // Update master coverage
+            master.merge(candidate.coverage);
+
+            // Save input to file-system
+            candidate.toFiles(dirToSave, inputs.size() - 1);
+
+            return true;
         } else {
-            System.out.println("Discarded input");
+            return false;
         }
     }
 
@@ -260,5 +303,30 @@ public class Concolic {
         Canonizer constraints;
         Coverage coverage;
         byte[] input;
+
+        public void toFiles(File dirToSave, int nth) {
+            try {
+                save(constraints, "constraints_" + nth, dirToSave);
+                save(coverage, "coverage_" + nth, dirToSave);
+                save(input, "input_" + nth, dirToSave);
+            } catch (IOException e) {
+                throw new Error(e);
+            }
+        }
+
+        private void save(Object toSave, String fileName, File dirToSave) throws IOException {
+            URI uri = Paths.get(dirToSave.getAbsolutePath(), fileName).toUri();
+            try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(new File(uri)))) {
+                oos.writeObject(toSave);
+            }
+
+        }
+
+        private void save(byte[] toSave, String fileName, File dirToSave) throws IOException {
+            URI uri = Paths.get(dirToSave.getAbsolutePath(), fileName).toUri();
+            try (FileOutputStream fos = new FileOutputStream(new File(uri))) {
+                fos.write(toSave);
+            }
+        }
     }
 }

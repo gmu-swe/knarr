@@ -77,6 +77,7 @@ public class CoverageClassVisitor extends ClassVisitor implements Opcodes {
 
         private void instrumentLocation() {
             Integer id = getNewLocationId();
+
             mv.visitFieldInsn(GETSTATIC, coverage.getInternalName(), "instance", coverage.getDescriptor());
             mv.visitFieldInsn(GETFIELD, coverage.getInternalName(), "coverage", "[I");
             mv.visitLdcInsn(id);
@@ -101,7 +102,6 @@ public class CoverageClassVisitor extends ClassVisitor implements Opcodes {
             /**
              *  Add instrumentation at start of method.
              */
-            instrumentLocation();
         }
 
         @Override
@@ -112,18 +112,19 @@ public class CoverageClassVisitor extends ClassVisitor implements Opcodes {
              *  Add instrumentation after the jump.
              *  Instrumentation for the if-branch is handled by visitLabel().
              */
-//            instrumentLocation();
+            if (opcode != GOTO)
+                instrumentLocation();
         }
-
-        @Override
-        public void visitLabel(Label label) {
-            mv.visitLabel(label);
-
-            /**
-             * Since there is a label, we most probably (surely?) jump to this location. Instrument.
-             */
+//
+//        @Override
+//        public void visitLabel(Label label) {
+//            mv.visitLabel(label);
+//
+//            /**
+//             * Since there is a label, we most probably (surely?) jump to this location. Instrument.
+//             */
 //            instrumentLocation();
-        }
+//        }
 
     }
 }

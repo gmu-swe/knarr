@@ -128,6 +128,7 @@ public class Symbolicator {
 			oos.writeBoolean(true);
 			oos.writeObject(name != null ? new File(name + ".dat") : null);
 			oos.writeObject(Coverage.instance);
+			Coverage.instance.print();
 			n++;
 			PathUtils.getCurPC().constraints = null;
 			serverConnection = null;

@@ -284,7 +284,7 @@ public class ConstraintServerHandler extends Thread {
 
 				if (sol.sat) {
 					nSat++;
-					System.out.println("SAT");
+//					System.out.println("SAT");
 //								System.out.println("SAT: " + sol);
 					for(String v : sol.data.keySet())	
 					{
@@ -293,7 +293,7 @@ public class ConstraintServerHandler extends Thread {
 					}
 				} else {
 					stateStore.addUnsat(newExp);
-					System.out.println("NOT SAT");
+//					System.out.println("NOT SAT");
 					for (String k : sol.data.keySet()) {
 						unsat.add(k);
 					}
