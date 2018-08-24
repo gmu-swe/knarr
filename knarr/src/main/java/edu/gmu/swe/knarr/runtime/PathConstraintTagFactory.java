@@ -22,8 +22,9 @@ import edu.columbia.cs.psl.phosphor.struct.TaintedIntWithObjTag;
 import edu.columbia.cs.psl.phosphor.struct.TaintedLongWithObjTag;
 import edu.columbia.cs.psl.phosphor.struct.TaintedShortWithObjTag;
 
-public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, StringOpcodes {
+import java.util.HashMap;
 
+public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, StringOpcodes {
 	@Override
 	public void fieldOp(int opcode, String owner, String name, String desc, MethodVisitor mv, LocalVariableManager lvs, TaintPassingMV ta, boolean trackedLoad) {
 		
@@ -462,8 +463,23 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 		}
 	}
 
+	private HashMap<Label, Integer> labelToID = new HashMap<>();
+
 	@Override
 	public void jumpOp(int opcode, int branchStarting, Label label, MethodVisitor mv, LocalVariableManager lvs, TaintPassingMV ta) {
+	    int takenID, notTakenID;
+		if (Coverage.enabled) {
+			notTakenID = Coverage.getNewLocationId();
+			Integer aux = labelToID.get(label);
+			if (aux == null) {
+			    aux = Coverage.getNewLocationId();
+			    labelToID.put(label, aux);
+			}
+			takenID = aux;
+        } else {
+			notTakenID = -1;
+			takenID = -1;
+		}
 		switch (opcode) {
 		case Opcodes.IFEQ:
 		case Opcodes.IFNE:
@@ -486,7 +502,9 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 			FrameNode fn = ta.getCurrentFrameNode();
 			// Jump will not be taken
 			mv.visitIntInsn(SIPUSH, invertOpcode(opcode));
-			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addConstraint", "(" + Configuration.TAINT_TAG_DESC + "I)V", false);
+			mv.visitLdcInsn(notTakenID);
+			mv.visitLdcInsn(takenID);
+			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addConstraint", "(" + Configuration.TAINT_TAG_DESC + "III)V", false);
 			FrameNode fn3 = ta.getCurrentFrameNode();
 
 			mv.visitJumpInsn(GOTO, originalEnd);
@@ -495,7 +513,9 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 			ta.acceptFn(fn);
 			// jump will be taken
 			mv.visitIntInsn(SIPUSH, opcode);
-			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addConstraint", "(" + Configuration.TAINT_TAG_DESC + "I)V", false);
+			mv.visitLdcInsn(takenID);
+			mv.visitLdcInsn(notTakenID);
+			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addConstraint", "(" + Configuration.TAINT_TAG_DESC + "III)V", false);
 			mv.visitJumpInsn(GOTO, label);
 			mv.visitLabel(untainted);
 			// need frame
@@ -532,13 +552,17 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 			fn = ta.getCurrentFrameNode();
 			// Jump will be taken
 			mv.visitIntInsn(SIPUSH, opcode);
-			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addConstraint", "(" + Configuration.TAINT_TAG_DESC + Configuration.TAINT_TAG_DESC + "III)V", false);
+			mv.visitLdcInsn(takenID);
+			mv.visitLdcInsn(notTakenID);
+			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addConstraint", "(" + Configuration.TAINT_TAG_DESC + Configuration.TAINT_TAG_DESC + "IIIII)V", false);
 			mv.visitJumpInsn(GOTO, label);
 			mv.visitLabel(isFalse);
 			ta.acceptFn(fn);
 			// jump will not be taken
 			mv.visitIntInsn(SIPUSH, invertOpcode(opcode));
-			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addConstraint", "(" + Configuration.TAINT_TAG_DESC + Configuration.TAINT_TAG_DESC + "III)V", false);
+			mv.visitLdcInsn(notTakenID);
+			mv.visitLdcInsn(takenID);
+			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addConstraint", "(" + Configuration.TAINT_TAG_DESC + Configuration.TAINT_TAG_DESC + "IIIII)V", false);
 
 			lvs.freeTmpLV(tmp);
 			break;
@@ -754,6 +778,27 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 
 		this.name = name;
 		this.args = Type.getArgumentTypes(desc);
+
+		if (Coverage.enabled) {
+			labelToID.clear();
+
+			Integer id = Coverage.getNewLocationId();
+
+			mv.visitFieldInsn(GETSTATIC, Coverage.INTERNAL_NAME, "instance", Coverage.DESCRIPTOR);
+			mv.visitFieldInsn(GETFIELD, Coverage.INTERNAL_NAME, "coverage", "[I");
+			mv.visitLdcInsn(id);
+			mv.visitIntInsn(BIPUSH, 32);
+			mv.visitInsn(IDIV);
+			mv.visitInsn(DUP2);
+			mv.visitInsn(IALOAD);
+			mv.visitInsn(ICONST_1);
+			mv.visitLdcInsn(id);
+			mv.visitIntInsn(BIPUSH, 32);
+			mv.visitInsn(IREM);
+			mv.visitInsn(ISHL);
+			mv.visitInsn(IOR);
+			mv.visitInsn(IASTORE);
+		}
 	}
 
 	@Override
@@ -797,8 +842,11 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 			mv.visitLdcInsn(keys[i]);
 			// taint, null, value, switch target
 			mv.visitLdcInsn(IF_ICMPEQ);
+			// TODO coverage
+			mv.visitLdcInsn(-1);
+			mv.visitLdcInsn(-1);
 			// taint, null, value, switch target, ==
-			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addConstraint", "(" + Configuration.TAINT_TAG_DESC + Configuration.TAINT_TAG_DESC + "III)V", false);
+			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addConstraint", "(" + Configuration.TAINT_TAG_DESC + Configuration.TAINT_TAG_DESC + "IIIII)V", false);
 			mv.visitJumpInsn(GOTO, labels[i]);
 		}
 		
@@ -815,8 +863,11 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 			mv.visitLdcInsn(keys[i]);
 			// taint, value, taint, null, value, switch target
 			mv.visitLdcInsn(IF_ICMPNE);
+			// TODO coverage
+			mv.visitLdcInsn(-1);
+			mv.visitLdcInsn(-1);
 			// taint, value, taint, null, value, switch target, !=
-			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addConstraint", "(" + Configuration.TAINT_TAG_DESC + Configuration.TAINT_TAG_DESC + "III)V", false);
+			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addConstraint", "(" + Configuration.TAINT_TAG_DESC + Configuration.TAINT_TAG_DESC + "IIIII)V", false);
 			// taint, value
 		}
 
@@ -854,8 +905,11 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 			mv.visitLdcInsn(min+i);
 			// taint, null, value, switch target
 			mv.visitLdcInsn(IF_ICMPEQ);
+			// TODO coverage
+			mv.visitLdcInsn(-1);
+			mv.visitLdcInsn(-1);
 			// taint, null, value, switch target, ==
-			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addConstraint", "(" + Configuration.TAINT_TAG_DESC + Configuration.TAINT_TAG_DESC + "III)V", false);
+			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addConstraint", "(" + Configuration.TAINT_TAG_DESC + Configuration.TAINT_TAG_DESC + "IIIII)V", false);
 			mv.visitJumpInsn(GOTO, labels[i]);
 		}
 		
@@ -872,8 +926,11 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 			mv.visitLdcInsn(min+i);
 			// taint, value, taint, null, value, switch target
 			mv.visitLdcInsn(IF_ICMPNE);
+			// TODO coverage
+			mv.visitLdcInsn(-1);
+			mv.visitLdcInsn(-1);
 			// taint, value, taint, null, value, switch target, !=
-			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addConstraint", "(" + Configuration.TAINT_TAG_DESC + Configuration.TAINT_TAG_DESC + "III)V", false);
+			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addConstraint", "(" + Configuration.TAINT_TAG_DESC + Configuration.TAINT_TAG_DESC + "IIIII)V", false);
 			// taint, value
 		}
 

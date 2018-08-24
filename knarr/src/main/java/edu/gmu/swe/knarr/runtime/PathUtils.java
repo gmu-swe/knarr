@@ -1044,7 +1044,7 @@ public class PathUtils {
 		t.lbl = new Operation(Operator.ADD, t.lbl, new IntConstant(inc));
 	}
 
-	public static void addConstraint(Taint<Expression> t, int opcode) {
+	public static void addConstraint(Taint<Expression> t, int opcode, int takenID, int notTakenID) {
 		if (t == null)
 			return;
 		if (!JPFInited)
@@ -1074,13 +1074,18 @@ public class PathUtils {
 		default:
 			throw new IllegalArgumentException("Unimplemented branch type: " + Printer.OPCODES[opcode]);
 		}
+
+		if (Coverage.enabled)
+			Coverage.instance.coverage[takenID / 32] |= (1 << takenID % 32);
+
+		// TODO annotate constraint with ID taken and not taken
 	}
 
 	public static void addConstraint(Expression lExp, Expression rExp, Object v1, Object v2, int opcode) {
 
 	}
 
-	public static void addConstraint(Taint<Expression> l, Taint<Expression> r, int v1, int v2, int opcode) {
+	public static void addConstraint(Taint<Expression> l, Taint<Expression> r, int v1, int v2, int opcode, int takenID, int notTakenID) {
 		// if (VM.isBooted$$INVIVO_PC(new TaintedBoolean()).val &&
 		// values.get(otherTaint) == null)
 		// System.out.println(Printer.OPCODES[opcode] + " - " + taint + " ; " +
@@ -1127,6 +1132,11 @@ public class PathUtils {
 		default:
 			throw new IllegalArgumentException("Unimplemented branch type: " + Printer.OPCODES[opcode]);
 		}
+
+		if (Coverage.enabled)
+			Coverage.instance.coverage[takenID / 32] |= (1 << takenID % 32);
+
+		// TODO annotate constraint with ID taken and not taken
 
 	}
 
