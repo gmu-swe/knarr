@@ -25,22 +25,26 @@ public class PathConditionWrapper implements Serializable {
 		}
 	}
 
-	public synchronized void _addDet(Operator op, Expression l, Expression r) {
+	public synchronized Expression _addDet(Operator op, Expression l, Expression r) {
 		Operation ret = new Operation(op, l, r);
 		if (constraints == null)
 			constraints = ret;
 		else {
 			constraints = new Operation(Operator.AND, constraints, ret);
 		}
+
+		return ret;
 	}
 
-	public synchronized void _addDet(Operator op, Expression t1) {
+	public synchronized Expression _addDet(Operator op, Expression t1) {
 		Operation ret = new Operation(op, t1);
 		if (constraints == null)
 			constraints = ret;
 		else {
 			constraints = new Operation(Operator.AND, constraints, ret);
 		}
+
+		return ret;
 	}
 
 }

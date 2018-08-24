@@ -1054,31 +1054,35 @@ public class PathUtils {
 		Expression exp = t.lbl;
 		switch (opcode) {
 		case Opcodes.IFEQ:
-			getCurPC()._addDet(Operator.EQ, ICONST_0, exp);
+			exp = getCurPC()._addDet(Operator.EQ, ICONST_0, exp);
 			break;
 		case Opcodes.IFGE:
-			getCurPC()._addDet(Operator.GE, exp, ICONST_0);
+			exp = getCurPC()._addDet(Operator.GE, exp, ICONST_0);
 			break;
 		case Opcodes.IFLE:
-			getCurPC()._addDet(Operator.LE, exp, ICONST_0);
+			exp = getCurPC()._addDet(Operator.LE, exp, ICONST_0);
 			break;
 		case Opcodes.IFLT:
-			getCurPC()._addDet(Operator.LT, exp, ICONST_0);
+			exp = getCurPC()._addDet(Operator.LT, exp, ICONST_0);
 			break;
 		case Opcodes.IFGT:
-			getCurPC()._addDet(Operator.GT, exp, ICONST_0);
+			exp = getCurPC()._addDet(Operator.GT, exp, ICONST_0);
 			break;
 		case Opcodes.IFNE:
-			getCurPC()._addDet(Operator.NE, exp, ICONST_0);
+			exp = getCurPC()._addDet(Operator.NE, exp, ICONST_0);
 			break;
 		default:
 			throw new IllegalArgumentException("Unimplemented branch type: " + Printer.OPCODES[opcode]);
 		}
 
-		if (Coverage.enabled)
+		if (Coverage.enabled) {
+		    // Update current coverate
 			Coverage.instance.coverage[takenID / 32] |= (1 << takenID % 32);
 
-		// TODO annotate constraint with ID taken and not taken
+			// Add not taken constraint to map
+			Coverage.instance.notTaken.put(exp, notTakenID);
+		}
+
 	}
 
 	public static void addConstraint(Expression lExp, Expression rExp, Object v1, Object v2, int opcode) {
@@ -1103,40 +1107,44 @@ public class PathUtils {
 			rExp = r.lbl;
 		if (lExp.toString().matches(interesting) || rExp.toString().matches(interesting))
 			System.out.print("");
+		Expression exp = null;
 		switch (opcode) {
 		case Opcodes.IF_ACMPEQ:
 		case Opcodes.IF_ACMPNE:
 			// TODO - object equality constraints?
 			break;
 		case Opcodes.IF_ICMPEQ:
-			getCurPC()._addDet(Operator.EQ, lExp, rExp);
+			exp = getCurPC()._addDet(Operator.EQ, lExp, rExp);
 			break;
 		case Opcodes.IF_ICMPGE:
-			getCurPC()._addDet(Operator.GE, lExp, rExp);
+			exp = getCurPC()._addDet(Operator.GE, lExp, rExp);
 			break;
 		case Opcodes.IF_ICMPGT:
-			getCurPC()._addDet(Operator.GT, lExp, rExp);
+			exp = getCurPC()._addDet(Operator.GT, lExp, rExp);
 			break;
 		case Opcodes.IF_ICMPLE:
-			getCurPC()._addDet(Operator.LE, lExp, rExp);
+			exp = getCurPC()._addDet(Operator.LE, lExp, rExp);
 			break;
 		case Opcodes.IF_ICMPLT:
 			// System.out.println("Other one is " +
 			// branches[branch].rVal.concreteValue_int+
 			// "...."+branches[branch].rVal.expression);
-			getCurPC()._addDet(Operator.LT, lExp, rExp);
+			exp = getCurPC()._addDet(Operator.LT, lExp, rExp);
 			break;
 		case Opcodes.IF_ICMPNE:
-			getCurPC()._addDet(Operator.NE, lExp, rExp);
+			exp = getCurPC()._addDet(Operator.NE, lExp, rExp);
 			break;
 		default:
 			throw new IllegalArgumentException("Unimplemented branch type: " + Printer.OPCODES[opcode]);
 		}
 
-		if (Coverage.enabled)
+		if (Coverage.enabled) {
+			// Update current coverate
 			Coverage.instance.coverage[takenID / 32] |= (1 << takenID % 32);
 
-		// TODO annotate constraint with ID taken and not taken
+			// Add not taken constraint to map
+			Coverage.instance.notTaken.put(exp, notTakenID);
+		}
 
 	}
 

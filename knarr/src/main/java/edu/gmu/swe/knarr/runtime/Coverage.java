@@ -1,9 +1,11 @@
 package edu.gmu.swe.knarr.runtime;
 
 import edu.columbia.cs.psl.phosphor.org.objectweb.asm.Type;
+import za.ac.sun.cs.green.expr.Expression;
 
 import java.io.Serializable;
 import java.util.BitSet;
+import java.util.HashMap;
 import java.util.Random;
 
 public class Coverage implements Serializable {
@@ -11,6 +13,8 @@ public class Coverage implements Serializable {
     public static transient int SIZE = 1 << 20; // Don't make it final to avoid stupid javac constant propagation
     public static transient Coverage instance = new Coverage();
     public final int[] coverage = new int[SIZE];
+
+    public HashMap<Expression, Integer> notTaken = new HashMap<>();
 
     public static final String INTERNAL_NAME = Type.getType(Coverage.class).getInternalName();
     public static final String DESCRIPTOR = Type.getType(Coverage.class).getDescriptor();
@@ -38,6 +42,8 @@ public class Coverage implements Serializable {
     public void reset() {
         for (int i = 0 ; i < SIZE ; i++)
             coverage[i] = 0;
+
+        notTaken.clear();
     }
 
     public void merge(Coverage c) {
