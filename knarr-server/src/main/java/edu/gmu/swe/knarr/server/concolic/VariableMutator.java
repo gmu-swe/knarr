@@ -30,18 +30,7 @@ public class VariableMutator implements Mutator {
     public Input mutateInput(Input in, int inputToNegate) {
 
         // Make a copy of the input so we can modify it
-        Canonizer c = new Canonizer();
-        for (Entry<String, HashSet<Expression>> entry : in.constraints.getCanonical().entrySet())
-            c.getCanonical().put(entry.getKey(), new HashSet<>(entry.getValue()));
-
-        for (Entry<String, HashSet<Expression>> entry : in.constraints.getConstArrayInits().entrySet())
-            c.getConstArrayInits().put(entry.getKey(), new HashSet<>(entry.getValue()));
-
-        c.getNotCanonical().addAll(in.constraints.getNotCanonical());
-        c.getVariables().addAll(in.constraints.getVariables());
-        c.getExpressionMap().putAll(in.constraints.getExpressionMap());
-        c.getOrder().addAll(in.constraints.getOrder());
-
+        Canonizer c = new Canonizer(in.constraints);
         in = null;
 
         Map<String, Expression> res = c.getExpressionMap();

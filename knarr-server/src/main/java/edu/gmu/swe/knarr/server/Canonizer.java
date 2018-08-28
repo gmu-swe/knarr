@@ -45,6 +45,7 @@ public class Canonizer implements Serializable {
 	
 	private LinkedList<Expression> order = new LinkedList<>();
 
+	// TODO make this static and run only once
 	public Canonizer() {
 		Class<?>[] cs = Canonizer.class.getDeclaredClasses();
 		LinkedList<CanonicalForm> lst = new LinkedList<>();
@@ -68,6 +69,20 @@ public class Canonizer implements Serializable {
 		}
 		
 		forms = lst.toArray(new CanonicalForm[0]);
+	}
+
+	public Canonizer(Canonizer c) {
+		this();
+
+		for (Entry<String, HashSet<Expression>> entry : c.canonical.entrySet())
+			canonical.put(entry.getKey(), new HashSet<>(entry.getValue()));
+
+		for (Entry<String, HashSet<Expression>> entry : c.constArrayInits.entrySet())
+			constArrayInits.put(entry.getKey(), new HashSet<>(entry.getValue()));
+
+		notCanonical.addAll(c.notCanonical);
+		variables.addAll(c.variables);
+		order.addAll(c.order);
 	}
 	
 	
