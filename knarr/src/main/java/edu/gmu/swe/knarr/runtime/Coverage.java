@@ -21,6 +21,10 @@ public class Coverage implements Serializable {
 
     public static boolean enabled = (System.getProperty("addCov") != null);
 
+    public void set(int id) {
+        coverage[id / 32] |= (1 << id % 32);
+    }
+
     public void print() {
         int res = 0;
         for (int i = 0 ; i < SIZE ; i++)

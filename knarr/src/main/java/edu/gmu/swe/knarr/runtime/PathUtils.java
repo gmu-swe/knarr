@@ -1076,8 +1076,8 @@ public class PathUtils {
 		}
 
 		if (Coverage.enabled) {
-		    // Update current coverate
-			Coverage.instance.coverage[takenID / 32] |= (1 << takenID % 32);
+		    // Update current coverage
+			Coverage.instance.set(takenID);
 
 			// Add not taken constraint to map
 			Coverage.instance.notTaken.put(exp, notTakenID);
@@ -1139,8 +1139,8 @@ public class PathUtils {
 		}
 
 		if (Coverage.enabled) {
-			// Update current coverate
-			Coverage.instance.coverage[takenID / 32] |= (1 << takenID % 32);
+			// Update current coverage
+			Coverage.instance.set(takenID);
 
 			// Add not taken constraint to map
 			Coverage.instance.notTaken.put(exp, notTakenID);
