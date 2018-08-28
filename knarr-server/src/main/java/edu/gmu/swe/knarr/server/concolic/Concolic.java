@@ -41,6 +41,8 @@ public class Concolic {
         in.coverage = server.cov;
         in.input = data;
 
+        master.merge(in.coverage);
+
         inputs.add(in);
 
         in.toFiles(dirToSave, 0);
