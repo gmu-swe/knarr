@@ -1080,7 +1080,8 @@ public class PathUtils {
 			Coverage.instance.set(takenID);
 
 			// Add not taken constraint to map
-			Coverage.instance.notTaken.put(exp, notTakenID);
+			if (notTakenID != -1)
+                Coverage.instance.notTaken.put(exp, notTakenID);
 		}
 
 	}
@@ -1143,7 +1144,8 @@ public class PathUtils {
 			Coverage.instance.set(takenID);
 
 			// Add not taken constraint to map
-			Coverage.instance.notTaken.put(exp, notTakenID);
+            if (notTakenID != -1)
+                Coverage.instance.notTaken.put(exp, notTakenID);
 		}
 
 	}
