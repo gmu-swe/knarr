@@ -27,6 +27,7 @@ public class Concolic {
 
     private Coverage master = new Coverage();
     private LinkedList<Input> inputs = new LinkedList<>();
+    private int lastAddedInput = 0;
     private ServerSocket listener;
 
     private void addInitialInput(File f, File dirToSave) throws IOException {
@@ -61,11 +62,21 @@ public class Concolic {
             int tries = 0;
             int var = 0;
 
-            Mutator mutator = new VariableMutator();
+//            Mutator mutator = new VariableMutator();
+            Mutator mutator = new ConstraintMutator(master);
 
-            while (var < 40) {
+            while (var < 4000) {
                 n++;
                 Input mutated = mutator.mutateInput(toMutate, var);
+
+                if (mutated == Mutator.OUT_OF_RANGE) {
+                    if (var == 0) {
+                        // was not able to generate a single new input
+                        // Remove from rotation
+                        removeInput(in);
+                    }
+                    break;
+                }
 
                 if (mutated == null) {
                     tries  = 0;
@@ -119,7 +130,19 @@ public class Concolic {
         return ret;
     }
 
-    private void executeInput(Input in) {
+    private void removeInput(Input in) {
+        Iterator<Input> iter = inputs.descendingIterator();
+        while (iter.hasNext()) {
+            Input i = iter.next();
+
+            if (i == in) {
+                iter.remove();
+                break;
+            }
+        }
+    }
+
+    private void executeInput(Input in) throws IOException {
         // Send the input to the server
         ConstraintServerHandler server = driver(in.input);
 
@@ -173,14 +196,14 @@ public class Concolic {
 
     private boolean saveInput(Input candidate, File dirToSave) {
         if (!master.coversTheSameAs(candidate.coverage)) {
-            System.out.println("Added input!");
+            System.out.println("Added input " + lastAddedInput + "!");
             inputs.addLast(candidate);
 
             // Update master coverage
             master.merge(candidate.coverage);
 
             // Save input to file-system
-            candidate.toFiles(dirToSave, inputs.size() - 1);
+            candidate.toFiles(dirToSave, lastAddedInput++);
 
             return true;
         } else {
