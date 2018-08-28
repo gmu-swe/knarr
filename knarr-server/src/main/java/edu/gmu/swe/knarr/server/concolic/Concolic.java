@@ -4,16 +4,14 @@ import edu.gmu.swe.knarr.runtime.Coverage;
 import edu.gmu.swe.knarr.server.Canonizer;
 import edu.gmu.swe.knarr.server.ConstraintServerHandler;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.file.Files;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.ListIterator;
 
 public class Concolic {
 
@@ -75,7 +73,16 @@ public class Concolic {
                     continue;
                 }
 
-                executeInput(mutated);
+                try {
+                    executeInput(mutated);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    tries  = 0;
+                    var++;
+                    toMutate = in;
+                    System.out.println("Moving to var " + var);
+                    continue;
+                }
 
                 // Better coverage?
                 if (saveInput(mutated, dirToSave)) {
@@ -98,6 +105,7 @@ public class Concolic {
     private void startConstraintServer() throws IOException {
         try {
             listener = new ServerSocket(9090);
+            listener.setSoTimeout(2000);
         } catch (IOException e) {
             throw new Error(e);
         }
@@ -122,7 +130,7 @@ public class Concolic {
         in.coverage = server.cov;
     }
 
-    private ConstraintServerHandler driver(byte[] in) {
+    private ConstraintServerHandler driver(byte[] in) throws IOException {
         // TODO move out of the concolic executor
 
         // Add two endlines to ensure request is attempted to be parsed
@@ -131,16 +139,24 @@ public class Concolic {
 
         // Connect to the HTTP server
         try(Socket s = new Socket("127.0.0.1",8080)) {
+            s.setSoTimeout(2000);
             BufferedWriter bw =  new BufferedWriter(
                     new OutputStreamWriter(s.getOutputStream()));
 
             bw.write(toSend);
             bw.flush();
 
+            // TODO do something with the timeout input
             // Get the constraints from the server
             ConstraintServerHandler ret;
-            try (Socket skt = listener.accept()) {
-                ret = new ConstraintServerHandler(skt);
+            while (true) {
+                try (Socket skt = listener.accept()) {
+                    ret = new ConstraintServerHandler(skt);
+                    break;
+                } catch (InterruptedIOException e) {
+                    bw.write("\n");
+                    bw.flush();
+                }
             }
 
             BufferedReader br = new BufferedReader(
@@ -150,8 +166,6 @@ public class Concolic {
             // TODO do something with the result
 
             return ret;
-        } catch (IOException e) {
-            throw new Error(e);
         }
     }
 
