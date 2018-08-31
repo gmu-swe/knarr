@@ -26,9 +26,19 @@ public class Concolic {
     }
 
     private Coverage master = new Coverage();
-    private LinkedList<Input> inputs = new LinkedList<>();
+    private LinkedList<Input> inputsInRotation = new LinkedList<>();
+    private LinkedList<Input> inputsOutOfRotation = new LinkedList<>();
     private int lastAddedInput = 0;
     private ServerSocket listener;
+    private Mutator[] mutators = new Mutator[] {
+            new ConstraintMutator(master, true, false),
+            new ConstraintMutator(master, false, false),
+            new ConstraintMutator(master, true, true),
+            new ConstraintMutator(master, false, true),
+//            new VariableMutator(),
+    };
+//    private Mutator[] mutators = new Mutator[] { new ConstraintMutator(master), new VariableMutator(), };
+    private int mutatorInUse = 0;
 
     private void addInitialInput(File f, File dirToSave) throws IOException {
         byte[] data = Files.readAllBytes(f.toPath());
@@ -44,33 +54,45 @@ public class Concolic {
 
         master.merge(in.coverage);
 
-        inputs.add(in);
+        inputsInRotation.add(in);
 
-        in.toFiles(dirToSave, 0);
+        in.toFiles(dirToSave, lastAddedInput++);
     }
 
     private void loop(File dirToSave) {
 
         int n = 0;
+        int newMutator = 100;
+
+        Mutator mutator = mutators[mutatorInUse];
 
         while (true) {
             Input in = pickInput();
-            Input toMutate = in;
-            System.out.println("Picking new input");
 
-            int maxTries = 10;
+            if (in == null || (n % newMutator) == 0) {
+                // No more inputs in rotation, change strategy
+                mutatorInUse = (mutatorInUse + 1) % mutators.length;
+                mutator = mutators[mutatorInUse];
+                System.out.println("Changing mutator to: " + mutator);
+                resetInputs();
+                n++;
+                continue;
+            }
+
+            Input toMutate = in;
+
+            int maxTries = 0;
             int tries = 0;
             int var = 0;
 
-//            Mutator mutator = new VariableMutator();
-            Mutator mutator = new ConstraintMutator(master);
+            boolean generatedAtLeastOneInput = false;
 
-            while (var < 4000) {
+            while (var < 4000 && (n % newMutator) != 0) {
                 n++;
                 Input mutated = mutator.mutateInput(toMutate, var);
 
                 if (mutated == Mutator.OUT_OF_RANGE) {
-                    if (var == 0) {
+                    if (var == 0 && tries == 0) {
                         // was not able to generate a single new input
                         // Remove from rotation
                         removeInput(in);
@@ -99,9 +121,11 @@ public class Concolic {
 
                 // Better coverage?
                 if (saveInput(mutated, dirToSave)) {
-                    tries = 0;
+                    generatedAtLeastOneInput = true;
+//                    tries = 0;
+                    tries++;
                     toMutate = mutated;
-                } else if (tries == maxTries) {
+                } else if (tries >= maxTries) {
                     tries  = 0;
                     var++;
                     toMutate = in;
@@ -111,6 +135,9 @@ public class Concolic {
                     tries++;
                 }
             }
+
+            if (!generatedAtLeastOneInput)
+                removeInput(in);
         }
 
     }
@@ -125,18 +152,29 @@ public class Concolic {
     }
 
     private Input pickInput() {
-        Input ret = inputs.removeFirst();
-        inputs.addLast(ret);
+        if (inputsInRotation.isEmpty())
+            return null;
+
+        Input ret = inputsInRotation.removeFirst();
+        inputsInRotation.addLast(ret);
+        System.out.println("Picking new input (" + inputsInRotation.size() + ")");
         return ret;
     }
 
+    private void resetInputs() {
+        inputsInRotation.addAll(inputsOutOfRotation);
+        inputsOutOfRotation.clear();
+    }
+
     private void removeInput(Input in) {
-        Iterator<Input> iter = inputs.descendingIterator();
+        Iterator<Input> iter = inputsInRotation.descendingIterator();
         while (iter.hasNext()) {
             Input i = iter.next();
 
             if (i == in) {
                 iter.remove();
+                inputsOutOfRotation.add(in);
+                System.out.println("Removed input (" + inputsInRotation.size()+ " left)");
                 break;
             }
         }
@@ -197,7 +235,7 @@ public class Concolic {
     private boolean saveInput(Input candidate, File dirToSave) {
         if (!master.coversTheSameAs(candidate.coverage)) {
             System.out.println("Added input " + lastAddedInput + "!");
-            inputs.addLast(candidate);
+            inputsInRotation.addLast(candidate);
 
             // Update master coverage
             master.merge(candidate.coverage);

@@ -56,7 +56,7 @@ public class VariableMutator implements Mutator {
         }
 
         if (varToNegate == null)
-            return null;
+            return Mutator.OUT_OF_RANGE;
 
         // Find value to negate
         Object valueToNegate = null;
@@ -68,7 +68,7 @@ public class VariableMutator implements Mutator {
         }
 
         if (valueToNegate == null)
-            return null;
+            return Mutator.OUT_OF_RANGE;
 
         // Add negated input to constraints
         Expression negatedInput = new Operation(

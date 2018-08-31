@@ -20,9 +20,13 @@ import java.util.Map.Entry;
 public class ConstraintMutator implements Mutator {
 
     private Coverage master;
+    private boolean reverseDirection;
+    private boolean pathSensitive;
 
-    public ConstraintMutator(Coverage master) {
+    public ConstraintMutator(Coverage master, boolean reverse, boolean pathSensitive) {
         this.master = master;
+        this.reverseDirection = reverse;
+        this.pathSensitive = pathSensitive;
     }
 
     @Override
@@ -39,22 +43,28 @@ public class ConstraintMutator implements Mutator {
         // Pick constraint
         {
             int i = 0;
-            Iterator<Expression> iter = c.getOrder().iterator();
+            Iterator<Expression> iter = (reverseDirection ? c.getOrder().descendingIterator() : c.getOrder().iterator());
             while (iter.hasNext()) {
                 newCoverage = null;
                 Expression e  = iter.next();
-                Integer id = cov.notTaken.get(e);
+                Integer id = (pathSensitive ? cov.notTakenPath : cov.notTakenCode).get(e);
                 if (id != null && id != -1) {
+                    // This expression was used on a jump
                     toNegate = e;
                     newCoverage = new Coverage();
-                    newCoverage.set(id);
+                    if (pathSensitive)
+                        newCoverage.setPath(id);
+                    else
+                        newCoverage.setCode(id);
 
                     // Check if it improves coverage
                     if (!master.coversTheSameAs(newCoverage)) {
                         if (i++ == which) {
-                            System.out.println(id);
+                            System.out.println(id + " " + e);
                             break;
                         }
+                    } else {
+                        System.out.print("");
                     }
                 }
                 newCoverage = null;
@@ -125,34 +135,38 @@ public class ConstraintMutator implements Mutator {
                 // UNSAT, maybe we can still find new paths
 
                 System.out.println("\tUNSAT");
-                System.out.println(toNegate);
-                System.out.println(negated);
-                System.out.println(unsat);
+                return null;
 
-                // Find earliest constraint in UNSAT core
-                newOrder = new LinkedList<>();
-                toRemove = new LinkedList<>();
-                found = false;
-                for (Expression e : c.getOrder()) {
-                    if (unsat.contains(e.toString()))
-                        found = true;
+//                System.out.println(toNegate);
+//                System.out.println(negated);
+//                System.out.println(unsat);
+//
+//                if (pathSensitive)
+//                    return null;
+//
+//                // Find earliest constraint in UNSAT core
+//                newOrder = new LinkedList<>();
+//                toRemove = new LinkedList<>();
+//                found = false;
+//                for (Expression e : c.getOrder()) {
+//                    if (unsat.contains(e.toString()))
+//                        found = true;
+//
+//                    (!found ? newOrder : toRemove).addLast(e);
+//                }
+//
+//                // Drop it and all later constraints
+//                for (HashSet<Expression> es : c.getCanonical().values())
+//                    es.removeAll(toRemove);
+//
+//                for (HashSet<Expression> es : c.getConstArrayInits().values())
+//                    es.removeAll(toRemove);
+//
+//                c.getNotCanonical().removeAll(toRemove);
+//
+//                // Try again
+//                continue;
 
-                    (!found ? newOrder : toRemove).addLast(e);
-                }
-
-                // Drop it and all later constraints
-                for (HashSet<Expression> es : c.getCanonical().values())
-                    es.removeAll(toRemove);
-
-                for (HashSet<Expression> es : c.getConstArrayInits().values())
-                    es.removeAll(toRemove);
-
-                c.getNotCanonical().removeAll(toRemove);
-
-                // Try again
-                continue;
-
-//                return null;
             } else {
                 throw new Error("Should never happen");
             }
