@@ -785,19 +785,23 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 			Integer id = Coverage.getNewLocationId();
 
 			mv.visitFieldInsn(GETSTATIC, Coverage.INTERNAL_NAME, "instance", Coverage.DESCRIPTOR);
-			mv.visitFieldInsn(GETFIELD, Coverage.INTERNAL_NAME, "coverage", "[I");
 			mv.visitLdcInsn(id);
-			mv.visitIntInsn(BIPUSH, 32);
-			mv.visitInsn(IDIV);
-			mv.visitInsn(DUP2);
-			mv.visitInsn(IALOAD);
-			mv.visitInsn(ICONST_1);
-			mv.visitLdcInsn(id);
-			mv.visitIntInsn(BIPUSH, 32);
-			mv.visitInsn(IREM);
-			mv.visitInsn(ISHL);
-			mv.visitInsn(IOR);
-			mv.visitInsn(IASTORE);
+			mv.visitMethodInsn(INVOKEVIRTUAL, Coverage.INTERNAL_NAME, "set", "(I)V", false);
+
+//			mv.visitFieldInsn(GETSTATIC, Coverage.INTERNAL_NAME, "instance", Coverage.DESCRIPTOR);
+//			mv.visitFieldInsn(GETFIELD, Coverage.INTERNAL_NAME, "coverage", "[I");
+//			mv.visitLdcInsn(id);
+//			mv.visitIntInsn(BIPUSH, 32);
+//			mv.visitInsn(IDIV);
+//			mv.visitInsn(DUP2);
+//			mv.visitInsn(IALOAD);
+//			mv.visitInsn(ICONST_1);
+//			mv.visitLdcInsn(id);
+//			mv.visitIntInsn(BIPUSH, 32);
+//			mv.visitInsn(IREM);
+//			mv.visitInsn(ISHL);
+//			mv.visitInsn(IOR);
+//			mv.visitInsn(IASTORE);
 		}
 	}
 

@@ -1075,13 +1075,13 @@ public class PathUtils {
 			throw new IllegalArgumentException("Unimplemented branch type: " + Printer.OPCODES[opcode]);
 		}
 
-		if (Coverage.enabled) {
-		    // Update current coverage
-			Coverage.instance.set(takenID);
 
+		if (Coverage.enabled && takenID != -1) {
+			// Update current coverage
+			int id = Coverage.instance.set(takenID, notTakenID);
 			// Add not taken constraint to map
-			if (notTakenID != -1)
-                Coverage.instance.notTaken.put(exp, notTakenID);
+			Coverage.instance.notTakenCode.put(exp, notTakenID);
+			Coverage.instance.notTakenPath.put(exp, id);
 		}
 
 	}
@@ -1139,13 +1139,12 @@ public class PathUtils {
 			throw new IllegalArgumentException("Unimplemented branch type: " + Printer.OPCODES[opcode]);
 		}
 
-		if (Coverage.enabled) {
+		if (Coverage.enabled && takenID != -1) {
 			// Update current coverage
-			Coverage.instance.set(takenID);
-
+			int id = Coverage.instance.set(takenID, notTakenID);
 			// Add not taken constraint to map
-            if (notTakenID != -1)
-                Coverage.instance.notTaken.put(exp, notTakenID);
+			Coverage.instance.notTakenCode.put(exp, notTakenID);
+			Coverage.instance.notTakenPath.put(exp, id);
 		}
 
 	}

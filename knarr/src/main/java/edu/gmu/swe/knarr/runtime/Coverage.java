@@ -6,29 +6,60 @@ import za.ac.sun.cs.green.expr.Expression;
 import java.io.Serializable;
 import java.util.BitSet;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Random;
 
 public class Coverage implements Serializable {
     private static final long serialVersionUID = -6059233792632965508L;
     public static transient int SIZE = 1 << 20; // Don't make it final to avoid stupid javac constant propagation
     public static transient Coverage instance = new Coverage();
-    public final int[] coverage = new int[SIZE];
 
-    public HashMap<Expression, Integer> notTaken = new HashMap<>();
+    public final int[] codeCoverage = new int[SIZE];
+    public final int[] pathCoverage = new int[SIZE];
+
+    public HashMap<Expression, Integer> notTakenCode = new HashMap<>();
+    public HashMap<Expression, Integer> notTakenPath = new HashMap<>();
 
     public static final String INTERNAL_NAME = Type.getType(Coverage.class).getInternalName();
     public static final String DESCRIPTOR = Type.getType(Coverage.class).getDescriptor();
 
     public static boolean enabled = (System.getProperty("addCov") != null);
 
-    public void set(int id) {
-        coverage[id / 32] |= (1 << id % 32);
+    private static LinkedList<ThreadLocalID> ids = new LinkedList<>();
+    private ThreadLocalID lastID = new ThreadLocalID();
+
+    public void setCode(int id) {
+        codeCoverage[(id / 32)] |= (1 << id % 32);
+    }
+
+    public void setPath(int id){
+        pathCoverage[(id / 32)] |= (1 << id % 32);
+    }
+
+    public void set(int id){
+        setCode(id);
+
+        int pathID = (lastID.get() ^ id) % SIZE;
+        pathID *= (pathID > 0 ? 1 : -1);
+        setPath(pathID);
+        lastID.set(id >> 1);
+    }
+
+    public int set(int takenID, int notTakenID) {
+        int last = lastID.get();
+
+        set(takenID);
+
+        int pathID = (lastID.get() ^ notTakenID) % SIZE;
+        pathID *= (pathID > 0 ? 1 : -1);
+
+        return pathID;
     }
 
     public void print() {
         int res = 0;
         for (int i = 0 ; i < SIZE ; i++)
-            res += coverage[i];
+            res += codeCoverage[i];
 
 
         System.out.println(res);
@@ -36,7 +67,9 @@ public class Coverage implements Serializable {
 
     public boolean coversTheSameAs(Coverage c) {
         for (int i = 0 ; i < SIZE ; i++) {
-            if ((this.coverage[i] | c.coverage[i]) != this.coverage[i])
+            if ((this.codeCoverage[i] | c.codeCoverage[i]) != this.codeCoverage[i])
+                return false;
+            if ((this.pathCoverage[i] | c.pathCoverage[i]) != this.pathCoverage[i])
                 return false;
         }
 
@@ -44,15 +77,25 @@ public class Coverage implements Serializable {
     }
 
     public void reset() {
-        for (int i = 0 ; i < SIZE ; i++)
-            coverage[i] = 0;
+        for (int i = 0 ; i < SIZE ; i++) {
+            codeCoverage[i] = 0;
+            pathCoverage[i] = 0;
+        }
 
-        notTaken.clear();
+        notTakenCode.clear();
+        notTakenPath.clear();
+
+        synchronized (ids) {
+            for (ThreadLocalID id : ids)
+                id.set(0);
+        }
     }
 
     public void merge(Coverage c) {
-        for (int i = 0 ; i < SIZE ; i++)
-            coverage[i] |= c.coverage[i];
+        for (int i = 0 ; i < SIZE ; i++) {
+            codeCoverage[i] |= c.codeCoverage[i];
+            pathCoverage[i] |= c.pathCoverage[i];
+        }
     }
 
     private static BitSet used = new BitSet(SIZE*32);
@@ -67,5 +110,17 @@ public class Coverage implements Serializable {
         } while (tries <= 10 && !used.get(id));
         used.set(id);
         return id;
+    }
+
+    private static class ThreadLocalID extends ThreadLocal<Integer> implements Serializable {
+
+        @Override
+        protected Integer initialValue() {
+            synchronized (ids) {
+                ids.add(this);
+            }
+            return 0;
+        }
+
     }
 }
