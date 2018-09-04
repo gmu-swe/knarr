@@ -3,14 +3,15 @@ package edu.gmu.swe.knarr.server.concolic;
 import edu.gmu.swe.knarr.runtime.Coverage;
 import edu.gmu.swe.knarr.server.Canonizer;
 import edu.gmu.swe.knarr.server.ConstraintServerHandler;
+import edu.gmu.swe.knarr.server.concolic.driver.Driver;
+import edu.gmu.swe.knarr.server.concolic.driver.HTTPDriver;
+import edu.gmu.swe.knarr.server.concolic.driver.IntSerialDriver;
 import edu.gmu.swe.knarr.server.concolic.mutator.ConstraintMutator;
 import edu.gmu.swe.knarr.server.concolic.mutator.Mutator;
-import edu.gmu.swe.knarr.server.concolic.mutator.VariableMutator;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.net.ServerSocket;
-import java.net.Socket;
-import java.nio.file.Files;
 import java.util.Iterator;
 import java.util.LinkedList;
 
@@ -21,11 +22,23 @@ public class Concolic {
 
         c.startConstraintServer();
 
-        c.addInitialInput(new File(args[0]), new File(args[1]));
+        switch (args[0]) {
+            case "http":
+                c.setHTTPDriver();
+                break;
+            case "int":
+                c.setIntDriver();
+                break;
+            default:
+                throw new Error("Unknown drive: " + args[0]);
+        }
 
-        c.loop(new File(args[1]));
+        c.addInitialInput(new File(args[1]), new File(args[2]));
+
+        c.loop(new File(args[2]));
     }
 
+    private Driver driver;
     private Coverage master = new Coverage();
     private LinkedList<Input> inputsInRotation = new LinkedList<>();
     private LinkedList<Input> inputsOutOfRotation = new LinkedList<>();
@@ -38,11 +51,19 @@ public class Concolic {
             new ConstraintMutator(master, false, true),
 //            new VariableMutator(),
     };
-//    private Mutator[] mutators = new Mutator[] { new ConstraintMutator(master), new VariableMutator(), };
+
     private int mutatorInUse = 0;
 
+    private void setHTTPDriver() {
+        this.driver = new HTTPDriver(listener, "127.0.0.1", 8080);
+    }
+
+    private void setIntDriver() {
+        this.driver = new IntSerialDriver(listener, "127.0.0.1", 8080);
+    }
+
     private void addInitialInput(File f, File dirToSave) throws IOException {
-        byte[] data = Files.readAllBytes(f.toPath());
+        Object data = driver.fromFile(f);
 
         ConstraintServerHandler server = driver(data);
 
@@ -60,7 +81,7 @@ public class Concolic {
 
         inputsInRotation.add(in);
 
-        in.toFiles(dirToSave, lastAddedInput++);
+        in.toFiles(dirToSave, lastAddedInput++, driver);
     }
 
     private void loop(File dirToSave) {
@@ -192,7 +213,7 @@ public class Concolic {
 
     private boolean executeInput(Input in) throws IOException {
         // Send the input to the server
-        ConstraintServerHandler server = driver(in.input);
+        ConstraintServerHandler server = driver.drive(in.input);
 
         if (server == null)
             return false;
@@ -207,41 +228,6 @@ public class Concolic {
         return true;
     }
 
-    private ConstraintServerHandler driver(byte[] in) throws IOException {
-        String toSend = new String(in) + "\n\n";
-
-        // Connect to the HTTP server
-        try(Socket s = new Socket("127.0.0.1",8080)) {
-            s.setSoTimeout(2000);
-            BufferedWriter bw =  new BufferedWriter(
-                    new OutputStreamWriter(s.getOutputStream()));
-
-            bw.write(toSend);
-            bw.flush();
-
-            // TODO do something with the timeout input
-            // Get the constraints from the server
-            ConstraintServerHandler ret;
-            try (Socket skt = listener.accept()) {
-                ret = new ConstraintServerHandler(skt);
-            } catch (InterruptedIOException e) {
-                return null;
-            }
-
-            try {
-                BufferedReader br = new BufferedReader(
-                        new InputStreamReader(s.getInputStream()));
-
-                String res = br.readLine();
-                // TODO do something with the result
-            } catch (IOException e) {
-                // Don't care
-            }
-
-            return ret;
-        }
-    }
-
     private boolean saveInput(Input candidate, File dirToSave) {
         if (!master.coversTheSameAs(candidate.coverage)) {
             System.out.println("Added input " + lastAddedInput + "!");
@@ -251,7 +237,7 @@ public class Concolic {
             master.merge(candidate.coverage);
 
             // Save input to file-system
-            candidate.toFiles(dirToSave, lastAddedInput++);
+            candidate.toFiles(dirToSave, lastAddedInput++, driver);
 
             return true;
         } else {

@@ -2,6 +2,7 @@ package edu.gmu.swe.knarr.server.concolic;
 
 import edu.gmu.swe.knarr.runtime.Coverage;
 import edu.gmu.swe.knarr.server.Canonizer;
+import edu.gmu.swe.knarr.server.concolic.driver.Driver;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -13,13 +14,13 @@ import java.nio.file.Paths;
 public class Input {
     public Canonizer constraints;
     public Coverage coverage;
-    public byte[] input;
+    public Object input;
 
-    public void toFiles(File dirToSave, int nth) {
+    public void toFiles(File dirToSave, int nth, Driver driver) {
         try {
             save(constraints, "constraints_" + nth, dirToSave);
             save(coverage, "coverage_" + nth, dirToSave);
-            save(input, "input_" + nth, dirToSave);
+            save(input, "input_" + nth, dirToSave, driver);
         } catch (IOException e) {
             throw new Error(e);
         }
@@ -30,13 +31,10 @@ public class Input {
         try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(new File(uri)))) {
             oos.writeObject(toSave);
         }
-
     }
 
-    private void save(byte[] toSave, String fileName, File dirToSave) throws IOException {
+    private void save(Object toSave, String fileName, File dirToSave, Driver d) throws IOException {
         URI uri = Paths.get(dirToSave.getAbsolutePath(), fileName).toUri();
-        try (FileOutputStream fos = new FileOutputStream(new File(uri))) {
-            fos.write(toSave);
-        }
+        d.toFile(toSave, new File(uri));
     }
 }
