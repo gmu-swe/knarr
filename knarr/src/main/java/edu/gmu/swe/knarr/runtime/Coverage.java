@@ -26,7 +26,8 @@ public class Coverage implements Serializable {
     public static boolean enabled = (System.getProperty("addCov") != null);
 
     private static LinkedList<ThreadLocalID> ids = new LinkedList<>();
-    private ThreadLocalID lastID = new ThreadLocalID();
+//    private ThreadLocalID lastID = new ThreadLocalID();
+    private int lastID = 0;
 
     public void setCode(int id) {
         codeCoverage[(id / 32)] |= (1 << id % 32);
@@ -39,18 +40,18 @@ public class Coverage implements Serializable {
     public void set(int id){
         setCode(id);
 
-        int pathID = (lastID.get() ^ id) % SIZE;
+        int pathID = (lastID ^ id) % SIZE;
         pathID *= (pathID > 0 ? 1 : -1);
         setPath(pathID);
-        lastID.set(id >> 1);
+        lastID = pathID >> 1;
+
+//        System.out.println("\t" + lastID + "\t" + id);
     }
 
     public int set(int takenID, int notTakenID) {
-        int last = lastID.get();
-
         set(takenID);
 
-        int pathID = (lastID.get() ^ notTakenID) % SIZE;
+        int pathID = (lastID ^ notTakenID) % SIZE;
         pathID *= (pathID > 0 ? 1 : -1);
 
         return pathID;
@@ -89,6 +90,8 @@ public class Coverage implements Serializable {
             for (ThreadLocalID id : ids)
                 id.set(0);
         }
+
+        lastID = 0;
     }
 
     public void merge(Coverage c) {
