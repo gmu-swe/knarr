@@ -468,7 +468,7 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 	@Override
 	public void jumpOp(int opcode, int branchStarting, Label label, MethodVisitor mv, LocalVariableManager lvs, TaintPassingMV ta) {
 	    int takenID, notTakenID;
-		if (Coverage.enabled) {
+		if (enableCov) {
 			notTakenID = Coverage.getNewLocationId();
 			Integer aux = labelToID.get(label);
 			if (aux == null) {
@@ -772,6 +772,8 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 	String name;
 	Type[] args;
 
+	private boolean enableCov = false;
+
 	@Override
 	public void methodEntered(String owner, String name, String desc, MethodVisitor mv, LocalVariableManager lvs, TaintPassingMV ta) {
 		inStringClass = "java/lang/String".equals(owner);
@@ -779,7 +781,9 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 		this.name = name;
 		this.args = Type.getArgumentTypes(desc);
 
-		if (Coverage.enabled) {
+		this.enableCov = Coverage.enabled && !owner.startsWith("za/ac/sun/cs/green");
+
+		if (enableCov) {
 			labelToID.clear();
 
 			Integer id = Coverage.getNewLocationId();
