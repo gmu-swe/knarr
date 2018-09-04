@@ -11,10 +11,8 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.file.Files;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.ListIterator;
 
 public class Concolic {
 
@@ -47,6 +45,9 @@ public class Concolic {
         byte[] data = Files.readAllBytes(f.toPath());
 
         ConstraintServerHandler server = driver(data);
+
+        if (server == null)
+            throw new Error("First input failed");
 
         // Get the constraints and coverage from the server
         Input in = new Input();
@@ -111,10 +112,16 @@ public class Concolic {
                     continue;
                 }
 
+                boolean success;
+
                 try {
-                    executeInput(mutated);
+                    success = executeInput(mutated);
                 } catch (IOException e) {
                     e.printStackTrace();
+                    success = false;
+                }
+
+                if (!success) {
                     tries  = 0;
                     var++;
                     toMutate = in;
@@ -183,9 +190,12 @@ public class Concolic {
         }
     }
 
-    private void executeInput(Input in) throws IOException {
+    private boolean executeInput(Input in) throws IOException {
         // Send the input to the server
         ConstraintServerHandler server = driver(in.input);
+
+        if (server == null)
+            return false;
 
         // By the time we get an answer, or the connection closes
         // we should already have constraints
@@ -194,13 +204,10 @@ public class Concolic {
         in.constraints = new Canonizer();
         in.constraints.canonize(server.req);
         in.coverage = server.cov;
+        return true;
     }
 
     private ConstraintServerHandler driver(byte[] in) throws IOException {
-        // TODO move out of the concolic executor
-
-        // Add two endlines to ensure request is attempted to be parsed
-        // Instead of timing out
         String toSend = new String(in) + "\n\n";
 
         // Connect to the HTTP server
@@ -215,21 +222,21 @@ public class Concolic {
             // TODO do something with the timeout input
             // Get the constraints from the server
             ConstraintServerHandler ret;
-            while (true) {
-                try (Socket skt = listener.accept()) {
-                    ret = new ConstraintServerHandler(skt);
-                    break;
-                } catch (InterruptedIOException e) {
-                    bw.write("\n");
-                    bw.flush();
-                }
+            try (Socket skt = listener.accept()) {
+                ret = new ConstraintServerHandler(skt);
+            } catch (InterruptedIOException e) {
+                return null;
             }
 
-            BufferedReader br = new BufferedReader(
-                    new InputStreamReader(s.getInputStream()));
+            try {
+                BufferedReader br = new BufferedReader(
+                        new InputStreamReader(s.getInputStream()));
 
-            String res = br.readLine();
-            // TODO do something with the result
+                String res = br.readLine();
+                // TODO do something with the result
+            } catch (IOException e) {
+                // Don't care
+            }
 
             return ret;
         }
