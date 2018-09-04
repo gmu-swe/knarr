@@ -10,10 +10,10 @@ import java.io.ObjectOutputStream;
 import java.net.URI;
 import java.nio.file.Paths;
 
-class Input {
-    Canonizer constraints;
-    Coverage coverage;
-    byte[] input;
+public class Input {
+    public Canonizer constraints;
+    public Coverage coverage;
+    public byte[] input;
 
     public void toFiles(File dirToSave, int nth) {
         try {

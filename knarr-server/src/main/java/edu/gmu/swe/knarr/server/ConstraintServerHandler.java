@@ -158,18 +158,18 @@ public class ConstraintServerHandler extends Thread {
 	static int nSolved;
 	static int nSat;
 	static long inZ3;
-	static{
-		Timer timer = new Timer(true);
-		timer.schedule(new TimerTask() {
-			
-			@Override
-			public void run() {
-				System.out.println("Solved: " + nSolved + ", sat: "+nSat +", Solver time: " + inZ3);
-				System.out.println("Options added: " + HashMapStateStore.optionsAdded +", ignored: " + HashMapStateStore.optionsIgnored +", trivilaly not sat: " + HashMapStateStore.optionsFoundUnsat);
-			}
-		}, 1000,1000);
-		
-	}
+//	static{
+//		Timer timer = new Timer(true);
+//		timer.schedule(new TimerTask() {
+//
+//			@Override
+//			public void run() {
+//				System.out.println("Solved: " + nSolved + ", sat: "+nSat +", Solver time: " + inZ3);
+//				System.out.println("Options added: " + HashMapStateStore.optionsAdded +", ignored: " + HashMapStateStore.optionsIgnored +", trivilaly not sat: " + HashMapStateStore.optionsFoundUnsat);
+//			}
+//		}, 1000,1000);
+//
+//	}
 
 	private ArrayList<SimpleEntry<String, Object>> solution = null;
 	public Expression req = null;

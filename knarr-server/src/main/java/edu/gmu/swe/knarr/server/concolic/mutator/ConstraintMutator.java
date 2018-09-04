@@ -1,8 +1,9 @@
-package edu.gmu.swe.knarr.server.concolic;
+package edu.gmu.swe.knarr.server.concolic.mutator;
 
 import edu.gmu.swe.knarr.runtime.Coverage;
 import edu.gmu.swe.knarr.server.Canonizer;
 import edu.gmu.swe.knarr.server.ConstraintServerHandler;
+import edu.gmu.swe.knarr.server.concolic.Input;
 import za.ac.sun.cs.green.expr.Expression;
 import za.ac.sun.cs.green.expr.Operation;
 import za.ac.sun.cs.green.expr.Operation.Operator;

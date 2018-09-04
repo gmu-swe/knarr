@@ -1,4 +1,6 @@
-package edu.gmu.swe.knarr.server.concolic;
+package edu.gmu.swe.knarr.server.concolic.mutator;
+
+import edu.gmu.swe.knarr.server.concolic.Input;
 
 public interface Mutator {
 
