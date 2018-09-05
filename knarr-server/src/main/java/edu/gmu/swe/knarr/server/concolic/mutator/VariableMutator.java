@@ -3,9 +3,11 @@ package edu.gmu.swe.knarr.server.concolic.mutator;
 import edu.gmu.swe.knarr.server.Canonizer;
 import edu.gmu.swe.knarr.server.ConstraintServerHandler;
 import edu.gmu.swe.knarr.server.concolic.Input;
+import edu.gmu.swe.knarr.server.concolic.driver.Driver;
 import za.ac.sun.cs.green.expr.*;
 import za.ac.sun.cs.green.expr.Operation.Operator;
 
+import java.lang.reflect.Array;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -25,7 +27,11 @@ import java.util.Map.Entry;
  *      # Re-add (i != solution)
  *      # Go to (1)
  */
-public class VariableMutator implements Mutator {
+public class VariableMutator extends Mutator {
+
+    public VariableMutator(Driver driver) {
+        super(driver);
+    }
 
     @Override
     public Input mutateInput(Input in, int inputToNegate) {
@@ -91,7 +97,7 @@ public class VariableMutator implements Mutator {
 
             if (!sat.isEmpty()) {
                 // SAT -> generate input
-                byte[] buf = new byte[sat.size()];
+                Object sol = driver.solution(sat.size());
                 int i = 0;
                 for (Entry<String, Object> e: sat) {
                     if (!e.getKey().startsWith("autoVar_"))
@@ -100,11 +106,11 @@ public class VariableMutator implements Mutator {
                     if (b == null)
                         break;
 
-                    buf[i++] = b.byteValue();
+                    driver.interpret(sol, i++, b);
                 }
 
                 Input ret = new Input();
-                ret.input = buf;
+                ret.input = sol;
                 return ret;
             } else if (!unsat.isEmpty()) {
                 // UNSAT

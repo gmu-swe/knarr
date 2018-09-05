@@ -33,6 +33,8 @@ public class Concolic {
                 throw new Error("Unknown drive: " + args[0]);
         }
 
+        c.initMutators();
+
         c.addInitialInput(new File(args[1]), new File(args[2]));
 
         c.loop(new File(args[2]));
@@ -44,13 +46,7 @@ public class Concolic {
     private LinkedList<Input> inputsOutOfRotation = new LinkedList<>();
     private int lastAddedInput = 0;
     private ServerSocket listener;
-    private Mutator[] mutators = new Mutator[] {
-            new ConstraintMutator(master, true, false),
-            new ConstraintMutator(master, false, false),
-            new ConstraintMutator(master, true, true),
-            new ConstraintMutator(master, false, true),
-//            new VariableMutator(),
-    };
+    private Mutator[] mutators;
 
     private int mutatorInUse = 0;
 
@@ -60,6 +56,16 @@ public class Concolic {
 
     private void setIntDriver() {
         this.driver = new IntSerialDriver(listener, "127.0.0.1", 8080);
+    }
+
+    private void initMutators() {
+        mutators = new Mutator[]{
+                new ConstraintMutator(driver, master, true, false),
+                new ConstraintMutator(driver, master, false, false),
+                new ConstraintMutator(driver, master, true, true),
+                new ConstraintMutator(driver, master, false, true),
+//            new VariableMutator(),
+        };
     }
 
     private void addInitialInput(File f, File dirToSave) throws IOException {

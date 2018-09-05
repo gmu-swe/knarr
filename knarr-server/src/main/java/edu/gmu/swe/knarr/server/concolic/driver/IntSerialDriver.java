@@ -13,22 +13,33 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.LinkedList;
 
-public class IntSerialDriver extends Driver {
+public class IntSerialDriver extends Driver<Integer[]> {
 
     public IntSerialDriver(ServerSocket listener, String host, int port) {
         super(listener, host, port);
     }
 
     @Override
-    protected void sendData(Object data, Socket s) throws IOException {
+    public Integer[] solution(int size) {
+        return new Integer[size];
+    }
+
+    @Override
+    public void interpret(Integer[] sol, int i, int val) {
+        sol[i] = val;
+    }
+
+    @Override
+    protected void sendData(Integer[] data, Socket s) throws IOException {
         try (ObjectOutputStream oos = new ObjectOutputStream(s.getOutputStream())) {
-            oos.writeObject(data);
+            for (int i : data)
+                oos.writeInt(i);
             oos.flush();
         }
     }
 
     @Override
-    public Object fromFile(File f) throws IOException {
+    public Integer[] fromFile(File f) throws IOException {
         LinkedList<Integer> ret = new LinkedList<>();
         try (BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(f))))  {
             String s;
@@ -40,10 +51,10 @@ public class IntSerialDriver extends Driver {
     }
 
     @Override
-    public void toFile(Object data, File f) throws IOException {
+    public void toFile(Integer[] data, File f) throws IOException {
         try (OutputStreamWriter osw = new OutputStreamWriter(new FileOutputStream(f))) {
-            for (Integer i : (Integer[])data) {
-                osw.write(i);
+            for (int i : data) {
+                osw.write(Integer.toString(i));
                 osw.write("\n");
             }
             osw.write("\n");

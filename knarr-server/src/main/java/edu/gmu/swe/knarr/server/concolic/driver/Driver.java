@@ -10,7 +10,7 @@ import java.io.InterruptedIOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
-public abstract class Driver {
+public abstract class Driver<T> {
 
     private final ServerSocket listener;
     private final String host;
@@ -22,7 +22,7 @@ public abstract class Driver {
         this.port = port;
     }
 
-    public final ConstraintServerHandler drive(Object in) throws IOException {
+    public final ConstraintServerHandler drive(T in) throws IOException {
         // Connect to the server
         try(Socket s = new Socket(host, port)) {
             s.setSoTimeout(2000);
@@ -48,11 +48,15 @@ public abstract class Driver {
         }
     }
 
-    protected abstract void sendData(Object data, Socket s) throws IOException;
+    protected abstract void sendData(T data, Socket s) throws IOException;
 
-    public abstract void toFile(Object data, File f) throws IOException;
+    public abstract T solution(int size);
 
-    public abstract Object fromFile(File f) throws IOException;
+    public abstract void interpret(T sol, int i, int val);
+
+    public abstract void toFile(T data, File f) throws IOException;
+
+    public abstract T fromFile(File f) throws IOException;
 
     protected ConstraintServerHandler receiveConstraints() throws IOException {
         try (Socket skt = listener.accept()) {

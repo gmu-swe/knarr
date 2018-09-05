@@ -4,6 +4,7 @@ import edu.gmu.swe.knarr.runtime.Coverage;
 import edu.gmu.swe.knarr.server.Canonizer;
 import edu.gmu.swe.knarr.server.ConstraintServerHandler;
 import edu.gmu.swe.knarr.server.concolic.Input;
+import edu.gmu.swe.knarr.server.concolic.driver.Driver;
 import za.ac.sun.cs.green.expr.Expression;
 import za.ac.sun.cs.green.expr.Operation;
 import za.ac.sun.cs.green.expr.Operation.Operator;
@@ -18,13 +19,14 @@ import java.util.Map.Entry;
  *   # SAT: Use that input
  *   # UNSAT: Give up
  */
-public class ConstraintMutator implements Mutator {
+public class ConstraintMutator extends Mutator {
 
     private Coverage master;
     private boolean reverseDirection;
     private boolean pathSensitive;
 
-    public ConstraintMutator(Coverage master, boolean reverse, boolean pathSensitive) {
+    public ConstraintMutator(Driver d, Coverage master, boolean reverse, boolean pathSensitive) {
+        super(d);
         this.master = master;
         this.reverseDirection = reverse;
         this.pathSensitive = pathSensitive;
@@ -117,7 +119,7 @@ public class ConstraintMutator implements Mutator {
 
             if (!sat.isEmpty()) {
                 // SAT -> generate input
-                byte[] buf = new byte[sat.size()];
+                Object sol = driver.solution(sat.size());
                 int i = 0;
                 for (Entry<String, Object> e: sat) {
                     if (!e.getKey().startsWith("autoVar_"))
@@ -126,11 +128,11 @@ public class ConstraintMutator implements Mutator {
                     if (b == null)
                         break;
 
-                    buf[i++] = b.byteValue();
+                    driver.interpret(sol, i++, b);
                 }
 
                 Input ret = new Input();
-                ret.input = buf;
+                ret.input = sol;
                 return ret;
             } else if (!unsat.isEmpty()) {
                 // UNSAT, maybe we can still find new paths
