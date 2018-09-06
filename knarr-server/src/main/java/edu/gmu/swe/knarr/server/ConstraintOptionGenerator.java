@@ -242,6 +242,7 @@ public class ConstraintOptionGenerator {
 				op = Operator.I2R;
 				return new Operation(op, createExpr(exp.getArgs()[0]));
 			case Z3_OP_UMINUS:
+            case Z3_OP_BNEG:
 				op = Operator.NEG;
 				return new Operation(op, createExpr(exp.getArgs()[0]));
 			case Z3_OP_SEQ_UNIT:
