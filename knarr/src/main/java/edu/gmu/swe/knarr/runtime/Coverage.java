@@ -17,9 +17,6 @@ public class Coverage implements Serializable {
     public final int[] codeCoverage = new int[SIZE];
     public final int[] pathCoverage = new int[SIZE];
 
-    public HashMap<Expression, Integer> notTakenCode = new HashMap<>();
-    public HashMap<Expression, Integer> notTakenPath = new HashMap<>();
-
     public static final String INTERNAL_NAME = Type.getType(Coverage.class).getInternalName();
     public static final String DESCRIPTOR = Type.getType(Coverage.class).getDescriptor();
 
@@ -83,9 +80,6 @@ public class Coverage implements Serializable {
             pathCoverage[i] = 0;
         }
 
-        notTakenCode.clear();
-        notTakenPath.clear();
-
         synchronized (ids) {
             for (ThreadLocalID id : ids)
                 id.set(0);
@@ -125,5 +119,17 @@ public class Coverage implements Serializable {
             return 0;
         }
 
+    }
+
+    public static class BranchData implements Serializable {
+        private static final long serialVersionUID = -2776780881587606089L;
+
+        public final int notTakenCode;
+        public final int notTakenPath;
+
+        public BranchData(int notTakenCode, int notTakenPath) {
+            this.notTakenCode = notTakenCode;
+            this.notTakenPath = notTakenPath;
+        }
     }
 }

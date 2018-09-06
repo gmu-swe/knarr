@@ -50,9 +50,10 @@ public class ConstraintMutator extends Mutator {
             while (iter.hasNext()) {
                 newCoverage = null;
                 Expression e  = iter.next();
-                Integer id = (pathSensitive ? cov.notTakenPath : cov.notTakenCode).get(e);
-                if (id != null && id != -1) {
+                if (e.metadata != null) {
                     // This expression was used on a jump
+                    Coverage.BranchData branches = (Coverage.BranchData) e.metadata;
+                    Integer id = (pathSensitive ? branches.notTakenPath : branches.notTakenCode);
                     toNegate = e;
                     newCoverage = new Coverage();
                     if (pathSensitive)

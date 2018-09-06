@@ -1078,10 +1078,9 @@ public class PathUtils {
 
 		if (Coverage.enabled && takenID != -1) {
 			// Update current coverage
-			int id = Coverage.instance.set(takenID, notTakenID);
+			int notTakenPath = Coverage.instance.set(takenID, notTakenID);
 			// Add not taken constraint to map
-			Coverage.instance.notTakenCode.put(exp, notTakenID);
-			Coverage.instance.notTakenPath.put(exp, id);
+			exp.metadata = new Coverage.BranchData(notTakenID, notTakenPath);
 		}
 
 	}
@@ -1141,10 +1140,9 @@ public class PathUtils {
 
 		if (Coverage.enabled && takenID != -1) {
 			// Update current coverage
-			int id = Coverage.instance.set(takenID, notTakenID);
+			int notTakenPath = Coverage.instance.set(takenID, notTakenID);
 			// Add not taken constraint to map
-			Coverage.instance.notTakenCode.put(exp, notTakenID);
-			Coverage.instance.notTakenPath.put(exp, id);
+			exp.metadata = new Coverage.BranchData(notTakenID, notTakenPath);
 		}
 
 	}
