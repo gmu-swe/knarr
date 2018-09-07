@@ -38,7 +38,6 @@ public class ConstraintMutator extends Mutator {
         // Make a copy of the input so we can modify it
         Canonizer c = new Canonizer(in.constraints);
         Coverage cov = in.coverage;
-        in = null;
 
         Expression toNegate = null;
         Coverage newCoverage = null;
@@ -50,7 +49,7 @@ public class ConstraintMutator extends Mutator {
             while (iter.hasNext()) {
                 newCoverage = null;
                 Expression e  = iter.next();
-                if (e.metadata != null) {
+                if (!in.children.containsKey(e) && e.metadata != null) {
                     // This expression was used on a jump
                     Coverage.BranchData branches = (Coverage.BranchData) e.metadata;
                     Integer id = (pathSensitive ? branches.notTakenPath : branches.notTakenCode);
@@ -109,6 +108,10 @@ public class ConstraintMutator extends Mutator {
             c.getNotCanonical().add(negated);
             c.getOrder().addLast(negated);
 
+            // Add key constraints to date
+            for (Input parent = in ; parent != null && parent.newConstraint != null ; parent = parent.parent)
+                c.getNotCanonical().add(parent.newConstraint);
+
             // Solve
             Map<String, Expression> res = c.getExpressionMap();
             ArrayList<AbstractMap.SimpleEntry<String, Object>> sat = new ArrayList<>();
@@ -134,6 +137,9 @@ public class ConstraintMutator extends Mutator {
 
                 Input ret = new Input();
                 ret.input = sol;
+                ret.parent = in;
+                ret.newConstraint = negated;
+                in.children.put(negated, ret);
                 return ret;
             } else if (!unsat.isEmpty()) {
                 // UNSAT, maybe we can still find new paths

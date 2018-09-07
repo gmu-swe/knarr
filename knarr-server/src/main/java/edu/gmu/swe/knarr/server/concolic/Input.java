@@ -3,6 +3,7 @@ package edu.gmu.swe.knarr.server.concolic;
 import edu.gmu.swe.knarr.runtime.Coverage;
 import edu.gmu.swe.knarr.server.Canonizer;
 import edu.gmu.swe.knarr.server.concolic.driver.Driver;
+import za.ac.sun.cs.green.expr.Expression;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -10,11 +11,16 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.net.URI;
 import java.nio.file.Paths;
+import java.util.HashMap;
 
 public class Input {
     public Canonizer constraints;
     public Coverage coverage;
     public Object input;
+
+    public Input parent = null;
+    public HashMap<Expression, Input> children = new HashMap<>();
+    public Expression newConstraint;
 
     public void toFiles(File dirToSave, int nth, Driver driver) {
         try {

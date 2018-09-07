@@ -38,7 +38,7 @@ public class VariableMutator extends Mutator {
 
         // Make a copy of the input so we can modify it
         Canonizer c = new Canonizer(in.constraints);
-        in = null;
+//        in = null;
 
         Map<String, Expression> res = c.getExpressionMap();
         ArrayList<SimpleEntry<String, Object>> sat = new ArrayList<>();
@@ -77,7 +77,6 @@ public class VariableMutator extends Mutator {
         if (valueToNegate == null)
             return Mutator.OUT_OF_RANGE;
 
-        // Add negated input to constraints
         Expression negatedInput = new Operation(
                 Operator.NOT,
                 new Operation(Operator.EQUALS, varToNegate, new BVConstant((int)valueToNegate, ((BVVariable)varToNegate).getSize()))
@@ -85,9 +84,13 @@ public class VariableMutator extends Mutator {
 
         // Solve
         while (true) {
+            // Add negated input to constraints
             c.getCanonical().get(varToNegate.getName()).add(negatedInput);
             c.getOrder().addLast(negatedInput);
-            c.getExpressionMap().put(negatedInput.toString(), negatedInput);
+
+            // Add key constraints to date
+            for (Input parent = in ; parent != null && parent.newConstraint != null ; parent = parent.parent)
+                c.getNotCanonical().add(parent.newConstraint);
 
             res = c.getExpressionMap();
 
@@ -95,7 +98,7 @@ public class VariableMutator extends Mutator {
             unsat.clear();
             ConstraintServerHandler.solve(res, sat, unsat);
 
-            if (!sat.isEmpty()) {
+            if (!sat.isEmpty() && unsat.isEmpty()) {
                 // SAT -> generate input
                 Object sol = driver.solution(sat.size());
                 int i = 0;
@@ -111,6 +114,9 @@ public class VariableMutator extends Mutator {
 
                 Input ret = new Input();
                 ret.input = sol;
+                ret.parent = in;
+                ret.newConstraint = negatedInput;
+                in.children.put(negatedInput, ret);
                 return ret;
             } else if (!unsat.isEmpty()) {
                 // UNSAT

@@ -8,10 +8,12 @@ import edu.gmu.swe.knarr.server.concolic.driver.HTTPDriver;
 import edu.gmu.swe.knarr.server.concolic.driver.IntSerialDriver;
 import edu.gmu.swe.knarr.server.concolic.mutator.ConstraintMutator;
 import edu.gmu.swe.knarr.server.concolic.mutator.Mutator;
+import edu.gmu.swe.knarr.server.concolic.mutator.VariableMutator;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
 
@@ -92,7 +94,7 @@ public class Concolic {
 
     private void loop(File dirToSave) {
 
-        int n = 0;
+        int n = 1;
         int newMutator = 100;
 
         Mutator mutator = mutators[mutatorInUse];
@@ -244,6 +246,14 @@ public class Concolic {
 
             // Save input to file-system
             candidate.toFiles(dirToSave, lastAddedInput++, driver);
+
+            for (Input in = candidate ; in != null && in.newConstraint != null ; in = in.parent) {
+                System.out.print("\t");
+                System.out.print(in.newConstraint);
+                System.out.print(" ");
+            }
+
+            System.out.println();
 
             return true;
         } else {
