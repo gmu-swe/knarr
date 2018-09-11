@@ -1,6 +1,5 @@
 package edu.gmu.swe.knarr.server.concolic;
 
-import edu.gmu.swe.knarr.runtime.Coverage;
 import edu.gmu.swe.knarr.server.Canonizer;
 import edu.gmu.swe.knarr.server.ConstraintServerHandler;
 import edu.gmu.swe.knarr.server.concolic.driver.Driver;
@@ -9,13 +8,14 @@ import edu.gmu.swe.knarr.server.concolic.driver.IntSerialDriver;
 import edu.gmu.swe.knarr.server.concolic.mutator.ConstraintMutator;
 import edu.gmu.swe.knarr.server.concolic.mutator.Mutator;
 import edu.gmu.swe.knarr.server.concolic.mutator.VariableMutator;
+import edu.gmu.swe.knarr.server.concolic.picker.MaxConstraintsPicker;
+import edu.gmu.swe.knarr.server.concolic.picker.MaxPathsPicker;
+import edu.gmu.swe.knarr.server.concolic.picker.MaxStaticCoveragePicker;
+import edu.gmu.swe.knarr.server.concolic.picker.Picker;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.LinkedList;
 
 public class Concolic {
 
@@ -43,12 +43,10 @@ public class Concolic {
     }
 
     private Driver driver;
-    private Coverage master = new Coverage();
-    private LinkedList<Input> inputsInRotation = new LinkedList<>();
-    private LinkedList<Input> inputsOutOfRotation = new LinkedList<>();
     private int lastAddedInput = 0;
     private ServerSocket listener;
     private Mutator[] mutators;
+    private Picker picker = new MaxConstraintsPicker();
 
     private int mutatorInUse = 0;
 
@@ -62,18 +60,18 @@ public class Concolic {
 
     private void initMutators() {
         mutators = new Mutator[]{
-                new ConstraintMutator(driver, master, true, false),
-                new ConstraintMutator(driver, master, false, false),
-                new ConstraintMutator(driver, master, true, true),
-                new ConstraintMutator(driver, master, false, true),
-//            new VariableMutator(),
+                new ConstraintMutator(driver, picker.getCurrentCoverage(), true, false),
+                new ConstraintMutator(driver, picker.getCurrentCoverage(), false, false),
+                new ConstraintMutator(driver, picker.getCurrentCoverage(), true, true),
+                new ConstraintMutator(driver, picker.getCurrentCoverage(), false, true),
+//                new VariableMutator(driver),
         };
     }
 
     private void addInitialInput(File f, File dirToSave) throws IOException {
         Object data = driver.fromFile(f);
 
-        ConstraintServerHandler server = driver(data);
+        ConstraintServerHandler server = driver.drive(data);
 
         if (server == null)
             throw new Error("First input failed");
@@ -85,9 +83,7 @@ public class Concolic {
         in.coverage = server.cov;
         in.input = data;
 
-        master.merge(in.coverage);
-
-        inputsInRotation.add(in);
+        picker.saveInput(in);
 
         in.toFiles(dirToSave, lastAddedInput++, driver);
     }
@@ -100,14 +96,14 @@ public class Concolic {
         Mutator mutator = mutators[mutatorInUse];
 
         while (true) {
-            Input in = pickInput();
+            Input in = picker.pickInput();
 
             if (in == null || (n % newMutator) == 0) {
                 // No more inputs in rotation, change strategy
                 mutatorInUse = (mutatorInUse + 1) % mutators.length;
                 mutator = mutators[mutatorInUse];
                 System.out.println("Changing mutator to: " + mutator);
-                resetInputs();
+                picker.reset();
                 n++;
                 continue;
             }
@@ -128,7 +124,7 @@ public class Concolic {
                     if (var == 0 && tries == 0) {
                         // was not able to generate a single new input
                         // Remove from rotation
-                        removeInput(in);
+                        picker.removeInput(in);
                     }
                     break;
                 }
@@ -176,7 +172,7 @@ public class Concolic {
             }
 
             if (!generatedAtLeastOneInput)
-                removeInput(in);
+                picker.removeInput(in);
         }
 
     }
@@ -187,35 +183,6 @@ public class Concolic {
             listener.setSoTimeout(2000);
         } catch (IOException e) {
             throw new Error(e);
-        }
-    }
-
-    private Input pickInput() {
-        if (inputsInRotation.isEmpty())
-            return null;
-
-        Input ret = inputsInRotation.removeFirst();
-        inputsInRotation.addLast(ret);
-        System.out.println("Picking new input (" + inputsInRotation.size() + ")");
-        return ret;
-    }
-
-    private void resetInputs() {
-        inputsInRotation.addAll(inputsOutOfRotation);
-        inputsOutOfRotation.clear();
-    }
-
-    private void removeInput(Input in) {
-        Iterator<Input> iter = inputsInRotation.descendingIterator();
-        while (iter.hasNext()) {
-            Input i = iter.next();
-
-            if (i == in) {
-                iter.remove();
-                inputsOutOfRotation.add(in);
-                System.out.println("Removed input (" + inputsInRotation.size()+ " left)");
-                break;
-            }
         }
     }
 
@@ -237,13 +204,7 @@ public class Concolic {
     }
 
     private boolean saveInput(Input candidate, File dirToSave) {
-        if (!master.coversTheSameAs(candidate.coverage)) {
-            System.out.println("Added input " + lastAddedInput + "!");
-            inputsInRotation.addLast(candidate);
-
-            // Update master coverage
-            master.merge(candidate.coverage);
-
+        if (picker.saveInput(candidate)) {
             // Save input to file-system
             candidate.toFiles(dirToSave, lastAddedInput++, driver);
 

@@ -1,11 +1,9 @@
 package edu.gmu.swe.knarr.runtime;
 
 import edu.columbia.cs.psl.phosphor.org.objectweb.asm.Type;
-import za.ac.sun.cs.green.expr.Expression;
 
 import java.io.Serializable;
 import java.util.BitSet;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Random;
 
@@ -56,11 +54,51 @@ public class Coverage implements Serializable {
 
     public void print() {
         int res = 0;
-        for (int i = 0 ; i < SIZE ; i++)
+        int res2 = 0;
+        for (int i = 0 ; i < SIZE ; i++) {
             res += codeCoverage[i];
+            res2 += pathCoverage[i];
+        }
 
 
-        System.out.println(res);
+        System.out.println(res + " " + res2);
+    }
+
+    public long countCodeCoverage() {
+        long total = 0;
+
+        for (int i = 0 ; i < SIZE ; i++) {
+            int n = this.codeCoverage[i];
+            while (n > 0) {
+                total += n & 1;
+                n >>>= 1;
+            }
+        }
+
+        return total;
+    }
+
+    public long countCoverage() {
+        long total = countCodeCoverage();
+
+        for (int i = 0 ; i < SIZE ; i++) {
+            int n = this.pathCoverage[i];
+            while (n > 0) {
+                total += n & 1;
+                n >>>= 1;
+            }
+        }
+
+        return total;
+    }
+
+    public boolean coversTheSameCodeAs(Coverage c) {
+        for (int i = 0 ; i < SIZE ; i++) {
+            if ((this.codeCoverage[i] | c.codeCoverage[i]) != this.codeCoverage[i])
+                return false;
+        }
+
+        return true;
     }
 
     public boolean coversTheSameAs(Coverage c) {
