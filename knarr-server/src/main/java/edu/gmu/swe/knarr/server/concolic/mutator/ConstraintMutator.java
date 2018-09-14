@@ -42,6 +42,11 @@ public class ConstraintMutator extends Mutator {
         Expression toNegate = null;
         Coverage newCoverage = null;
 
+        // Compute key constraints to date
+        HashSet<Expression>  keyConstraints = new HashSet<>();
+        for (Input parent = in ; parent != null && parent.newConstraint != null ; parent = parent.parent)
+            keyConstraints.add(parent.newConstraint);
+
         // Pick constraint
         {
             int i = 0;
@@ -49,7 +54,7 @@ public class ConstraintMutator extends Mutator {
             while (iter.hasNext()) {
                 newCoverage = null;
                 Expression e  = iter.next();
-                if (!in.children.containsKey(e) && e.metadata != null) {
+                if (e.metadata != null && !keyConstraints.contains(e)) {
                     // This expression was used on a jump
                     Coverage.BranchData branches = (Coverage.BranchData) e.metadata;
                     Integer id = (pathSensitive ? branches.notTakenPath : branches.notTakenCode);
@@ -66,8 +71,8 @@ public class ConstraintMutator extends Mutator {
                             System.out.println(id + " " + e);
                             break;
                         }
-                    } else {
-                        System.out.print("");
+//                    } else {
+//                        System.out.print("");
                     }
                 }
                 newCoverage = null;
@@ -84,7 +89,7 @@ public class ConstraintMutator extends Mutator {
         LinkedList<Expression> newOrder = new LinkedList<>();
         LinkedList<Expression> toRemove = new LinkedList<>();
         for (Expression e : c.getOrder()) {
-            if (toNegate == e)
+            if (!found && (e == toNegate || keyConstraints.contains(e)))
                 found = true;
 
             (!found ? newOrder : toRemove).addLast(e);
@@ -109,8 +114,8 @@ public class ConstraintMutator extends Mutator {
             c.getOrder().addLast(negated);
 
             // Add key constraints to date
-            for (Input parent = in ; parent != null && parent.newConstraint != null ; parent = parent.parent)
-                c.getNotCanonical().add(parent.newConstraint);
+            for (Expression e : keyConstraints)
+                c.getNotCanonical().add(new Operation(Operator.NOT, e));
 
             // Solve
             Map<String, Expression> res = c.getExpressionMap();
@@ -138,7 +143,7 @@ public class ConstraintMutator extends Mutator {
                 Input ret = new Input();
                 ret.input = sol;
                 ret.parent = in;
-                ret.newConstraint = negated;
+                ret.newConstraint = toNegate;
                 in.children.put(negated, ret);
                 return ret;
             } else if (!unsat.isEmpty()) {
