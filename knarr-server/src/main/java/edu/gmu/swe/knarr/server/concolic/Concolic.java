@@ -6,6 +6,8 @@ import edu.gmu.swe.knarr.server.concolic.driver.Driver;
 import edu.gmu.swe.knarr.server.concolic.driver.HTTPDriver;
 import edu.gmu.swe.knarr.server.concolic.driver.IntSerialDriver;
 import edu.gmu.swe.knarr.server.concolic.mutator.ConstraintMutator;
+import edu.gmu.swe.knarr.server.concolic.mutator.FixedOutputMutator;
+import edu.gmu.swe.knarr.server.concolic.mutator.MaxConstraintsMutator;
 import edu.gmu.swe.knarr.server.concolic.mutator.Mutator;
 import edu.gmu.swe.knarr.server.concolic.mutator.VariableMutator;
 import edu.gmu.swe.knarr.server.concolic.picker.MaxConstraintsPicker;
@@ -59,9 +61,19 @@ public class Concolic {
     }
 
     private void initMutators() {
+//        int[] sorted = new int[200];
+//        for (int i = 0 ; i < sorted.length ; i++) {
+//            sorted[i] = i;
+//        }
         mutators = new Mutator[]{
-                new ConstraintMutator(driver, picker.getCurrentCoverage(), true, false),
-                new ConstraintMutator(driver, picker.getCurrentCoverage(), false, false),
+//                new ConstraintMutator(driver, picker.getCurrentCoverage(), true, false),
+//                new ConstraintMutator(driver, picker.getCurrentCoverage(), false, false),
+//                new FixedOutputMutator(driver,
+//                        new int[] { 1 , 0 , 0 , 0 , 0 },
+//                        new int[] { 2 , 1 , 0 , 0 , 0 },
+//                        new int[] { 3 , 2 , 1 , 0 , 0 },
+//                        new int[] { 10, 9, 8, 7, 6, 5, 4 , 3 , 2 , 1 , 0 }),
+//                        sorted),
                 new ConstraintMutator(driver, picker.getCurrentCoverage(), true, true),
                 new ConstraintMutator(driver, picker.getCurrentCoverage(), false, true),
 //                new VariableMutator(driver),
