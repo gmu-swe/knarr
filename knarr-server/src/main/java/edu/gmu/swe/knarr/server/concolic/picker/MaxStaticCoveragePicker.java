@@ -14,8 +14,11 @@ public class MaxStaticCoveragePicker extends Picker {
     }
 
     @Override
-    protected boolean shouldSaveInput(Input in) {
-        return !current.coversTheSameCodeAs(in.coverage);
+    protected String shouldSaveInput(Input in) {
+        if (!current.coversTheSameCodeAs(in.coverage))
+            return "newCode";
+        else
+            return null;
     }
 
     @Override

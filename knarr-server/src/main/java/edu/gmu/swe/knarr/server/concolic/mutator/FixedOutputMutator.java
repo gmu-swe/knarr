@@ -27,6 +27,7 @@ public class FixedOutputMutator extends Mutator {
         Input ret = new Input();
         ret.input = sol;
         ret.parent = in;
+        ret.how = "fixed";
         return ret;
     }
 }

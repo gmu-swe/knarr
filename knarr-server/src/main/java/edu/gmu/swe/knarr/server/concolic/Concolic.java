@@ -18,6 +18,8 @@ import edu.gmu.swe.knarr.server.concolic.picker.Picker;
 import java.io.File;
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.net.URI;
+import java.nio.file.Paths;
 
 public class Concolic {
 
@@ -76,6 +78,7 @@ public class Concolic {
 //                        sorted),
                 new ConstraintMutator(driver, picker.getCurrentCoverage(), true, true),
                 new ConstraintMutator(driver, picker.getCurrentCoverage(), false, true),
+                new MaxConstraintsMutator(driver, (MaxConstraintsPicker) picker),
 //                new VariableMutator(driver),
         };
     }
@@ -94,16 +97,19 @@ public class Concolic {
         in.constraints.canonize(server.req);
         in.coverage = server.cov;
         in.input = data;
+        in.nth = lastAddedInput++;
+        in.how = "initial";
 
         picker.saveInput(in);
+        picker.setThreshold(MaxConstraintsPicker.countConstraints(in.constraints));
 
-        in.toFiles(dirToSave, lastAddedInput++, driver);
+        in.toFiles(dirToSave, driver, "");
     }
 
     private void loop(File dirToSave) {
 
         int n = 1;
-        int newMutator = 100;
+        int newMutator = 500;
 
         Mutator mutator = mutators[mutatorInUse];
 
@@ -120,31 +126,35 @@ public class Concolic {
                 continue;
             }
 
-            Input toMutate = in;
 
-            int maxTries = 0;
+            int maxTries = 1;
             int tries = 0;
             int var = 0;
 
             boolean generatedAtLeastOneInput = false;
 
             while (var < 4000 && (n % newMutator) != 0) {
+                Input toMutate = picker.pickInput();
+
+                if (toMutate != in)
+                    break;
+
                 n++;
                 Input mutated = mutator.mutateInput(toMutate, var);
 
                 if (mutated == Mutator.OUT_OF_RANGE) {
-                    if (var == 0 && tries == 0) {
+//                    if (var == 0 && tries == 0) {
                         // was not able to generate a single new input
                         // Remove from rotation
                         picker.removeInput(in);
-                    }
+//                    }
                     break;
                 }
 
                 if (mutated == null) {
                     tries  = 0;
                     var++;
-                    toMutate = in;
+//                    toMutate = in;
                     System.out.println("Moving to var " + var);
                     continue;
                 }
@@ -170,17 +180,20 @@ public class Concolic {
                 if (saveInput(mutated, dirToSave)) {
                     generatedAtLeastOneInput = true;
 //                    tries = 0;
-                    tries++;
-                    toMutate = mutated;
-                } else if (tries >= maxTries) {
-                    tries  = 0;
-                    var++;
-                    toMutate = in;
-                    System.out.println("Moving to var " + var);
-                } else {
-                    toMutate = mutated;
-                    tries++;
+//                    tries++;
+//                    toMutate = mutated;
+//                } else if (tries >= maxTries) {
+//                    tries  = 0;
+//                    var++;
+//                    toMutate = in;
+//                    System.out.println("Moving to var " + var);
+//                } else {
+//                    toMutate = mutated;
+//                    tries++;
                 }
+
+                var++;
+                System.out.println("Moving to var " + var);
             }
 
             if (!generatedAtLeastOneInput)
@@ -192,7 +205,7 @@ public class Concolic {
     private void startConstraintServer() throws IOException {
         try {
             listener = new ServerSocket(9090);
-            listener.setSoTimeout(2000);
+//            listener.setSoTimeout(2000);
         } catch (IOException e) {
             throw new Error(e);
         }
@@ -216,17 +229,19 @@ public class Concolic {
     }
 
     private boolean saveInput(Input candidate, File dirToSave) {
-        if (picker.saveInput(candidate)) {
+        String reason;
+        if ((reason = picker.saveInput(candidate)) != null) {
             // Save input to file-system
-            candidate.toFiles(dirToSave, lastAddedInput++, driver);
+            candidate.nth = lastAddedInput++;
+            candidate.toFiles(dirToSave, driver, reason);
 
-            for (Input in = candidate ; in != null && in.newConstraint != null ; in = in.parent) {
-                System.out.print("\t");
-                System.out.print(in.newConstraint);
-                System.out.print(" ");
-            }
-
-            System.out.println();
+//            for (Input in = candidate ; in != null && in.newConstraint != null ; in = in.parent) {
+//                System.out.print("\t");
+//                System.out.print(in.newConstraint);
+//                System.out.print(" ");
+//            }
+//
+//            System.out.println();
 
             return true;
         } else {

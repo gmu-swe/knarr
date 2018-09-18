@@ -12,12 +12,13 @@ public abstract class Picker {
     protected Collection<Input> inCirculation = createInCirculation();
     protected HashSet<Input> outOfCirculation = new HashSet<>();
 
+    protected int threshold = Integer.MAX_VALUE;
+
     public Input pickInput() {
         if (inCirculation.isEmpty())
             return null;
 
         Input ret = doPickInput();
-        System.out.println("Picking new input (" + inCirculation.size() + ")");
 
         return ret;
     }
@@ -34,29 +35,47 @@ public abstract class Picker {
         outOfCirculation.add(in);
     }
 
-    public boolean saveInput(Input in) {
-        if (shouldSaveInput(in)) {
+    public String saveInput(Input in) {
+        String reason;
+        if ((reason = shouldSaveInput(in)) != null) {
             inCirculation.add(in);
 
             // Update current coverage
             current.merge(in.coverage);
 
-            return true;
-        } else if (!current.coversTheSameAs(in.coverage)) {
+            return reason;
+        }
+
+        if (!current.coversTheSameCodeAs(in.coverage)) {
             inCirculation.add(in);
             current.merge(in.coverage);
 
-            return false;
-        } else {
-            return false;
+            return "newCode";
         }
+
+//        int score = MaxConstraintsPicker.countConstraints(in.constraints);
+//        if (score < threshold)
+            return null;
+
+//        if (!current.coversTheSameAs(in.coverage)) {
+//            inCirculation.add(in);
+//            current.merge(in.coverage);
+//
+//            return "newPath";
+//        } else {
+//            return null;
+//        }
     }
 
-    protected abstract boolean shouldSaveInput(Input in);
+    protected abstract String shouldSaveInput(Input in);
 
     protected abstract Collection<Input> createInCirculation();
 
     public Coverage getCurrentCoverage() {
         return current;
+    }
+
+    public void setThreshold(int threshold) {
+        this.threshold = threshold;
     }
 }

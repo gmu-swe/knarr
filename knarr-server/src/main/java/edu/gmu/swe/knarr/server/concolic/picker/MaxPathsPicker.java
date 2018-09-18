@@ -14,8 +14,11 @@ public class MaxPathsPicker extends Picker {
     }
 
     @Override
-    protected boolean shouldSaveInput(Input in) {
-        return !current.coversTheSameAs(in.coverage);
+    protected String shouldSaveInput(Input in) {
+        if (!current.coversTheSameAs(in.coverage))
+            return "newPath";
+        else
+            return null;
     }
 
     @Override

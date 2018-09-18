@@ -3,6 +3,7 @@ package edu.gmu.swe.knarr.server.concolic;
 import edu.gmu.swe.knarr.runtime.Coverage;
 import edu.gmu.swe.knarr.server.Canonizer;
 import edu.gmu.swe.knarr.server.concolic.driver.Driver;
+import edu.gmu.swe.knarr.server.concolic.picker.MaxConstraintsPicker;
 import za.ac.sun.cs.green.expr.Expression;
 
 import java.io.File;
@@ -17,16 +18,29 @@ public class Input {
     public Canonizer constraints;
     public Coverage coverage;
     public Object input;
+    public int nth;
+    public String how;
 
     public Input parent = null;
     public HashMap<Expression, Input> children = new HashMap<>();
     public Expression newConstraint;
 
-    public void toFiles(File dirToSave, int nth, Driver driver) {
+    private static String FORMAT = "id:%06d,src:%06d,score=%d,op:%s,%s";
+
+    public void toFiles(File dirToSave, Driver driver, String reason) {
+        URI queue = Paths.get(dirToSave.getAbsolutePath(), "queue").toUri();
+        File q = new File(queue);
+        q.mkdirs();
         try {
-            save(constraints, "constraints_" + nth, dirToSave);
-            save(coverage, "coverage_" + nth, dirToSave);
-            save(input, "input_" + nth, dirToSave, driver);
+//            save(constraints, "constraints_" + nth, dirToSave);
+//            save(coverage, "coverage_" + nth, dirToSave);
+            int score = MaxConstraintsPicker.countConstraints(this.constraints);
+            String inputFilename;
+            if (this.parent != null)
+                inputFilename = String.format(FORMAT, this.nth, this.parent.nth, score, this.how, reason);
+            else
+                inputFilename = String.format(FORMAT, this.nth, 0, score, this.how, reason);
+            save(input, inputFilename, q, driver);
         } catch (IOException e) {
             throw new Error(e);
         }

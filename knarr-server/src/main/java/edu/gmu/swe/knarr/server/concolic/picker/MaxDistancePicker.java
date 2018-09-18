@@ -28,15 +28,15 @@ public class MaxDistancePicker extends Picker {
     }
 
     @Override
-    protected boolean shouldSaveInput(Input in) {
+    protected String shouldSaveInput(Input in) {
         int n = distance(in);
 
         if (n > max) {
             max = n;
-            return true;
+            return "maxDistance";
         }
 
-        return false;
+        return null;
     }
 
     @Override

@@ -38,9 +38,11 @@ public class MaxConstraintsPicker extends Picker {
     }
 
     @Override
-    protected boolean shouldSaveInput(Input in) {
+    protected String shouldSaveInput(Input in) {
         int n = countConstraints(in.constraints);
 
+        String maxVar = "";
+        String plus = "";
         for (Variable v : in.constraints.getVariables()) {
             HashSet<Expression> exps = in.constraints.getCanonical().get(v.toString());
 
@@ -56,17 +58,32 @@ public class MaxConstraintsPicker extends Picker {
             Integer count = maxVars.get(v);
             if (count == null || vars > count) {
                 maxVars.put(v, vars);
+                Input toRemove = maxIns.get(v);
+                if (toRemove != null && countConstraints(toRemove.constraints) < threshold) {
+                    inCirculation.remove(toRemove);
+                    outOfCirculation.remove(toRemove);
+                }
                 maxIns.put(v, in);
+                if (maxVar.length() < 30) {
+                    if (!maxVar.isEmpty())
+                        maxVar += ",";
+                    maxVar += (v.toString() + "=" + vars);
+                } else {
+                    plus = "...";
+                }
             }
         }
 
         if (n > max) {
             max = n;
             maxIn = in;
-            return true;
+            return "maxConstraints=" + n;
         }
 
-        return false;
+        if (!maxVar.isEmpty())
+            return "maxVar-"+maxVar+plus;
+
+        return null;
     }
 
     @Override
@@ -82,7 +99,7 @@ public class MaxConstraintsPicker extends Picker {
         });
     }
 
-    private static int countConstraints(Canonizer c) {
+    public static int countConstraints(Canonizer c) {
         int n = 0;
 
         n += c.getNotCanonical().size();

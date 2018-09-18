@@ -47,10 +47,9 @@ public class MaxConstraintsMutator extends Mutator {
 
         // Pick pair of variables
         LinkedList<Expression> added = new LinkedList<>();
+        Variable picked = null;
+        Input pickedIn = null;
         {
-            if (in == picker.getMaxInput())
-                System.out.print("");
-
             int i = 0;
             for (Variable v : in.constraints.getVariables()) {
                 if (which == i) {
@@ -87,13 +86,15 @@ public class MaxConstraintsMutator extends Mutator {
                         }
                     }
 
+                    picked = v;
+                    pickedIn = maxIn;
                     break;
                 } else {
                     i++;
                 }
             }
 
-            if (which != i)
+            if (picked == null)
                 return Mutator.OUT_OF_RANGE;
         }
 
@@ -128,6 +129,7 @@ public class MaxConstraintsMutator extends Mutator {
                 Input ret = new Input();
                 ret.input = sol;
                 ret.parent = in;
+                ret.how = picked.toString() + " from " + pickedIn.nth;
                 return ret;
             } else if (!unsat.isEmpty()) {
                 // UNSAT, maybe we can still find new paths

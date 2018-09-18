@@ -145,6 +145,7 @@ public class ConstraintMutator extends Mutator {
                 ret.parent = in;
                 ret.newConstraint = toNegate;
                 in.children.put(negated, ret);
+                ret.how = negated.toString();
                 return ret;
             } else if (!unsat.isEmpty()) {
                 // UNSAT, maybe we can still find new paths
