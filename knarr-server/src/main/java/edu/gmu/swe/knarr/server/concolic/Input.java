@@ -20,9 +20,9 @@ public class Input {
     public Object input;
     public int nth;
     public String how;
+    public int score;
 
     public Input parent = null;
-    public HashMap<Expression, Input> children = new HashMap<>();
     public Expression newConstraint;
 
     private static String FORMAT = "id:%06d,src:%06d,score=%d,op:%s,%s";

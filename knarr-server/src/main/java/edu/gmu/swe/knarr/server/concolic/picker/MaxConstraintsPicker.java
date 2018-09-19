@@ -39,8 +39,6 @@ public class MaxConstraintsPicker extends Picker {
 
     @Override
     protected String shouldSaveInput(Input in) {
-        int n = countConstraints(in.constraints);
-
         String maxVar = "";
         String plus = "";
         for (Variable v : in.constraints.getVariables()) {
@@ -58,10 +56,13 @@ public class MaxConstraintsPicker extends Picker {
             Integer count = maxVars.get(v);
             if (count == null || vars > count) {
                 maxVars.put(v, vars);
-                Input toRemove = maxIns.get(v);
-                if (toRemove != null && countConstraints(toRemove.constraints) < threshold) {
+                Input toRemove = maxIns.remove(v);
+
+                if (toRemove != null && toRemove.score < threshold && !maxIns.containsValue(toRemove)) {
                     inCirculation.remove(toRemove);
                     outOfCirculation.remove(toRemove);
+                    toRemove.input = null;
+                    toRemove.constraints = null;
                 }
                 maxIns.put(v, in);
                 if (maxVar.length() < 30) {
@@ -74,10 +75,10 @@ public class MaxConstraintsPicker extends Picker {
             }
         }
 
-        if (n > max) {
-            max = n;
+        if (in.score > max) {
+            max = in.score;
             maxIn = in;
-            return "maxConstraints=" + n;
+            return "maxConstraints=" + in.score;
         }
 
         if (!maxVar.isEmpty())
@@ -91,10 +92,7 @@ public class MaxConstraintsPicker extends Picker {
         return new TreeSet<>(new Comparator<Input>() {
             @Override
             public int compare(Input o1, Input o2) {
-                long l1 = countConstraints(o1.constraints);
-                long l2 = countConstraints(o2.constraints);
-
-                return Long.compare(l1, l2);
+                return Integer.compare(o1.score, o2.score);
             }
         });
     }

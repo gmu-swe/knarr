@@ -105,7 +105,7 @@ public class HashMapStateStore extends StateStore {
 		while(iter.hasNext())
 		{
 			Z3GreenBridge r = iter.next();
-			completed.add(r);
+//			completed.add(r);
 			iter.remove();
 
 			return r;

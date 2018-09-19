@@ -144,7 +144,6 @@ public class ConstraintMutator extends Mutator {
                 ret.input = sol;
                 ret.parent = in;
                 ret.newConstraint = toNegate;
-                in.children.put(negated, ret);
                 ret.how = negated.toString();
                 return ret;
             } else if (!unsat.isEmpty()) {

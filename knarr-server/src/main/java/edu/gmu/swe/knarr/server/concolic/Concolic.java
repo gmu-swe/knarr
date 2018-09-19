@@ -1,6 +1,7 @@
 package edu.gmu.swe.knarr.server.concolic;
 
 import edu.gmu.swe.knarr.server.Canonizer;
+import edu.gmu.swe.knarr.server.ConstraintServer;
 import edu.gmu.swe.knarr.server.ConstraintServerHandler;
 import edu.gmu.swe.knarr.server.concolic.driver.Driver;
 import edu.gmu.swe.knarr.server.concolic.driver.HTTPDriver;
@@ -99,6 +100,7 @@ public class Concolic {
         in.input = data;
         in.nth = lastAddedInput++;
         in.how = "initial";
+        in.score = MaxConstraintsPicker.countConstraints(in.constraints);
 
         picker.saveInput(in);
         picker.setThreshold(MaxConstraintsPicker.countConstraints(in.constraints));
@@ -192,6 +194,12 @@ public class Concolic {
 //                    tries++;
                 }
 
+                // Discard info not needed that takes a lot of memory
+                // We can always get it back by re-executing the same input
+                // That should be cheap
+                mutated.coverage = null;
+//              candidate.constraints = null;
+
                 var++;
                 System.out.println("Moving to var " + var);
             }
@@ -225,6 +233,7 @@ public class Concolic {
         in.constraints = new Canonizer();
         in.constraints.canonize(server.req);
         in.coverage = server.cov;
+        in.score = MaxConstraintsPicker.countConstraints(in.constraints);
         return true;
     }
 

@@ -116,7 +116,6 @@ public class VariableMutator extends Mutator {
                 ret.input = sol;
                 ret.parent = in;
                 ret.newConstraint = negatedInput;
-                in.children.put(negatedInput, ret);
                 return ret;
             } else if (!unsat.isEmpty()) {
                 // UNSAT

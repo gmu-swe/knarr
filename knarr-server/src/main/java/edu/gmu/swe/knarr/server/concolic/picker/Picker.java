@@ -78,4 +78,8 @@ public abstract class Picker {
     public void setThreshold(int threshold) {
         this.threshold = threshold;
     }
+
+    public int getThreshold() {
+        return this.threshold;
+    }
 }
