@@ -12,6 +12,7 @@ import edu.gmu.swe.knarr.server.concolic.mutator.MaxConstraintsMutator;
 import edu.gmu.swe.knarr.server.concolic.mutator.Mutator;
 import edu.gmu.swe.knarr.server.concolic.mutator.VariableMutator;
 import edu.gmu.swe.knarr.server.concolic.picker.MaxConstraintsPicker;
+import edu.gmu.swe.knarr.server.concolic.picker.MaxMeanConstraintsPicker;
 import edu.gmu.swe.knarr.server.concolic.picker.MaxPathsPicker;
 import edu.gmu.swe.knarr.server.concolic.picker.MaxStaticCoveragePicker;
 import edu.gmu.swe.knarr.server.concolic.picker.Picker;
@@ -51,7 +52,7 @@ public class Concolic {
     private int lastAddedInput = 0;
     private ServerSocket listener;
     private Mutator[] mutators;
-    private Picker picker = new MaxConstraintsPicker();
+    private Picker picker = new MaxMeanConstraintsPicker();
 
     private int mutatorInUse = 0;
 
@@ -100,7 +101,7 @@ public class Concolic {
         in.input = data;
         in.nth = lastAddedInput++;
         in.how = "initial";
-        in.score = MaxConstraintsPicker.countConstraints(in.constraints);
+        picker.score(in); //MaxConstraintsPicker.countConstraints(in.constraints);
 
         picker.saveInput(in);
         picker.setThreshold(MaxConstraintsPicker.countConstraints(in.constraints));
@@ -233,7 +234,7 @@ public class Concolic {
         in.constraints = new Canonizer();
         in.constraints.canonize(server.req);
         in.coverage = server.cov;
-        in.score = MaxConstraintsPicker.countConstraints(in.constraints);
+        picker.score(in);
         return true;
     }
 

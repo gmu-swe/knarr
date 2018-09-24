@@ -67,6 +67,10 @@ public abstract class Picker {
 //        }
     }
 
+    public void score(Input in) {
+        in.score = 0;
+    }
+
     protected abstract String shouldSaveInput(Input in);
 
     protected abstract Collection<Input> createInCirculation();

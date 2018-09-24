@@ -38,16 +38,20 @@ public class MaxConstraintsPicker extends Picker {
     }
 
     @Override
+    public void score(Input in) {
+        in.score = countConstraints(in.constraints);
+    }
+
+    @Override
     protected String shouldSaveInput(Input in) {
         String maxVar = "";
         String plus = "";
         for (Variable v : in.constraints.getVariables()) {
             HashSet<Expression> exps = in.constraints.getCanonical().get(v.toString());
 
-            if (exps == null)
-                continue;
-
-            int vars = exps.size();
+            int vars = 0;
+            if (exps != null)
+                vars = exps.size();
 
             for (Expression e : in.constraints.getNotCanonical())
                 if (refersVar(v, e))

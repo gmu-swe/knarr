@@ -34,7 +34,7 @@ public class Input {
         try {
 //            save(constraints, "constraints_" + nth, dirToSave);
 //            save(coverage, "coverage_" + nth, dirToSave);
-            int score = MaxConstraintsPicker.countConstraints(this.constraints);
+            int score = this.score;
             String inputFilename;
             if (this.parent != null)
                 inputFilename = String.format(FORMAT, this.nth, this.parent.nth, score, this.how, reason);
