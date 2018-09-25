@@ -469,10 +469,10 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 	public void jumpOp(int opcode, int branchStarting, Label label, MethodVisitor mv, LocalVariableManager lvs, TaintPassingMV ta) {
 	    int takenID, notTakenID;
 		if (enableCov) {
-			notTakenID = Coverage.getNewLocationId();
+			notTakenID = AFLCoverage.getNewLocationId();
 			Integer aux = labelToID.get(label);
 			if (aux == null) {
-			    aux = Coverage.getNewLocationId();
+			    aux = AFLCoverage.getNewLocationId();
 			    labelToID.put(label, aux);
 			}
 			takenID = aux;
@@ -786,7 +786,7 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 		if (enableCov) {
 			labelToID.clear();
 
-			Integer id = Coverage.getNewLocationId();
+			Integer id = AFLCoverage.getNewLocationId();
 
 			mv.visitFieldInsn(GETSTATIC, Coverage.INTERNAL_NAME, "instance", Coverage.DESCRIPTOR);
 			mv.visitLdcInsn(id);

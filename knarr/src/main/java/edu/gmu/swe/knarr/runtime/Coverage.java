@@ -10,7 +10,7 @@ import java.util.Random;
 public class Coverage implements Serializable {
     private static final long serialVersionUID = -6059233792632965508L;
     public static transient int SIZE = 1 << 20; // Don't make it final to avoid stupid javac constant propagation
-    public static transient Coverage instance = new Coverage();
+    public static transient Coverage instance = new AFLCoverage();
 
     public final int[] codeCoverage = new int[SIZE];
     public final int[] pathCoverage = new int[SIZE];
