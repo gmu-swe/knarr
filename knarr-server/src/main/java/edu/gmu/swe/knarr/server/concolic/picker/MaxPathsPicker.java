@@ -14,7 +14,14 @@ public class MaxPathsPicker extends Picker {
     }
 
     @Override
+    public void score(Input in) {
+        in.score = in.coverage.countCoverage();
+    }
+
+    @Override
     protected String shouldSaveInput(Input in) {
+        super.shouldSaveInput(in);
+
         if (!current.coversTheSameAs(in.coverage))
             return "newPath";
         else

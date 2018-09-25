@@ -1,5 +1,6 @@
 package edu.gmu.swe.knarr.server.concolic.picker;
 
+import edu.gmu.swe.knarr.runtime.AFLCoverage;
 import edu.gmu.swe.knarr.runtime.Coverage;
 import edu.gmu.swe.knarr.server.concolic.Input;
 
@@ -7,7 +8,7 @@ import java.util.Collection;
 import java.util.HashSet;
 
 public abstract class Picker {
-    protected Coverage current = new Coverage();
+    protected Coverage current = new AFLCoverage();
 
     protected Collection<Input> inCirculation = createInCirculation();
     protected HashSet<Input> outOfCirculation = new HashSet<>();
@@ -55,16 +56,16 @@ public abstract class Picker {
 
 //        int score = MaxConstraintsPicker.countConstraints(in.constraints);
 //        if (score < threshold)
-            return null;
-
-//        if (!current.coversTheSameAs(in.coverage)) {
-//            inCirculation.add(in);
-//            current.merge(in.coverage);
-//
-//            return "newPath";
-//        } else {
 //            return null;
-//        }
+
+        if (!current.coversTheSameAs(in.coverage)) {
+            inCirculation.add(in);
+            current.merge(in.coverage);
+
+            return "newPath";
+        } else {
+            return null;
+        }
     }
 
     public void score(Input in) {

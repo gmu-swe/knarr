@@ -52,7 +52,7 @@ public class Concolic {
     private int lastAddedInput = 0;
     private ServerSocket listener;
     private Mutator[] mutators;
-    private Picker picker = new MaxMeanConstraintsPicker();
+    private Picker picker = new MaxPathsPicker();
 
     private int mutatorInUse = 0;
 
@@ -198,7 +198,7 @@ public class Concolic {
                 // Discard info not needed that takes a lot of memory
                 // We can always get it back by re-executing the same input
                 // That should be cheap
-                mutated.coverage = null;
+//                mutated.coverage = null;
 //              candidate.constraints = null;
 
                 var++;
