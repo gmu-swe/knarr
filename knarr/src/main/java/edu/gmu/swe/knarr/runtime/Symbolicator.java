@@ -123,6 +123,40 @@ public class Symbolicator {
 		try (ObjectOutputStream oos = new ObjectOutputStream(getSocket().getOutputStream())) {
 			ObjectInputStream ois = new ObjectInputStream(getSocket().getInputStream());
 
+//			{
+//				Expression exp = PathUtils.getCurPC().constraints;
+//				long n = 0;
+//				while (true) {
+//					if (exp instanceof Operation) {
+//						n++;
+//						Operation op = (Operation) exp;
+//						if (op.getOperator() == Operator.AND) {
+//							Expression e0 = op.getOperand(0);
+//							Expression e1 = op.getOperand(1);
+//							exp = e0;
+//						} else {
+//							break;
+//						}
+//					}
+//				}
+//
+//				oos.writeLong(n);
+//			    exp = PathUtils.getCurPC().constraints;
+//			    while (true) {
+//					if (exp instanceof Operation) {
+//						Operation op = (Operation) exp;
+//						if (op.getOperator() == Operator.AND) {
+//							Expression e0 = op.getOperand(0);
+//							Expression e1 = op.getOperand(1);
+//							oos.writeObject(e1);
+//							exp = e0;
+//						} else {
+//							oos.writeObject(op);
+//							break;
+//						}
+//					}
+//				}
+//			}
 			oos.writeObject(PathUtils.getCurPC().constraints);
 //			oos.writeBoolean(false);
 			oos.writeBoolean(true);

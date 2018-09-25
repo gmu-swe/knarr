@@ -10,10 +10,7 @@ import za.ac.sun.cs.green.expr.Expression;
 import za.ac.sun.cs.green.expr.IntConstant;
 import za.ac.sun.cs.green.expr.IntVariable;
 import za.ac.sun.cs.green.expr.Operation;
-import za.ac.sun.cs.green.expr.StringVariable;
 import za.ac.sun.cs.green.expr.Operation.Operator;
-import za.ac.sun.cs.green.expr.RealConstant;
-import za.ac.sun.cs.green.expr.StringConstant;
 import edu.columbia.cs.psl.phosphor.org.objectweb.asm.Opcodes;
 import edu.columbia.cs.psl.phosphor.org.objectweb.asm.util.Printer;
 import edu.columbia.cs.psl.phosphor.runtime.Taint;
@@ -28,13 +25,15 @@ import edu.columbia.cs.psl.phosphor.struct.TaintedLongWithObjTag;
 import edu.columbia.cs.psl.phosphor.struct.TaintedPrimitiveWithObjTag;
 import edu.columbia.cs.psl.phosphor.struct.TaintedShortWithObjTag;
 import edu.columbia.cs.psl.phosphor.struct.TaintedWithObjTag;
+import za.ac.sun.cs.green.expr.RealConstant;
+import za.ac.sun.cs.green.expr.StringConstant;
 
 public class PathUtils {
 	private static PathConditionWrapper curPC;
 	public static final boolean IGNORE_SHIFTS = true;
 	public static final String INTERNAL_NAME = "edu/gmu/swe/knarr/runtime/PathUtils";
 	
-	public static String interesting = ".*autoVar_15[^0-9].*47.*";
+//	public static String interesting = ".*autoVar_15[^0-9].*47.*";
 
 	public static PathConditionWrapper getCurPC() {
 		if (curPC == null)
@@ -1049,8 +1048,8 @@ public class PathUtils {
 			return;
 		if (!JPFInited)
 			initJPF();
-		if (t.lbl.toString().matches(interesting))
-			System.out.print("");
+//		if (t.lbl.toString().matches(interesting))
+//			System.out.print("");
 		Expression exp = t.lbl;
 		switch (opcode) {
 		case Opcodes.IFEQ:
@@ -1082,7 +1081,6 @@ public class PathUtils {
 			// Add not taken constraint to map
 			exp.metadata = new Coverage.BranchData(notTakenID, notTakenPath);
 		}
-
 	}
 
 	public static void addConstraint(Expression lExp, Expression rExp, Object v1, Object v2, int opcode) {
@@ -1105,8 +1103,8 @@ public class PathUtils {
 			rExp = new IntConstant(v2);
 		else
 			rExp = r.lbl;
-		if (lExp.toString().matches(interesting) || rExp.toString().matches(interesting))
-			System.out.print("");
+//		if (lExp.toString().matches(interesting) || rExp.toString().matches(interesting))
+//			System.out.print("");
 		Expression exp = null;
 		switch (opcode) {
 		case Opcodes.IF_ACMPEQ:
@@ -1144,7 +1142,6 @@ public class PathUtils {
 			// Add not taken constraint to map
 			exp.metadata = new Coverage.BranchData(notTakenID, notTakenPath);
 		}
-
 	}
 
 	/**

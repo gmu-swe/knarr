@@ -35,39 +35,41 @@ public class TaintListener extends DerivedTaintListener {
 				ret = ll;
 
 				ArrayVariable arrVar = new ArrayVariable(var.getName() + "_" + ret.size(), var.getType());
-				for (int i = 0 ; i < Array.getLength(arr) ; i++)
-				{
-					Operation select = new Operation(Operator.SELECT, arrVar, new BVConstant(i, 32));
-					Constant val;
-					switch(arr.getClass().getComponentType().getName()) {
-						case "boolean":
-							val = new BoolConstant(((boolean[])arr)[i]);
-							break;
-						case "byte":
-							val = new BVConstant(((byte[])arr)[i], 32);
-							break;
-						case "char":
-							val = new BVConstant(((char[])arr)[i], 32);
-							break;
-						case "short":
-							val = new BVConstant(((short[])arr)[i], 32);
-							break;
-						case "int":
-							val = new BVConstant(((int[])arr)[i], 32);
-							break;
-						case "long":
-							val = new BVConstant(((long[])arr)[i], 64);
-							break;
-						case "float":
-							val = new RealConstant(((float[])arr)[i]);
-							break;
-						case "double":
-							val = new RealConstant(((double[])arr)[i]);
-							break;
-						default:
-							throw new Error("Not supported");
+				if (Array.getLength(arr) < 200) {
+					for (int i = 0 ; i < Array.getLength(arr) ; i++)
+					{
+						Operation select = new Operation(Operator.SELECT, arrVar, new BVConstant(i, 32));
+						Constant val;
+						switch(arr.getClass().getComponentType().getName()) {
+							case "boolean":
+								val = new BoolConstant(((boolean[])arr)[i]);
+								break;
+							case "byte":
+								val = new BVConstant(((byte[])arr)[i], 32);
+								break;
+							case "char":
+								val = new BVConstant(((char[])arr)[i], 32);
+								break;
+							case "short":
+								val = new BVConstant(((short[])arr)[i], 32);
+								break;
+							case "int":
+								val = new BVConstant(((int[])arr)[i], 32);
+								break;
+							case "long":
+								val = new BVConstant(((long[])arr)[i], 64);
+								break;
+							case "float":
+								val = new RealConstant(((float[])arr)[i]);
+								break;
+							case "double":
+								val = new RealConstant(((double[])arr)[i]);
+								break;
+							default:
+								throw new Error("Not supported");
+						}
+						PathUtils.getCurPC()._addDet(Operator.EQ, select, val);
 					}
-					PathUtils.getCurPC()._addDet(Operator.EQ, select, val);
 				}
 			}
 			return new ArrayVariable(ret.getLast().getName() + "_" + ret.size(), ret.getLast().getType());
@@ -159,8 +161,8 @@ public class TaintListener extends DerivedTaintListener {
 	public TaintedBooleanWithObjTag arrayGet(LazyBooleanArrayObjTags b, Taint idxTaint, int idx, TaintedBooleanWithObjTag ret, ControlTaintTagStack ctrl) {
 		ret.val = b.val[idx];
 		ret.taint = genericReadArray(b, idxTaint, idx, new BoolConstant(ret.val));
-		if (idxTaint != null && idxTaint.toString().matches(PathUtils.interesting))
-			System.out.print("");
+//		if (idxTaint != null && idxTaint.toString().matches(PathUtils.interesting))
+//			System.out.print("");
 		return ret;
 	}
 	
@@ -168,8 +170,8 @@ public class TaintListener extends DerivedTaintListener {
 	public TaintedByteWithObjTag arrayGet(LazyByteArrayObjTags b, Taint idxTaint, int idx, TaintedByteWithObjTag ret, ControlTaintTagStack ctrl) {
 		ret.val = b.val[idx];
 		ret.taint = genericReadArray(b, idxTaint, idx, new BVConstant(ret.val, 32));
-		if (idxTaint != null && idxTaint.toString().matches(PathUtils.interesting))
-			System.out.print("");
+//		if (idxTaint != null && idxTaint.toString().matches(PathUtils.interesting))
+//			System.out.print("");
 		return ret;
 	}
 	
@@ -177,8 +179,8 @@ public class TaintListener extends DerivedTaintListener {
 	public TaintedCharWithObjTag arrayGet(LazyCharArrayObjTags b, Taint idxTaint, int idx, TaintedCharWithObjTag ret, ControlTaintTagStack ctrl) {
 		ret.val = b.val[idx];
 		ret.taint = genericReadArray(b, idxTaint, idx, new BVConstant(ret.val, 32));
-		if (idxTaint != null && idxTaint.toString().matches(PathUtils.interesting))
-			System.out.print("");
+//		if (idxTaint != null && idxTaint.toString().matches(PathUtils.interesting))
+//			System.out.print("");
 		return ret;
 	}
 	
@@ -186,8 +188,8 @@ public class TaintListener extends DerivedTaintListener {
 	public TaintedShortWithObjTag arrayGet(LazyShortArrayObjTags b, Taint idxTaint, int idx, TaintedShortWithObjTag ret, ControlTaintTagStack ctrl) {
 		ret.val = b.val[idx];
 		ret.taint = genericReadArray(b, idxTaint, idx, new BVConstant(ret.val, 32));
-		if (idxTaint != null && idxTaint.toString().matches(PathUtils.interesting))
-			System.out.print("");
+//		if (idxTaint != null && idxTaint.toString().matches(PathUtils.interesting))
+//			System.out.print("");
 		return ret;
 	}
 	
@@ -195,8 +197,8 @@ public class TaintListener extends DerivedTaintListener {
 	public TaintedIntWithObjTag arrayGet(LazyIntArrayObjTags b, Taint idxTaint, int idx, TaintedIntWithObjTag ret, ControlTaintTagStack ctrl) {
 		ret.val = b.val[idx];
 		ret.taint = genericReadArray(b, idxTaint, idx, new BVConstant(ret.val, 32));
-		if (idxTaint != null && idxTaint.toString().matches(PathUtils.interesting))
-			System.out.print("");
+//		if (idxTaint != null && idxTaint.toString().matches(PathUtils.interesting))
+//			System.out.print("");
 		return ret;
 	}
 	
@@ -204,8 +206,8 @@ public class TaintListener extends DerivedTaintListener {
 	public TaintedLongWithObjTag arrayGet(LazyLongArrayObjTags b, Taint idxTaint, int idx, TaintedLongWithObjTag ret, ControlTaintTagStack ctrl) {
 		ret.val = b.val[idx];
 		ret.taint = genericReadArray(b, idxTaint, idx, new BVConstant(ret.val, 64));
-		if (idxTaint != null && idxTaint.toString().matches(PathUtils.interesting))
-			System.out.print("");
+//		if (idxTaint != null && idxTaint.toString().matches(PathUtils.interesting))
+//			System.out.print("");
 		return ret;
 	}
 	

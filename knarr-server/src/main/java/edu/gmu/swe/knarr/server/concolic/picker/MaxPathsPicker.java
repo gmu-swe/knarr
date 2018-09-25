@@ -6,7 +6,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.TreeSet;
 
-public class MaxPathsPicker extends Picker {
+public class MaxPathsPicker extends MaxConstraintsPicker {
 
     @Override
     public Input doPickInput() {
