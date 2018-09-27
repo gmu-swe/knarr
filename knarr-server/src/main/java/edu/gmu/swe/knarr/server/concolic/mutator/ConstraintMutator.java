@@ -1,6 +1,5 @@
 package edu.gmu.swe.knarr.server.concolic.mutator;
 
-import edu.gmu.swe.knarr.runtime.AFLCoverage;
 import edu.gmu.swe.knarr.runtime.Coverage;
 import edu.gmu.swe.knarr.server.Canonizer;
 import edu.gmu.swe.knarr.server.ConstraintServerHandler;
@@ -60,7 +59,7 @@ public class ConstraintMutator extends Mutator {
                     Coverage.BranchData branches = (Coverage.BranchData) e.metadata;
                     Integer id = (pathSensitive ? branches.notTakenPath : branches.notTakenCode);
                     toNegate = e;
-                    newCoverage = new AFLCoverage();
+                    newCoverage = Coverage.newCoverage();
                     if (pathSensitive)
                         newCoverage.setPath(id);
                     else

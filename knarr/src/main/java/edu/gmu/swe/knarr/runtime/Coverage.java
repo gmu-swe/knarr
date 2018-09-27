@@ -10,7 +10,6 @@ import java.util.Random;
 public class Coverage implements Serializable {
     private static final long serialVersionUID = -6059233792632965508L;
     public static transient int SIZE = 1 << 20; // Don't make it final to avoid stupid javac constant propagation
-    public static transient Coverage instance = new AFLCoverage();
 
     public final int[] codeCoverage = new int[SIZE];
     public final int[] pathCoverage = new int[SIZE];
@@ -19,6 +18,7 @@ public class Coverage implements Serializable {
     public static final String DESCRIPTOR = Type.getType(Coverage.class).getDescriptor();
 
     public static boolean enabled = (System.getProperty("addCov") != null);
+    public static transient Coverage instance = new Coverage();
 
     private static LinkedList<ThreadLocalID> ids = new LinkedList<>();
 //    private ThreadLocalID lastID = new ThreadLocalID();
@@ -136,7 +136,7 @@ public class Coverage implements Serializable {
     private static BitSet used = new BitSet(SIZE*32);
     private static Random r = new Random();
 
-    /*default*/ static int getNewLocationId() {
+    /*default*/ int getNewLocationId() {
         int id;
         int tries = 0;
         do {
@@ -169,5 +169,9 @@ public class Coverage implements Serializable {
             this.notTakenCode = notTakenCode;
             this.notTakenPath = notTakenPath;
         }
+    }
+
+    public static Coverage newCoverage() {
+        return ("AFL".equals(System.getProperty("addCov"))) ? new AFLCoverage() : new Coverage();
     }
 }

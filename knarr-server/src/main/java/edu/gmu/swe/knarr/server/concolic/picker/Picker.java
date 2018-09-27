@@ -1,6 +1,5 @@
 package edu.gmu.swe.knarr.server.concolic.picker;
 
-import edu.gmu.swe.knarr.runtime.AFLCoverage;
 import edu.gmu.swe.knarr.runtime.Coverage;
 import edu.gmu.swe.knarr.server.concolic.Input;
 
@@ -8,7 +7,7 @@ import java.util.Collection;
 import java.util.HashSet;
 
 public abstract class Picker {
-    protected Coverage current = new AFLCoverage();
+    protected Coverage current = Coverage.newCoverage();
 
     protected Collection<Input> inCirculation = createInCirculation();
     protected HashSet<Input> outOfCirculation = new HashSet<>();

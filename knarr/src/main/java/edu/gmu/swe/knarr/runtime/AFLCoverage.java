@@ -107,7 +107,8 @@ public class AFLCoverage extends Coverage implements Serializable {
     private static BitSet used = new BitSet(SIZE*32);
     private static Random r = new Random();
 
-    /*default*/ static int getNewLocationId() {
+    @Override
+    /*default*/ int getNewLocationId() {
         int id;
         int tries = 0;
         do {
