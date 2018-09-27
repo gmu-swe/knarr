@@ -55,16 +55,16 @@ public abstract class Picker {
 
 //        int score = MaxConstraintsPicker.countConstraints(in.constraints);
 //        if (score < threshold)
-//            return null;
-
-        if (!current.coversTheSameAs(in.coverage)) {
-            inCirculation.add(in);
-            current.merge(in.coverage);
-
-            return "newPath";
-        } else {
             return null;
-        }
+
+//        if (!current.coversTheSameAs(in.coverage)) {
+//            inCirculation.add(in);
+//            current.merge(in.coverage);
+//
+//            return "newPath";
+//        } else {
+//            return null;
+//        }
     }
 
     public void score(Input in) {

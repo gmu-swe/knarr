@@ -9,6 +9,7 @@ import edu.gmu.swe.knarr.server.concolic.driver.IntSerialDriver;
 import edu.gmu.swe.knarr.server.concolic.mutator.ConstraintMutator;
 import edu.gmu.swe.knarr.server.concolic.mutator.FixedOutputMutator;
 import edu.gmu.swe.knarr.server.concolic.mutator.MaxConstraintsMutator;
+import edu.gmu.swe.knarr.server.concolic.mutator.ImportMutator;
 import edu.gmu.swe.knarr.server.concolic.mutator.Mutator;
 import edu.gmu.swe.knarr.server.concolic.mutator.VariableMutator;
 import edu.gmu.swe.knarr.server.concolic.picker.MaxConstraintsPicker;
@@ -41,7 +42,7 @@ public class Concolic {
                 throw new Error("Unknown drive: " + args[0]);
         }
 
-        c.initMutators();
+        c.initMutators(args.length > 3 ? new File(args[3]) : null);
 
         c.addInitialInput(new File(args[1]), new File(args[2]));
 
@@ -52,7 +53,7 @@ public class Concolic {
     private int lastAddedInput = 0;
     private ServerSocket listener;
     private Mutator[] mutators;
-    private Picker picker = new MaxPathsPicker();
+    private Picker picker = new MaxConstraintsPicker();
 
     private int mutatorInUse = 0;
 
@@ -72,17 +73,27 @@ public class Concolic {
         mutators = new Mutator[]{
 //                new ConstraintMutator(driver, picker.getCurrentCoverage(), true, false),
 //                new ConstraintMutator(driver, picker.getCurrentCoverage(), false, false),
-//                new FixedOutputMutator(driver,
-//                        new int[] { 1 , 0 , 0 , 0 , 0 },
-//                        new int[] { 2 , 1 , 0 , 0 , 0 },
-//                        new int[] { 3 , 2 , 1 , 0 , 0 },
-//                        new int[] { 10, 9, 8, 7, 6, 5, 4 , 3 , 2 , 1 , 0 }),
-//                        sorted),
                 new ConstraintMutator(driver, picker.getCurrentCoverage(), true, true),
                 new ConstraintMutator(driver, picker.getCurrentCoverage(), false, true),
                 new MaxConstraintsMutator(driver, (MaxConstraintsPicker) picker),
 //                new VariableMutator(driver),
         };
+
+        if (importDir != null) {
+            Mutator importer = new ImportMutator(driver, importDir);
+            Mutator[] old = mutators;
+            mutators = new Mutator[(old.length * 2)];
+
+            mutators[0] = importer;
+
+            for (int i = 0 ; i < old.length ; i++) {
+                mutators[(i*2) + 1] = old[i];
+
+                if (i != old.length-1)
+                    mutators[(i*2) + 1 + 1] = importer;
+            }
+        }
+
     }
 
     private void addInitialInput(File f, File dirToSave) throws IOException {
