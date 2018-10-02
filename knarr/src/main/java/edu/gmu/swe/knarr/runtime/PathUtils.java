@@ -472,7 +472,7 @@ public class PathUtils {
 			return ret;
 		}
 		// TODO figure out how to support this
-		ret.taint = null;
+		ret.taint = registerBinaryOp(getExpression(lVal, v2), getExpression(rVal, v1), Opcodes.LREM);
 		// ret.taint = registerBinaryOp(getExpression(lVal, v2),
 		// getExpression(rVal, v1), Opcodes.LREM);
 		return ret;

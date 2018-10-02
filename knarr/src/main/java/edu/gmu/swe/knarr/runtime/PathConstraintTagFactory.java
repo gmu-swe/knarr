@@ -914,7 +914,12 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 			// taint, null, value, switch target
 			mv.visitLdcInsn(IF_ICMPEQ);
 			// TODO coverage
-			mv.visitLdcInsn(-1);
+			Integer id = labelToID.get(labels[i]);
+			if (id == null) {
+				id = Coverage.instance.getNewLocationId();
+				labelToID.put(labels[i], id);
+			}
+			mv.visitLdcInsn(id);
 			mv.visitLdcInsn(-1);
 			// taint, null, value, switch target, ==
 			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addConstraint", "(" + Configuration.TAINT_TAG_DESC + Configuration.TAINT_TAG_DESC + "IIIII)V", false);
@@ -935,7 +940,12 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 			// taint, value, taint, null, value, switch target
 			mv.visitLdcInsn(IF_ICMPNE);
 			// TODO coverage
-			mv.visitLdcInsn(-1);
+			Integer id = labelToID.get(dflt);
+			if (id == null) {
+				id = Coverage.instance.getNewLocationId();
+				labelToID.put(dflt, id);
+			}
+			mv.visitLdcInsn(id);
 			mv.visitLdcInsn(-1);
 			// taint, value, taint, null, value, switch target, !=
 			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addConstraint", "(" + Configuration.TAINT_TAG_DESC + Configuration.TAINT_TAG_DESC + "IIIII)V", false);

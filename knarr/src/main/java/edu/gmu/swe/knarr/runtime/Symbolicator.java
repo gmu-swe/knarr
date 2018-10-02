@@ -520,7 +520,9 @@ public class Symbolicator {
 		if (mySoln != null && !mySoln.isUnconstrained)
 			ret.val = ((Integer) mySoln.varMapping.get(label)).byteValue();
 		ret.taint = new ExpressionTaint(new BVVariable((String) label, 32));
-		PathUtils.getCurPC()._addDet(Operator.EQ, new Operation(Operator.BIT_AND, new BVVariable((String) label, 32), new IntConstant(0xFFFFFF00)), new IntConstant(0));
+        Expression pos = new Operation(Operator.EQ, new Operation(Operator.BIT_AND, new BVVariable((String) label, 32), new IntConstant(0xFFFFFF00)), new IntConstant(0));
+		Expression neg = new Operation(Operator.EQ, new Operation(Operator.BIT_AND, new BVVariable((String) label, 32), new IntConstant(0xFFFFFF00)), new IntConstant(0xFFFFFF00));
+		PathUtils.getCurPC()._addDet(Operator.OR, pos, neg);
 		symbolicLabels.put((ExpressionTaint) ret.taint, label);
 		return ret;
 	}
