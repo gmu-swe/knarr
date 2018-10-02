@@ -9,6 +9,7 @@ import edu.gmu.swe.knarr.server.concolic.driver.IntSerialDriver;
 import edu.gmu.swe.knarr.server.concolic.mutator.ConstraintMutator;
 import edu.gmu.swe.knarr.server.concolic.mutator.FixedOutputMutator;
 import edu.gmu.swe.knarr.server.concolic.mutator.MaxConstraintsMutator;
+import edu.gmu.swe.knarr.server.concolic.mutator.AllMaxConstraintsMutator;
 import edu.gmu.swe.knarr.server.concolic.mutator.ImportMutator;
 import edu.gmu.swe.knarr.server.concolic.mutator.Mutator;
 import edu.gmu.swe.knarr.server.concolic.mutator.VariableMutator;
