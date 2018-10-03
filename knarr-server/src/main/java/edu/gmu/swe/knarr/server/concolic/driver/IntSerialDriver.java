@@ -32,8 +32,13 @@ public class IntSerialDriver extends Driver<Integer[]> {
     @Override
     protected void sendData(Integer[] data, Socket s) throws IOException {
         try (ObjectOutputStream oos = new ObjectOutputStream(s.getOutputStream())) {
-            for (int i : data)
-                oos.writeByte(i);
+            for (int i = 0 ; i < data.length ; i++) {
+                if (data[i] == null)
+                    data[i] = 0;
+
+                oos.writeByte(data[i]);
+            }
+
             oos.flush();
         }
     }
@@ -53,9 +58,14 @@ public class IntSerialDriver extends Driver<Integer[]> {
     @Override
     public void toFile(Integer[] data, File f) throws IOException {
         try (OutputStreamWriter osw = new OutputStreamWriter(new FileOutputStream(f))) {
-            for (int i : data) {
-                osw.write(i);
+            for (int i = 0 ; i < data.length ; i++) {
+                if (data[i] == null)
+                    data[i] = 0;
+
+                osw.write(data[i]);
             }
+
+            osw.flush();
         }
     }
 }

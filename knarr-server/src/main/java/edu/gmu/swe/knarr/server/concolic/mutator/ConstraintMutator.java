@@ -25,6 +25,8 @@ public class ConstraintMutator extends Mutator {
     private boolean reverseDirection;
     private boolean pathSensitive;
 
+    private HashMap<Input, Integer> memory = new HashMap<>();
+
     public ConstraintMutator(Driver d, Coverage master, boolean reverse, boolean pathSensitive) {
         super(d);
         this.master = master;
@@ -34,6 +36,13 @@ public class ConstraintMutator extends Mutator {
 
     @Override
     public Input mutateInput(Input in, int which) {
+
+        Integer m = memory.get(in);
+        if (m != null && m > which) {
+            which += m;
+        }
+
+        memory.put(in, which);
 
         // Make a copy of the input so we can modify it
         Canonizer c = new Canonizer(in.constraints);

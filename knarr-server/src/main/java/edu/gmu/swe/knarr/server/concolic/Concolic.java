@@ -75,8 +75,17 @@ public class Concolic {
 //                new ConstraintMutator(driver, picker.getCurrentCoverage(), true, false),
 //                new ConstraintMutator(driver, picker.getCurrentCoverage(), false, false),
                 new ConstraintMutator(driver, picker.getCurrentCoverage(), true, true),
+                new AllMaxConstraintsMutator(driver, (MaxConstraintsPicker) picker),
                 new ConstraintMutator(driver, picker.getCurrentCoverage(), false, true),
+                new AllMaxConstraintsMutator(driver, (MaxConstraintsPicker) picker),
                 new MaxConstraintsMutator(driver, (MaxConstraintsPicker) picker),
+                new AllMaxConstraintsMutator(driver, (MaxConstraintsPicker) picker),
+//                new FixedOutputMutator(driver,
+//                        new int[] { 1 , 0 , 0 , 0 , 0 },
+//                        new int[] { 2 , 1 , 0 , 0 , 0 },
+//                        new int[] { 3 , 2 , 1 , 0 , 0 },
+//                        new int[] { 10, 9, 8, 7, 6, 5, 4 , 3 , 2 , 1 , 0 }),
+//                        sorted),
 //                new VariableMutator(driver),
         };
 
