@@ -236,7 +236,13 @@ public class PathUtils {
 			ret.taint = null;
 			return ret;
 		}
-		ret.taint = registerBinaryOp(getExpression(lVal, v2), getExpression(rVal, v1), Opcodes.IADD);
+		if (v2 == 0 && lVal == null)
+			ret.taint = rVal;
+		else if (v1 == 0 && rVal == null)
+			ret.taint = lVal;
+		else
+			ret.taint = registerBinaryOp(getExpression(lVal, v2), getExpression(rVal, v1), Opcodes.IADD);
+
 		return ret;
 	}
 
