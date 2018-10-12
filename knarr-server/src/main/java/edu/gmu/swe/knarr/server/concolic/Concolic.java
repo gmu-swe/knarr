@@ -50,7 +50,7 @@ public class Concolic {
         c.loop(new File(args[2]));
     }
 
-    private Driver driver;
+    /*default*/ Driver driver;
     private int lastAddedInput = 0;
     private ServerSocket listener;
     private Mutator[] mutators;
@@ -58,15 +58,15 @@ public class Concolic {
 
     private int mutatorInUse = 0;
 
-    private void setHTTPDriver() {
+    /*default*/ void setHTTPDriver() {
         this.driver = new HTTPDriver(listener, "127.0.0.1", 8080);
     }
 
-    private void setIntDriver() {
+    /*default*/ void setIntDriver() {
         this.driver = new IntSerialDriver(listener, "127.0.0.1", 8080);
     }
 
-    private void initMutators() {
+    private void initMutators(File importDir) {
 //        int[] sorted = new int[200];
 //        for (int i = 0 ; i < sorted.length ; i++) {
 //            sorted[i] = i;
