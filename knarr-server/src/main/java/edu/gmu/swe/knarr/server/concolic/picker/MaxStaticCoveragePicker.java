@@ -42,4 +42,9 @@ public class MaxStaticCoveragePicker extends Picker {
             }
         });
     }
+
+    @Override
+    public void score(Input in) {
+        in.score = in.coverage.countCodeCoverage();
+    }
 }
