@@ -20,58 +20,66 @@ public class TaintListener extends DerivedTaintListener {
 
 	public static IdentityHashMap<Object, LinkedList<ArrayVariable>> arrayNames = new IdentityHashMap<>();
 
+	private LinkedList<ArrayVariable> getOrInitArray(Object arr) {
+		LinkedList<ArrayVariable> ret = arrayNames.get(arr);
+		if (ret != null)
+			return ret;
+
+		Class<?> t = arr.getClass().getComponentType().isPrimitive() ? arr.getClass().getComponentType() : Object.class;
+		LinkedList<ArrayVariable> ll = new LinkedList<>();
+		ArrayVariable var = new ArrayVariable("const_array_" + arrayNames.size(), t);
+		ll.add(var);
+		arrayNames.put(arr, ll);
+		ret = ll;
+
+		if (Array.getLength(arr) < 200) {
+			ArrayVariable arrVar = new ArrayVariable(var.getName() + "_" + ret.size(), var.getType());
+
+			for (int i = 0 ; i < Array.getLength(arr) ; i++)
+			{
+				Operation select = new Operation(Operator.SELECT, arrVar, new BVConstant(i, 32));
+				Constant val;
+				switch(arr.getClass().getComponentType().getName()) {
+					case "boolean":
+						val = new BoolConstant(((boolean[])arr)[i]);
+						break;
+					case "byte":
+						val = new BVConstant(((byte[])arr)[i], 32);
+						break;
+					case "char":
+						val = new BVConstant(((char[])arr)[i], 32);
+						break;
+					case "short":
+						val = new BVConstant(((short[])arr)[i], 32);
+						break;
+					case "int":
+						val = new BVConstant(((int[])arr)[i], 32);
+						break;
+					case "long":
+						val = new BVConstant(((long[])arr)[i], 64);
+						break;
+					case "float":
+						val = new RealConstant(((float[])arr)[i]);
+						break;
+					case "double":
+						val = new RealConstant(((double[])arr)[i]);
+						break;
+					default:
+						throw new Error("Not supported");
+				}
+				PathUtils.getCurPC()._addDet(Operator.EQ, select, val);
+			}
+		}
+
+		return ret;
+
+	}
+
 	private Expression getArrayVar(Object arr)
 	{
 		synchronized (arrayNames)
 		{
-			LinkedList<ArrayVariable> ret = arrayNames.get(arr);
-			if (ret == null)
-			{
-				Class<?> t = arr.getClass().getComponentType().isPrimitive() ? arr.getClass().getComponentType() : Object.class;
-				LinkedList<ArrayVariable> ll = new LinkedList<>();
-				ArrayVariable var = new ArrayVariable("const_array_" + arrayNames.size(), t);
-				ll.add(var);
-				arrayNames.put(arr, ll);
-				ret = ll;
-
-				ArrayVariable arrVar = new ArrayVariable(var.getName() + "_" + ret.size(), var.getType());
-				if (Array.getLength(arr) < 200) {
-					for (int i = 0 ; i < Array.getLength(arr) ; i++)
-					{
-						Operation select = new Operation(Operator.SELECT, arrVar, new BVConstant(i, 32));
-						Constant val;
-						switch(arr.getClass().getComponentType().getName()) {
-							case "boolean":
-								val = new BoolConstant(((boolean[])arr)[i]);
-								break;
-							case "byte":
-								val = new BVConstant(((byte[])arr)[i], 32);
-								break;
-							case "char":
-								val = new BVConstant(((char[])arr)[i], 32);
-								break;
-							case "short":
-								val = new BVConstant(((short[])arr)[i], 32);
-								break;
-							case "int":
-								val = new BVConstant(((int[])arr)[i], 32);
-								break;
-							case "long":
-								val = new BVConstant(((long[])arr)[i], 64);
-								break;
-							case "float":
-								val = new RealConstant(((float[])arr)[i]);
-								break;
-							case "double":
-								val = new RealConstant(((double[])arr)[i]);
-								break;
-							default:
-								throw new Error("Not supported");
-						}
-						PathUtils.getCurPC()._addDet(Operator.EQ, select, val);
-					}
-				}
-			}
+			LinkedList<ArrayVariable> ret = getOrInitArray(arr);
 			return new ArrayVariable(ret.getLast().getName() + "_" + ret.size(), ret.getLast().getType());
 		}
 	}
@@ -80,19 +88,14 @@ public class TaintListener extends DerivedTaintListener {
 	{
 		synchronized (arrayNames)
 		{
-			LinkedList<ArrayVariable> ret = arrayNames.get(arr);
-			if (ret == null)
-			{
-				// Not interested in writes to arrays not yet read, right?
-				return null;
-			}
+			LinkedList<ArrayVariable> ret = getOrInitArray(arr);
 
 			Class<?> t = arr.getClass().getComponentType().isPrimitive() ? arr.getClass().getComponentType() : Object.class;
 			ArrayVariable var = ret.getLast();
 
 			ArrayVariable oldVar = new ArrayVariable(var.getName() + "_" + ret.size(), var.getType());
+			ArrayVariable newVar = new ArrayVariable(var.getName() + "_" + (ret.size() + 1), var.getType());
 			ret.addLast(var);
-			ArrayVariable newVar = new ArrayVariable(var.getName() + "_" + ret.size(), var.getType());
 
 			Operation store = new Operation(Operator.STORE, oldVar, idx, val);
 			PathUtils.getCurPC()._addDet(Operator.EQ, store, newVar);
@@ -134,11 +137,7 @@ public class TaintListener extends DerivedTaintListener {
 //		else if (taintedVal && taintedIndex)
 //			throw new UnsupportedOperationException("Not implemented symbolic index on symbolic array");
 
-		if (taintedVal)
-		{
-			return t;
-		}
-		else if(taintedArray && !taintedIndex &&!taintedVal)
+		if(taintedArray && !taintedIndex &&!taintedVal)
 		{
 			setArrayVar(b.getVal(), new BVConstant(idx, 32), c);
 			return null;
@@ -146,14 +145,18 @@ public class TaintListener extends DerivedTaintListener {
 		else if(taintedIndex)
 		{
 			setArrayVar(b.getVal(), (Expression)idxTaint.lbl, taintedVal ? (Expression) t.lbl : c);
-			
+
 			// Index is within the array bounds
 			PathUtils.getCurPC()._addDet(Operator.LT, (Expression)idxTaint.lbl, new BVConstant(b.getLength(), 32));
 			PathUtils.getCurPC()._addDet(Operator.GE, (Expression)idxTaint.lbl, new BVConstant(0, 32));
 			
 			return null;
 		}
-		
+		else if (taintedVal)
+		{
+			return t;
+		}
+
 		throw new UnsupportedOperationException("Dead code?");
 	}
 	

@@ -158,8 +158,8 @@ public class Symbolicator {
 //				}
 //			}
 			oos.writeObject(PathUtils.getCurPC().constraints);
-//			oos.writeBoolean(false);
-			oos.writeBoolean(true);
+			oos.writeBoolean(false);
+//			oos.writeBoolean(true);
 			oos.writeObject(name != null ? new File(name + ".dat") : null);
 			oos.writeObject(Coverage.instance);
 			n++;
