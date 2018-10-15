@@ -36,6 +36,8 @@ public class Input {
 //            save(coverage, "coverage_" + nth, dirToSave);
             int score = this.score;
             String inputFilename;
+            if (this.how.length() > 30)
+                this.how = this.how.substring(0, 29) + "...";
             if (this.parent != null)
                 inputFilename = String.format(FORMAT, this.nth, this.parent.nth, score, this.how, reason);
             else
