@@ -20,7 +20,9 @@ public class Main {
 		Configuration.PREALLOC_STACK_OPS = true;
 		Configuration.WITH_TAGS_FOR_JUMPS = true;
 		Configuration.WITH_HEAVY_OBJ_EQUALS_HASHCODE = true;
-		
+
+		Configuration.ANNOTATE_LOOPS = true;
+
 		Configuration.extensionMethodVisitor = JunitTestAdapter.class;
 		Configuration.extensionClassVisitor = StringTagFactory.class;
 

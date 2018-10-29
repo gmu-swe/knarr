@@ -1085,7 +1085,7 @@ public class PathUtils {
 			// Update current coverage
 			int notTakenPath = Coverage.instance.set(takenID, notTakenID);
 			// Add not taken constraint to map
-			exp.metadata = new Coverage.BranchData(notTakenID, notTakenPath);
+			exp.metadata = new Coverage.BranchData(notTakenID, notTakenPath, breaksLoop);
 		}
 	}
 
@@ -1093,7 +1093,31 @@ public class PathUtils {
 
 	}
 
-	public static void addConstraint(Taint<Expression> l, Taint<Expression> r, int v1, int v2, int opcode, int takenID, int notTakenID) {
+	public static void addConstraint(Taint<Expression> l, int v, int min, int max, int takenID, int notTakenID, boolean breaksLoop) {
+		if (l == null)
+			return;
+		Expression lExp = l.lbl;
+		Operation limit = new Operation(Operator.LE, lExp, new IntConstant(max));
+		limit = new Operation(Operator.AND, limit, new Operation(Operator.GE, lExp, new IntConstant(min)));
+
+		for (int i = min ; i < max ; i++) {
+			if (i == v)
+				continue;
+
+			Expression notTaken = new Operation(Operator.NE, lExp, new IntConstant(i));
+			Expression exp = getCurPC()._addDet(Operator.AND, limit, notTaken);
+
+			if (Coverage.enabled && takenID != -1) {
+				// Update current coverage
+				int notTakenPath = Coverage.instance.set(takenID, notTakenID);
+				// Add not taken constraint to map
+				exp.metadata = new Coverage.BranchData(notTakenID, notTakenPath, breaksLoop);
+			}
+		}
+
+    }
+
+	public static void addConstraint(Taint<Expression> l, Taint<Expression> r, int v1, int v2, int opcode, int takenID, int notTakenID, boolean breaksLoop) {
 		// if (VM.isBooted$$INVIVO_PC(new TaintedBoolean()).val &&
 		// values.get(otherTaint) == null)
 		// System.out.println(Printer.OPCODES[opcode] + " - " + taint + " ; " +
@@ -1146,7 +1170,7 @@ public class PathUtils {
 			// Update current coverage
 			int notTakenPath = Coverage.instance.set(takenID, notTakenID);
 			// Add not taken constraint to map
-			exp.metadata = new Coverage.BranchData(notTakenID, notTakenPath);
+			exp.metadata = new Coverage.BranchData(notTakenID, notTakenPath, breaksLoop);
 		}
 	}
 

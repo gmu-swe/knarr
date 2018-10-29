@@ -164,10 +164,12 @@ public class Coverage implements Serializable {
 
         public final int notTakenCode;
         public final int notTakenPath;
+        public final boolean breaksLoop;
 
-        public BranchData(int notTakenCode, int notTakenPath) {
+        public BranchData(int notTakenCode, int notTakenPath, boolean breaksLoop) {
             this.notTakenCode = notTakenCode;
             this.notTakenPath = notTakenPath;
+            this.breaksLoop = breaksLoop;
         }
     }
 

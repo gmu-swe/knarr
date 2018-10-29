@@ -467,7 +467,7 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 
 	@Override
 	public void jumpOp(int opcode, int branchStarting, Label label, MethodVisitor mv, LocalVariableManager lvs, TaintPassingMV ta) {
-	    int takenID, notTakenID;
+	    int takenID, notTakenID, loop;
 		if (enableCov) {
 			notTakenID = Coverage.instance.getNewLocationId();
 			Integer aux = labelToID.get(label);
@@ -476,9 +476,11 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 			    labelToID.put(label, aux);
 			}
 			takenID = aux;
+			loop = (breaksLoop ? 1 : 0);
         } else {
 			notTakenID = -1;
 			takenID = -1;
+			loop = 0;
 		}
 		switch (opcode) {
 		case Opcodes.IFEQ:
@@ -504,7 +506,8 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 			mv.visitIntInsn(SIPUSH, invertOpcode(opcode));
 			mv.visitLdcInsn(notTakenID);
 			mv.visitLdcInsn(takenID);
-			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addConstraint", "(" + Configuration.TAINT_TAG_DESC + "III)V", false);
+			mv.visitLdcInsn(loop);
+			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addConstraint", "(" + Configuration.TAINT_TAG_DESC + "IIIZ)V", false);
 			FrameNode fn3 = ta.getCurrentFrameNode();
 
 			mv.visitJumpInsn(GOTO, originalEnd);
@@ -515,7 +518,8 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 			mv.visitIntInsn(SIPUSH, opcode);
 			mv.visitLdcInsn(takenID);
 			mv.visitLdcInsn(notTakenID);
-			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addConstraint", "(" + Configuration.TAINT_TAG_DESC + "III)V", false);
+			mv.visitLdcInsn(loop);
+			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addConstraint", "(" + Configuration.TAINT_TAG_DESC + "IIIZ)V", false);
 			mv.visitJumpInsn(GOTO, label);
 			mv.visitLabel(untainted);
 			// need frame
@@ -554,7 +558,8 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 			mv.visitIntInsn(SIPUSH, opcode);
 			mv.visitLdcInsn(takenID);
 			mv.visitLdcInsn(notTakenID);
-			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addConstraint", "(" + Configuration.TAINT_TAG_DESC + Configuration.TAINT_TAG_DESC + "IIIII)V", false);
+			mv.visitLdcInsn(loop);
+			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addConstraint", "(" + Configuration.TAINT_TAG_DESC + Configuration.TAINT_TAG_DESC + "IIIIIZ)V", false);
 			mv.visitJumpInsn(GOTO, label);
 			mv.visitLabel(isFalse);
 			ta.acceptFn(fn);
@@ -562,7 +567,8 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 			mv.visitIntInsn(SIPUSH, invertOpcode(opcode));
 			mv.visitLdcInsn(notTakenID);
 			mv.visitLdcInsn(takenID);
-			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addConstraint", "(" + Configuration.TAINT_TAG_DESC + Configuration.TAINT_TAG_DESC + "IIIII)V", false);
+			mv.visitLdcInsn(loop);
+			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addConstraint", "(" + Configuration.TAINT_TAG_DESC + Configuration.TAINT_TAG_DESC + "IIIIIZ)V", false);
 
 			lvs.freeTmpLV(tmp);
 			break;
@@ -737,6 +743,8 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 			mv.visitJumpInsn(opcode, label);
 			// throw new IllegalArgumentException();
 		}
+
+		breaksLoop = false;
 	}
 
 	@Override
@@ -763,9 +771,12 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 
 	}
 
+	private boolean breaksLoop = false;
+
 	@Override
 	public void signalOp(int signal, Object option) {
-
+		if (signal == TaintUtils.LOOP_HEADER)
+			breaksLoop = true;
 	}
 
 	boolean inStringClass = false;
@@ -853,8 +864,9 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 			// TODO coverage
 			mv.visitLdcInsn(-1);
 			mv.visitLdcInsn(-1);
+			mv.visitInsn(ICONST_0);
 			// taint, null, value, switch target, ==
-			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addConstraint", "(" + Configuration.TAINT_TAG_DESC + Configuration.TAINT_TAG_DESC + "IIIII)V", false);
+			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addConstraint", "(" + Configuration.TAINT_TAG_DESC + Configuration.TAINT_TAG_DESC + "IIIIIZ)V", false);
 			mv.visitJumpInsn(GOTO, labels[i]);
 		}
 		
@@ -874,8 +886,9 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 			// TODO coverage
 			mv.visitLdcInsn(-1);
 			mv.visitLdcInsn(-1);
+			mv.visitInsn(ICONST_0);
 			// taint, value, taint, null, value, switch target, !=
-			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addConstraint", "(" + Configuration.TAINT_TAG_DESC + Configuration.TAINT_TAG_DESC + "IIIII)V", false);
+			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addConstraint", "(" + Configuration.TAINT_TAG_DESC + Configuration.TAINT_TAG_DESC + "IIIIIZ)V", false);
 			// taint, value
 		}
 
@@ -921,8 +934,9 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 			}
 			mv.visitLdcInsn(id);
 			mv.visitLdcInsn(-1);
+			mv.visitInsn(ICONST_0);
 			// taint, null, value, switch target, ==
-			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addConstraint", "(" + Configuration.TAINT_TAG_DESC + Configuration.TAINT_TAG_DESC + "IIIII)V", false);
+			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addConstraint", "(" + Configuration.TAINT_TAG_DESC + Configuration.TAINT_TAG_DESC + "IIIIIZ)V", false);
 			mv.visitJumpInsn(GOTO, labels[i]);
 		}
 		
@@ -947,8 +961,9 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 			}
 			mv.visitLdcInsn(id);
 			mv.visitLdcInsn(-1);
+			mv.visitInsn(ICONST_0);
 			// taint, value, taint, null, value, switch target, !=
-			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addConstraint", "(" + Configuration.TAINT_TAG_DESC + Configuration.TAINT_TAG_DESC + "IIIII)V", false);
+			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addConstraint", "(" + Configuration.TAINT_TAG_DESC + Configuration.TAINT_TAG_DESC + "IIIIIZ)V", false);
 			// taint, value
 		}
 
