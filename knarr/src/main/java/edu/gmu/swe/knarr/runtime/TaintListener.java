@@ -6,7 +6,24 @@ import java.util.LinkedList;
 
 import edu.columbia.cs.psl.phosphor.runtime.DerivedTaintListener;
 import edu.columbia.cs.psl.phosphor.runtime.Taint;
-import edu.columbia.cs.psl.phosphor.struct.*;
+import edu.columbia.cs.psl.phosphor.struct.ControlTaintTagStack;
+import edu.columbia.cs.psl.phosphor.struct.LazyArrayObjTags;
+import edu.columbia.cs.psl.phosphor.struct.LazyBooleanArrayObjTags;
+import edu.columbia.cs.psl.phosphor.struct.LazyByteArrayObjTags;
+import edu.columbia.cs.psl.phosphor.struct.LazyCharArrayObjTags;
+import edu.columbia.cs.psl.phosphor.struct.LazyDoubleArrayObjTags;
+import edu.columbia.cs.psl.phosphor.struct.LazyFloatArrayObjTags;
+import edu.columbia.cs.psl.phosphor.struct.LazyIntArrayObjTags;
+import edu.columbia.cs.psl.phosphor.struct.LazyLongArrayObjTags;
+import edu.columbia.cs.psl.phosphor.struct.LazyShortArrayObjTags;
+import edu.columbia.cs.psl.phosphor.struct.TaintedBooleanWithObjTag;
+import edu.columbia.cs.psl.phosphor.struct.TaintedByteWithObjTag;
+import edu.columbia.cs.psl.phosphor.struct.TaintedCharWithObjTag;
+import edu.columbia.cs.psl.phosphor.struct.TaintedDoubleWithObjTag;
+import edu.columbia.cs.psl.phosphor.struct.TaintedFloatWithObjTag;
+import edu.columbia.cs.psl.phosphor.struct.TaintedIntWithObjTag;
+import edu.columbia.cs.psl.phosphor.struct.TaintedLongWithObjTag;
+import edu.columbia.cs.psl.phosphor.struct.TaintedShortWithObjTag;
 import za.ac.sun.cs.green.expr.ArrayVariable;
 import za.ac.sun.cs.green.expr.BVConstant;
 import za.ac.sun.cs.green.expr.BoolConstant;
@@ -20,6 +37,13 @@ public class TaintListener extends DerivedTaintListener {
 
 	public static IdentityHashMap<Object, LinkedList<ArrayVariable>> arrayNames = new IdentityHashMap<>();
 
+	// Do not tell the solver about the initial contents of concrete arrays larger than this
+	public static int IGNORE_CONCRETE_ARRAY_INITIAL_CONTENTS = 1000;
+	// Do not track constraints on arrays larger than this and ...
+	public static int IGNORE_LARGE_ARRAY_SIZE = 20000;
+	// ... on indexes larger than this
+	public static int IGNORE_LARGE_ARRAY_INDEX = 500;
+
 	private LinkedList<ArrayVariable> getOrInitArray(Object arr) {
 		LinkedList<ArrayVariable> ret = arrayNames.get(arr);
 		if (ret != null)
@@ -32,7 +56,7 @@ public class TaintListener extends DerivedTaintListener {
 		arrayNames.put(arr, ll);
 		ret = ll;
 
-		if (Array.getLength(arr) < 200) {
+		if (Array.getLength(arr) < IGNORE_CONCRETE_ARRAY_INITIAL_CONTENTS) {
 			ArrayVariable arrVar = new ArrayVariable(var.getName() + "_" + ret.size(), var.getType());
 
 			for (int i = 0 ; i < Array.getLength(arr) ; i++)
@@ -105,6 +129,8 @@ public class TaintListener extends DerivedTaintListener {
 	
 	
 	private <B extends LazyArrayObjTags> Taint genericReadArray(B b, Taint idxTaint, int idx, Constant c) {
+        if (b.getLength() > IGNORE_LARGE_ARRAY_SIZE && idx > IGNORE_LARGE_ARRAY_INDEX)
+			return null;
 		if(idxTaint != null)
 		{
 			Expression var = getArrayVar(b.getVal());
@@ -131,6 +157,9 @@ public class TaintListener extends DerivedTaintListener {
 		boolean taintedArray = (b.taints != null && b.taints[idx] != null);
 		boolean taintedIndex = (idxTaint != null);
 		boolean taintedVal   = (t != null);
+
+		if (b.getLength() > IGNORE_LARGE_ARRAY_SIZE && idx > IGNORE_LARGE_ARRAY_INDEX)
+ 			return null;
 		
 		if (!taintedArray && !taintedIndex && !taintedVal)
 			return null;
