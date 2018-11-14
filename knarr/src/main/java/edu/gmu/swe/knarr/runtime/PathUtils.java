@@ -1049,7 +1049,7 @@ public class PathUtils {
 		t.lbl = new Operation(Operator.ADD, t.lbl, new IntConstant(inc));
 	}
 
-	public static void addConstraint(Taint<Expression> t, int opcode, int takenID, int notTakenID) {
+	public static void addConstraint(Taint<Expression> t, int opcode, int takenID, int notTakenID, boolean breaksLoop) {
 		if (t == null)
 			return;
 		if (!JPFInited)
