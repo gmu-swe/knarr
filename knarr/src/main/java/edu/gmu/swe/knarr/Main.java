@@ -3,6 +3,7 @@ package edu.gmu.swe.knarr;
 import edu.columbia.cs.psl.phosphor.Configuration;
 import edu.columbia.cs.psl.phosphor.Instrumenter;
 import edu.columbia.cs.psl.phosphor.PreMain;
+import edu.gmu.swe.knarr.runtime.Coverage;
 import edu.gmu.swe.knarr.runtime.JunitTestAdapter;
 import edu.gmu.swe.knarr.runtime.PathConstraintTagFactory;
 import edu.gmu.swe.knarr.runtime.StringTagFactory;
@@ -21,7 +22,8 @@ public class Main {
 		Configuration.WITH_TAGS_FOR_JUMPS = true;
 		Configuration.WITH_HEAVY_OBJ_EQUALS_HASHCODE = true;
 
-		Configuration.ANNOTATE_LOOPS = true;
+		if (Coverage.enabled)
+            Configuration.ANNOTATE_LOOPS = true;
 
 		Configuration.extensionMethodVisitor = JunitTestAdapter.class;
 		Configuration.extensionClassVisitor = StringTagFactory.class;
