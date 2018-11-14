@@ -158,19 +158,17 @@ public class Symbolicator {
 //				}
 //			}
 			oos.writeObject(PathUtils.getCurPC().constraints);
+
+			// Solve constraints?
 			oos.writeBoolean(false);
-//			oos.writeBoolean(true);
+
+			// Dump constraints to file?
 			oos.writeObject(name != null ? new File(name + ".dat") : null);
+
+            // Coverage, if any
 			oos.writeObject(Coverage.instance);
+
 			n++;
-			PathUtils.getCurPC().constraints = null;
-			serverConnection = null;
-			firstLabel = null;
-			TaintListener.arrayNames.clear();
-			StringUtils.stringName = 0;
-			PathUtils.usedLabels.clear();
-			Coverage.instance.reset();
-			autoLblr.set(0);
 			ArrayList<SimpleEntry<String, Object>> solution = (ArrayList<SimpleEntry<String,Object>>) ois.readObject();
 //			System.out.println("Solution received: " + solution);
 			byte[] array = new byte[solution.size()];
@@ -190,6 +188,17 @@ public class Symbolicator {
 				array[i++] = b.byteValue();
 			}
 			System.out.println(new String(array, StandardCharsets.UTF_8));
+
+			// Reset
+			PathUtils.getCurPC().constraints = null;
+			serverConnection = null;
+			firstLabel = null;
+			TaintListener.arrayNames.clear();
+			StringUtils.stringName = 0;
+			PathUtils.usedLabels.clear();
+			Coverage.instance.reset();
+			autoLblr.set(0);
+
 			oos.close();
 			return solution;
 		} catch (IOException e) {
