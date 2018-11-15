@@ -45,7 +45,7 @@ public class TaintListener extends DerivedTaintListener {
 	// ... on indexes larger than this
 	public static int IGNORE_LARGE_ARRAY_INDEX = 500;
 
-	public static ConcurrentLinkedQueue<LazyArrayObjTags> symbolizedArrays = new ConcurrentLinkedQueue<>();
+	public static ConcurrentLinkedQueue<Taint[]> symbolizedArrays = new ConcurrentLinkedQueue<>();
 
 	private LinkedList<ArrayVariable> getOrInitArray(Object arr) {
 		LinkedList<ArrayVariable> ret = arrayNames.get(arr);
@@ -197,6 +197,22 @@ public class TaintListener extends DerivedTaintListener {
 
 			if (b.taints == null)
 				b.taints = new Taint[b.getLength()];
+
+			symbolizedArrays.add(b.taints);
+
+            // Return symbolic array read
+            return ret;
+		} else if (taintedArray && !taintedIndex) {
+			// Concrete read of symbolic array pos
+            // Return array symb
+            return b.taints[idx];
+		} else if (taintedArray && taintedIndex) {
+		    // Symbolic read of symbolic array pos
+			// Return array symb OR return symbolic array read
+			Expression var = getArrayVar(b.getVal());
+			Operation select = new Operation(Operator.SELECT, var, (Expression) idxTaint.lbl);
+			PathUtils.getCurPC()._addDet(Operator.EQ, (Expression) b.taints[idx].lbl, select);
+
 
 //			b.taints[idx] = ret;
 			b.taints[idx] = new ExpressionTaint(c);

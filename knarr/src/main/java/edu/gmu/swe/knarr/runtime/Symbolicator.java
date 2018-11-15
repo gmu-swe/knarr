@@ -200,8 +200,9 @@ public class Symbolicator {
 			Coverage.instance.reset();
 			autoLblr.set(0);
 
-			for (LazyArrayObjTags b : TaintListener.symbolizedArrays)
-				b.taints = null;
+			for (Taint[] b : TaintListener.symbolizedArrays)
+				for (int j = 0 ; j < b.length ; j++)
+                    b[j] = null;
 
 			TaintListener.symbolizedArrays.clear();
 
