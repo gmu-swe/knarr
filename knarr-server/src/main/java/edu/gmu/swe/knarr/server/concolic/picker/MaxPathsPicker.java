@@ -15,7 +15,7 @@ public class MaxPathsPicker extends MaxConstraintsPicker {
 
     @Override
     public void score(Input in) {
-        in.score = in.coverage.countCoverage();
+        in.score = (int) in.coverage.countCoverage();
     }
 
     @Override

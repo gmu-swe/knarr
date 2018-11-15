@@ -232,7 +232,7 @@ public class Concolic {
 
     }
 
-    private void startConstraintServer() throws IOException {
+    /*default*/ void startConstraintServer() throws IOException {
         try {
             listener = new ServerSocket(9090);
 //            listener.setSoTimeout(2000);
