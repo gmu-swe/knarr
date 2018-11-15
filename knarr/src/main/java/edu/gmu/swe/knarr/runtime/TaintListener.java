@@ -3,6 +3,7 @@ package edu.gmu.swe.knarr.runtime;
 import java.lang.reflect.Array;
 import java.util.IdentityHashMap;
 import java.util.LinkedList;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import edu.columbia.cs.psl.phosphor.runtime.DerivedTaintListener;
 import edu.columbia.cs.psl.phosphor.runtime.Taint;
@@ -43,6 +44,8 @@ public class TaintListener extends DerivedTaintListener {
 	public static int IGNORE_LARGE_ARRAY_SIZE = 20000;
 	// ... on indexes larger than this
 	public static int IGNORE_LARGE_ARRAY_INDEX = 500;
+
+	public static ConcurrentLinkedQueue<LazyArrayObjTags> symbolizedArrays = new ConcurrentLinkedQueue<>();
 
 	private LinkedList<ArrayVariable> getOrInitArray(Object arr) {
 		LinkedList<ArrayVariable> ret = arrayNames.get(arr);
@@ -136,76 +139,78 @@ public class TaintListener extends DerivedTaintListener {
         if (b.getLength() > IGNORE_LARGE_ARRAY_SIZE && idx > IGNORE_LARGE_ARRAY_INDEX)
 			return null;
 
-		if (taintedIndex && !taintedArray) {
-			// Symbolic read of concrete array pos
-
-			// Make array position symbolic because it may be written in the future
-			if (b.taints == null)
-				b.taints = new Taint[b.getLength()];
-
-			Expression var = getArrayVar(b.getVal());
-			Operation select = new Operation(Operator.SELECT, var, (Expression) idxTaint.lbl);
-			Taint ret = new ExpressionTaint(select);
-			b.taints[idx] = ret;
-
-			PathUtils.getCurPC()._addDet(Operator.EQ, c, select);
-
-			// Index is within the array bounds
-			PathUtils.getCurPC()._addDet(Operator.LT, (Expression)idxTaint.lbl, new BVConstant(b.getLength(), 32));
-			PathUtils.getCurPC()._addDet(Operator.GE, (Expression)idxTaint.lbl, new BVConstant(0, 32));
-
-            // Return symbolic array read
-            return ret;
-		} else if (taintedArray && !taintedIndex) {
-			// Concrete read of symbolic array pos
-            // Return array symb
-            return b.taints[idx];
-		} else if (taintedArray && taintedIndex) {
-		    // Symbolic read of symbolic array pos
-			// Return array symb OR return symbolic array read
-			Expression var = getArrayVar(b.getVal());
-			Operation select = new Operation(Operator.SELECT, var, (Expression) idxTaint.lbl);
-			PathUtils.getCurPC()._addDet(Operator.EQ, (Expression) b.taints[idx].lbl, select);
-
-			// Index is within the array bounds
-			PathUtils.getCurPC()._addDet(Operator.LT, (Expression)idxTaint.lbl, new BVConstant(b.getLength(), 32));
-			PathUtils.getCurPC()._addDet(Operator.GE, (Expression)idxTaint.lbl, new BVConstant(0, 32));
-
-			return b.taints[idx];
-		} else if (!taintedArray && !taintedIndex) {
-			// Concrete read of concrete array pos
-		    return null;
-		}
-
-//		if(idxTaint != null)
-//		{
-//			Expression var = getArrayVar(b.getVal());
-//			BVConstant idxBV = new BVConstant(idx, 32);
+//		if (taintedIndex && !taintedArray) {
+//			// Symbolic read of concrete array pos
 //
+//			// Make array position symbolic because it may be written in the future
+//			if (b.taints == null)
+//				b.taints = new Taint[b.getLength()];
+//
+//			Expression var = getArrayVar(b.getVal());
 //			Operation select = new Operation(Operator.SELECT, var, (Expression) idxTaint.lbl);
+//			Taint ret = new ExpressionTaint(select);
+//			b.taints[idx] = ret;
+//
 //			PathUtils.getCurPC()._addDet(Operator.EQ, c, select);
 //
 //			// Index is within the array bounds
 //			PathUtils.getCurPC()._addDet(Operator.LT, (Expression)idxTaint.lbl, new BVConstant(b.getLength(), 32));
 //			PathUtils.getCurPC()._addDet(Operator.GE, (Expression)idxTaint.lbl, new BVConstant(0, 32));
-//			Taint ret = new ExpressionTaint(select);
 //
-//			if (b.taints == null)
-//				b.taints = new Taint[b.getLength()];
+//			symbolizedArrays.add(b);
 //
-////			b.taints[idx] = ret;
-//			b.taints[idx] = new ExpressionTaint(c);
+//            // Return symbolic array read
+//            return ret;
+//		} else if (taintedArray && !taintedIndex) {
+//			// Concrete read of symbolic array pos
+//            // Return array symb
+//            return b.taints[idx];
+//		} else if (taintedArray && taintedIndex) {
+//		    // Symbolic read of symbolic array pos
+//			// Return array symb OR return symbolic array read
+//			Expression var = getArrayVar(b.getVal());
+//			Operation select = new Operation(Operator.SELECT, var, (Expression) idxTaint.lbl);
+//			PathUtils.getCurPC()._addDet(Operator.EQ, (Expression) b.taints[idx].lbl, select);
 //
-//			return ret;
-//		}
-//		else if(b.taints != null && b.taints[idx] != null)
-//		{
+//			// Index is within the array bounds
+//			PathUtils.getCurPC()._addDet(Operator.LT, (Expression)idxTaint.lbl, new BVConstant(b.getLength(), 32));
+//			PathUtils.getCurPC()._addDet(Operator.GE, (Expression)idxTaint.lbl, new BVConstant(0, 32));
+//
 //			return b.taints[idx];
+//		} else if (!taintedArray && !taintedIndex) {
+//			// Concrete read of concrete array pos
+//		    return null;
 //		}
-//
-//		return null;
 
-		throw new Error("Dead code");
+		if(idxTaint != null)
+		{
+			Expression var = getArrayVar(b.getVal());
+			BVConstant idxBV = new BVConstant(idx, 32);
+
+			Operation select = new Operation(Operator.SELECT, var, (Expression) idxTaint.lbl);
+			PathUtils.getCurPC()._addDet(Operator.EQ, c, select);
+
+			// Index is within the array bounds
+			PathUtils.getCurPC()._addDet(Operator.LT, (Expression)idxTaint.lbl, new BVConstant(b.getLength(), 32));
+			PathUtils.getCurPC()._addDet(Operator.GE, (Expression)idxTaint.lbl, new BVConstant(0, 32));
+			Taint ret = new ExpressionTaint(select);
+
+			if (b.taints == null)
+				b.taints = new Taint[b.getLength()];
+
+//			b.taints[idx] = ret;
+			b.taints[idx] = new ExpressionTaint(c);
+
+			return ret;
+		}
+		else if(b.taints != null && b.taints[idx] != null)
+		{
+			return b.taints[idx];
+		}
+
+		return null;
+
+//		throw new Error("Dead code");
 	}
 	
 	private <B extends LazyArrayObjTags> Taint genericWriteArray(B b, Taint t, Taint idxTaint, int idx, Constant c) {
