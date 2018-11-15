@@ -9,11 +9,13 @@ import java.util.regex.Pattern;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import edu.gmu.swe.knarr.runtime.StringUtils;
 import edu.gmu.swe.knarr.runtime.Symbolicator;
 
+@Ignore
 public class StringOpITCase {
 	
 	private static boolean isStringUtilsEnabled;
@@ -167,9 +169,9 @@ public class StringOpITCase {
 
 		ArrayList<SimpleEntry<String, Object>> solution = Symbolicator.dumpConstraints();
 		System.out.println(solution);
-		
+
 		assertTrue(solution != null && !solution.isEmpty());
-		
+
 		Pattern p = Pattern.compile("toUpperLowerVar_([0-9][0-9]*)");
 
 		for (SimpleEntry<String, Object> e : solution) {
