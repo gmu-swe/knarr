@@ -34,6 +34,8 @@ public class ConstraintMutator extends Mutator {
         this.pathSensitive = pathSensitive;
     }
 
+    private HashMap<Input, Set<String>> tried = new HashMap<>();
+
     @Override
     public Input mutateInput(Input in, int which) {
 
@@ -63,7 +65,17 @@ public class ConstraintMutator extends Mutator {
             while (iter.hasNext()) {
                 newCoverage = null;
                 Expression e  = iter.next();
-                if (e.metadata != null && !keyConstraints.contains(e)) {
+                if (e.metadata != null && ((Coverage.BranchData)e.metadata).breaksLoop && !keyConstraints.contains(e)) {
+
+                    Set<String> tried = this.tried.get(in);
+                    if (tried == null)  {
+                        tried = new HashSet<>();
+                        this.tried.put(in, tried);
+                    }
+
+                    if (tried.contains(e.toString()))
+                        continue;
+
                     // This expression was used on a jump
                     Coverage.BranchData branches = (Coverage.BranchData) e.metadata;
                     Integer id = (pathSensitive ? branches.notTakenPath : branches.notTakenCode);
@@ -78,6 +90,7 @@ public class ConstraintMutator extends Mutator {
                     if (!master.coversTheSameAs(newCoverage)) {
                         if (i++ == which) {
                             System.out.println(id + " " + e);
+                            tried.add(e.toString());
                             break;
                         }
 //                    } else {
