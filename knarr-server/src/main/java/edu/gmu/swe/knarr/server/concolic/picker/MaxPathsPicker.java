@@ -8,6 +8,8 @@ import java.util.TreeSet;
 
 public class MaxPathsPicker extends MaxConstraintsPicker {
 
+    private int max = 0;
+
     @Override
     public Input doPickInput() {
         return (((TreeSet<Input>)inCirculation)).last();
@@ -22,10 +24,12 @@ public class MaxPathsPicker extends MaxConstraintsPicker {
     protected String shouldSaveInput(Input in) {
         super.shouldSaveInput(in);
 
-        if (!current.coversTheSameAs(in.coverage))
-            return "newPath";
-        else
-            return null;
+        if (in.score > max) {
+            max = in.score;
+            return "maxPaths";
+        }
+
+        return null;
     }
 
     @Override
