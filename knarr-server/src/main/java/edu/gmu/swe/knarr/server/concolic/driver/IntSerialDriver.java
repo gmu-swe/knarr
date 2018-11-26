@@ -1,14 +1,13 @@
 package edu.gmu.swe.knarr.server.concolic.driver;
 
 
-import java.io.BufferedReader;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.ObjectOutputStream;
-import java.io.OutputStreamWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.LinkedList;
@@ -36,7 +35,7 @@ public class IntSerialDriver extends Driver<Integer[]> {
                 if (data[i] == null)
                     data[i] = 0;
 
-                oos.writeByte(data[i]);
+                oos.writeInt(data[i]);
             }
 
             oos.flush();
@@ -46,10 +45,8 @@ public class IntSerialDriver extends Driver<Integer[]> {
     @Override
     public Integer[] fromFile(File f) throws IOException {
         LinkedList<Integer> ret = new LinkedList<>();
-        try (FileInputStream fis = new FileInputStream(f))  {
-            int i;
-            while ((i  = fis.read()) != -1)
-                ret.addLast(i);
+        try (DataInputStream dis = new DataInputStream(new FileInputStream(f))) {
+            ret.addLast(dis.readInt());
         }
 
         return ret.toArray(new Integer[ret.size()]);
@@ -57,15 +54,15 @@ public class IntSerialDriver extends Driver<Integer[]> {
 
     @Override
     public void toFile(Integer[] data, File f) throws IOException {
-        try (OutputStreamWriter osw = new OutputStreamWriter(new FileOutputStream(f))) {
+        try (DataOutputStream dos = new DataOutputStream(new FileOutputStream(f))) {
             for (int i = 0 ; i < data.length ; i++) {
                 if (data[i] == null)
                     data[i] = 0;
 
-                osw.write(data[i]);
+                dos.writeInt(data[i]);
             }
 
-            osw.flush();
+            dos.flush();
         }
     }
 }

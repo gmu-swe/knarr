@@ -3,6 +3,7 @@ package edu.gmu.swe.knarr.server.concolic;
 import edu.gmu.swe.knarr.server.Canonizer;
 import edu.gmu.swe.knarr.server.ConstraintServer;
 import edu.gmu.swe.knarr.server.ConstraintServerHandler;
+import edu.gmu.swe.knarr.server.concolic.driver.ByteDriver;
 import edu.gmu.swe.knarr.server.concolic.driver.Driver;
 import edu.gmu.swe.knarr.server.concolic.driver.HTTPDriver;
 import edu.gmu.swe.knarr.server.concolic.driver.IntSerialDriver;
@@ -39,6 +40,9 @@ public class Concolic {
             case "int":
                 c.setIntDriver();
                 break;
+            case "byte":
+                c.setByteDriver();
+                break;
             default:
                 throw new Error("Unknown drive: " + args[0]);
         }
@@ -64,6 +68,10 @@ public class Concolic {
 
     /*default*/ void setIntDriver() {
         this.driver = new IntSerialDriver(listener, "127.0.0.1", 8080);
+    }
+
+    /*default*/ void setByteDriver() {
+        this.driver = new ByteDriver(listener, "127.0.0.1", 8080);
     }
 
     private void initMutators(File importDir) {
