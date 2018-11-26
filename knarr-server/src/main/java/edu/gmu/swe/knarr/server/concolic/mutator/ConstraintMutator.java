@@ -133,7 +133,7 @@ public class ConstraintMutator extends Mutator {
         while (true) {
             // Add negated constraint
             c.getNotCanonical().add(negated);
-            c.getOrder().addLast(negated);
+//            c.getOrder().addLast(negated);
 
             // Add key constraints to date
             for (Expression e : keyConstraints)
@@ -150,8 +150,7 @@ public class ConstraintMutator extends Mutator {
 
             if (!sat.isEmpty()) {
                 // SAT -> generate input
-                Object sol = driver.solution(sat.size());
-                int i = 0;
+                int max = 0;
                 for (Entry<String, Object> e: sat) {
                     if (!e.getKey().startsWith("autoVar_"))
                         break;
@@ -159,7 +158,22 @@ public class ConstraintMutator extends Mutator {
                     if (b == null)
                         break;
 
-                    driver.interpret(sol, i++, b);
+                    int n = Integer.parseInt(e.getKey().substring("autoVar_".length()));
+
+                    max = Math.max(n, max);
+                }
+
+                Object sol = driver.solution(max+1);
+                for (Entry<String, Object> e: sat) {
+                    if (!e.getKey().startsWith("autoVar_"))
+                        break;
+                    Integer b = (Integer) e.getValue();
+                    if (b == null)
+                        break;
+
+                    int n = Integer.parseInt(e.getKey().substring("autoVar_".length()));
+
+                    driver.interpret(sol, n, b);
                 }
 
                 Input ret = new Input();
