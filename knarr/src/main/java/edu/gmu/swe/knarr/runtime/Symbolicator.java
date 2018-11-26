@@ -167,6 +167,7 @@ public class Symbolicator {
 			oos.writeObject(name != null ? new File(name + ".dat") : null);
 
             // Coverage, if any
+			Coverage.instance.thisCount = Coverage.count;
 			oos.writeObject(Coverage.instance);
 
 			n++;
@@ -199,6 +200,7 @@ public class Symbolicator {
 			PathUtils.usedLabels.clear();
 			Coverage.instance.reset();
 			autoLblr.set(0);
+			Coverage.count = 0;
 
 			for (Taint[] b : TaintListener.symbolizedArrays)
 				for (int j = 0 ; j < b.length ; j++)

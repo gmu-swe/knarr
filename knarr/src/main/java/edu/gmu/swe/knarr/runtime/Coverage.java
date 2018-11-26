@@ -20,6 +20,9 @@ public class Coverage implements Serializable {
     public static boolean enabled = (System.getProperty("addCov") != null);
     public static transient Coverage instance = new Coverage();
 
+    public static int count = 0;
+    public int thisCount;
+
     private static LinkedList<ThreadLocalID> ids = new LinkedList<>();
 //    private ThreadLocalID lastID = new ThreadLocalID();
     private int lastID = 0;
