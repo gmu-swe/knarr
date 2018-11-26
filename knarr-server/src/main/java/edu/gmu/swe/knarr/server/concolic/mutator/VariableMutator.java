@@ -55,6 +55,8 @@ public class VariableMutator extends Mutator {
         {
             int i = 0;
             for (Variable v : c.getVariables()) {
+                if (!v.getName().startsWith("autoVar"))
+                    continue;
                 if (i++ == inputToNegate) {
                     varToNegate = v;
                     break;
@@ -75,7 +77,10 @@ public class VariableMutator extends Mutator {
         }
 
         if (valueToNegate == null)
-            return Mutator.OUT_OF_RANGE;
+            return null; // Mutator.OUT_OF_RANGE;
+
+        System.out.println(varToNegate);
+        System.out.println(valueToNegate);
 
         Expression negatedInput = new Operation(
                 Operator.NOT,
@@ -85,7 +90,9 @@ public class VariableMutator extends Mutator {
         // Solve
         while (true) {
             // Add negated input to constraints
-            c.getCanonical().get(varToNegate.getName()).add(negatedInput);
+            HashSet<Expression> s = c.getCanonical().get(varToNegate.getName());
+            if (s != null)
+                s.add(negatedInput);
             c.getOrder().addLast(negatedInput);
 
             // Add key constraints to date
@@ -116,6 +123,7 @@ public class VariableMutator extends Mutator {
                 ret.input = sol;
                 ret.parent = in;
                 ret.newConstraint = negatedInput;
+                ret.how = negatedInput.toString();
                 return ret;
             } else if (!unsat.isEmpty()) {
                 // UNSAT
