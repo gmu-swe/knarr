@@ -126,11 +126,10 @@ public class TaintListener extends DerivedTaintListener {
 
 			Operation store = new Operation(Operator.STORE, oldVar, idx, val);
 			PathUtils.getCurPC()._addDet(Operator.EQ, store, newVar);
-			return ret.getLast();
+			return newVar;
 		}
 	}
-	
-	
+
 	private <B extends LazyArrayObjTags> Taint genericReadArray(B b, Taint idxTaint, int idx, Constant c) {
 
 		boolean taintedArray = (b.taints != null && b.taints[idx] != null);
@@ -139,64 +138,23 @@ public class TaintListener extends DerivedTaintListener {
         if (b.getLength() > IGNORE_LARGE_ARRAY_SIZE && idx > IGNORE_LARGE_ARRAY_INDEX)
 			return null;
 
-//		if (taintedIndex && !taintedArray) {
-//			// Symbolic read of concrete array pos
-//
-//			// Make array position symbolic because it may be written in the future
-//			if (b.taints == null)
-//				b.taints = new Taint[b.getLength()];
-//
-//			Expression var = getArrayVar(b.getVal());
-//			Operation select = new Operation(Operator.SELECT, var, (Expression) idxTaint.lbl);
-//			Taint ret = new ExpressionTaint(select);
-//			b.taints[idx] = ret;
-//
-//			PathUtils.getCurPC()._addDet(Operator.EQ, c, select);
-//
-//			// Index is within the array bounds
-//			PathUtils.getCurPC()._addDet(Operator.LT, (Expression)idxTaint.lbl, new BVConstant(b.getLength(), 32));
-//			PathUtils.getCurPC()._addDet(Operator.GE, (Expression)idxTaint.lbl, new BVConstant(0, 32));
-//
-//			symbolizedArrays.add(b);
-//
-//            // Return symbolic array read
-//            return ret;
-//		} else if (taintedArray && !taintedIndex) {
-//			// Concrete read of symbolic array pos
-//            // Return array symb
-//            return b.taints[idx];
-//		} else if (taintedArray && taintedIndex) {
-//		    // Symbolic read of symbolic array pos
-//			// Return array symb OR return symbolic array read
-//			Expression var = getArrayVar(b.getVal());
-//			Operation select = new Operation(Operator.SELECT, var, (Expression) idxTaint.lbl);
-//			PathUtils.getCurPC()._addDet(Operator.EQ, (Expression) b.taints[idx].lbl, select);
-//
-//			// Index is within the array bounds
-//			PathUtils.getCurPC()._addDet(Operator.LT, (Expression)idxTaint.lbl, new BVConstant(b.getLength(), 32));
-//			PathUtils.getCurPC()._addDet(Operator.GE, (Expression)idxTaint.lbl, new BVConstant(0, 32));
-//
-//			return b.taints[idx];
-//		} else if (!taintedArray && !taintedIndex) {
-//			// Concrete read of concrete array pos
-//		    return null;
-//		}
+		if (taintedIndex && !taintedArray) {
+			// Symbolic read of concrete array pos
 
-		if(idxTaint != null)
-		{
+			// Make array position symbolic because it may be written in the future
+			if (b.taints == null)
+				b.taints = new Taint[b.getLength()];
+
 			Expression var = getArrayVar(b.getVal());
-			BVConstant idxBV = new BVConstant(idx, 32);
-
 			Operation select = new Operation(Operator.SELECT, var, (Expression) idxTaint.lbl);
+			Taint ret = new ExpressionTaint(select);
+			b.taints[idx] = ret;
+
 			PathUtils.getCurPC()._addDet(Operator.EQ, c, select);
 
 			// Index is within the array bounds
 			PathUtils.getCurPC()._addDet(Operator.LT, (Expression)idxTaint.lbl, new BVConstant(b.getLength(), 32));
 			PathUtils.getCurPC()._addDet(Operator.GE, (Expression)idxTaint.lbl, new BVConstant(0, 32));
-			Taint ret = new ExpressionTaint(select);
-
-			if (b.taints == null)
-				b.taints = new Taint[b.getLength()];
 
 			symbolizedArrays.add(b.taints);
 
@@ -213,20 +171,45 @@ public class TaintListener extends DerivedTaintListener {
 			Operation select = new Operation(Operator.SELECT, var, (Expression) idxTaint.lbl);
 			PathUtils.getCurPC()._addDet(Operator.EQ, (Expression) b.taints[idx].lbl, select);
 
+			// Index is within the array bounds
+			PathUtils.getCurPC()._addDet(Operator.LT, (Expression)idxTaint.lbl, new BVConstant(b.getLength(), 32));
+			PathUtils.getCurPC()._addDet(Operator.GE, (Expression)idxTaint.lbl, new BVConstant(0, 32));
 
-//			b.taints[idx] = ret;
-			b.taints[idx] = new ExpressionTaint(c);
-
-			return ret;
-		}
-		else if(b.taints != null && b.taints[idx] != null)
-		{
 			return b.taints[idx];
+		} else if (!taintedArray && !taintedIndex) {
+			// Concrete read of concrete array pos
+		    return null;
 		}
 
-		return null;
+//		if(idxTaint != null)
+//		{
+//			Expression var = getArrayVar(b.getVal());
+//			BVConstant idxBV = new BVConstant(idx, 32);
+//
+//			Operation select = new Operation(Operator.SELECT, var, (Expression) idxTaint.lbl);
+//			PathUtils.getCurPC()._addDet(Operator.EQ, c, select);
+//
+//			// Index is within the array bounds
+//			PathUtils.getCurPC()._addDet(Operator.LT, (Expression)idxTaint.lbl, new BVConstant(b.getLength(), 32));
+//			PathUtils.getCurPC()._addDet(Operator.GE, (Expression)idxTaint.lbl, new BVConstant(0, 32));
+//			Taint ret = new ExpressionTaint(select);
+//
+//			if (b.taints == null)
+//				b.taints = new Taint[b.getLength()];
+//
+////			b.taints[idx] = ret;
+//			b.taints[idx] = new ExpressionTaint(c);
+//
+//			return ret;
+//		}
+//		else if(b.taints != null && b.taints[idx] != null)
+//		{
+//			return b.taints[idx];
+//		}
+//
+//		return null;
 
-//		throw new Error("Dead code");
+		throw new Error("Dead code");
 	}
 	
 	private <B extends LazyArrayObjTags> Taint genericWriteArray(B b, Taint t, Taint idxTaint, int idx, Constant c) {
@@ -236,34 +219,95 @@ public class TaintListener extends DerivedTaintListener {
 		boolean taintedVal   = (t != null);
 
 		if (b.getLength() > IGNORE_LARGE_ARRAY_SIZE && idx > IGNORE_LARGE_ARRAY_INDEX)
- 			return null;
-		
-		if (!taintedArray && !taintedIndex && !taintedVal)
 			return null;
-//		else if (taintedVal && taintedIndex)
-//			throw new UnsupportedOperationException("Not implemented symbolic index on symbolic array");
 
-		if(taintedArray && !taintedIndex &&!taintedVal)
-		{
-			setArrayVar(b.getVal(), new BVConstant(idx, 32), c);
+		if (!taintedArray && !taintedIndex && !taintedVal) {
+			// Everything concrete
 			return null;
-		}
-		else if(taintedIndex)
-		{
-			setArrayVar(b.getVal(), (Expression)idxTaint.lbl, taintedVal ? (Expression) t.lbl : c);
+		} else if(taintedArray && !taintedIndex &&!taintedVal) {
+		    // Symbolic position overwritten by concrete value
+
+			// New value of the array
+			Expression newArray = setArrayVar(b.getVal(), new BVConstant(idx, 32), c);
+
+//			return new ExpressionTaint(c);
+			return null;
+        } else if(!taintedArray && taintedIndex &&!taintedVal) {
+		    // Symbolic index on concrete values
+
+			// New value of the array
+			Expression newArray = setArrayVar(b.getVal(), (Expression)idxTaint.lbl, c);
 
 			// Index is within the array bounds
 			PathUtils.getCurPC()._addDet(Operator.LT, (Expression)idxTaint.lbl, new BVConstant(b.getLength(), 32));
 			PathUtils.getCurPC()._addDet(Operator.GE, (Expression)idxTaint.lbl, new BVConstant(0, 32));
-			
+
+			// Array position becomes new value
+//			return new ExpressionTaint(c);
 			return null;
-		}
-		else if (taintedVal)
-		{
+        } else if(!taintedArray && !taintedIndex && taintedVal) {
+			// Concrete index on concrete array and symb new value
+			// Array position becomes symbolic new value
+			return t;
+        } else if(!taintedArray && taintedIndex && taintedVal) {
+		    // Concrete array pos with symb index and val
+			// Make array pos symbolic with new val
+
+			// Index is within the array bounds
+			PathUtils.getCurPC()._addDet(Operator.LT, (Expression)idxTaint.lbl, new BVConstant(b.getLength(), 32));
+			PathUtils.getCurPC()._addDet(Operator.GE, (Expression)idxTaint.lbl, new BVConstant(0, 32));
+
+			return t;
+		} else if(taintedArray && !taintedIndex && taintedVal) {
+			// Symb array pos and symb value with concrete index
+
+			// New array with the change
+			Expression newArray = setArrayVar(b.getVal(), new BVConstant(idx, 32), (Expression) t.lbl);
+
+			// Array position becomes symbolic new value
+			return t;
+		} else if(taintedArray && taintedIndex && !taintedVal) {
+		    // Symbolic array pos being overwritten by concrete value with symbolic index
+
+			// New array with the change
+			Expression newArray = setArrayVar(b.getVal(), (Expression)idxTaint.lbl, c);
+
+			// Index is within the array bounds
+			PathUtils.getCurPC()._addDet(Operator.LT, (Expression)idxTaint.lbl, new BVConstant(b.getLength(), 32));
+			PathUtils.getCurPC()._addDet(Operator.GE, (Expression)idxTaint.lbl, new BVConstant(0, 32));
+
+//			return new ExpressionTaint(c);
+			return null;
+		} else if(taintedArray && taintedIndex && taintedVal) {
+		    // Symbolic array position overwritten by another symbolic value with a symbolic index
+
+			// New array with the change
+			Expression newArray = setArrayVar(b.getVal(), (Expression)idxTaint.lbl, (Expression) t.lbl);
+
+			// Index is within the array bounds
+			PathUtils.getCurPC()._addDet(Operator.LT, (Expression)idxTaint.lbl, new BVConstant(b.getLength(), 32));
+			PathUtils.getCurPC()._addDet(Operator.GE, (Expression)idxTaint.lbl, new BVConstant(0, 32));
+
+			// Array position becomes symbolic new value
 			return t;
 		}
+//		else if(taintedIndex)
+//		{
+//			Expression newArray = setArrayVar(b.getVal(), (Expression)idxTaint.lbl, taintedVal ? (Expression) t.lbl : c);
+//
+//			// Index is within the array bounds
+//			PathUtils.getCurPC()._addDet(Operator.LT, (Expression)idxTaint.lbl, new BVConstant(b.getLength(), 32));
+//			PathUtils.getCurPC()._addDet(Operator.GE, (Expression)idxTaint.lbl, new BVConstant(0, 32));
+//
+////			return new ExpressionTaint(new Operation(Operator.SELECT, newArray, new BVConstant(idx, 32)));
+//			return new ExpressionTaint(c);
+//		}
+//		else if (taintedVal)
+//		{
+//			return t;
+//		}
 
-		throw new UnsupportedOperationException("Dead code?");
+		throw new Error("Dead code");
 	}
 	
 	@Override

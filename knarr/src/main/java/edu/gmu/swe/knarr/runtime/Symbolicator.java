@@ -161,7 +161,7 @@ public class Symbolicator {
 			oos.writeObject(PathUtils.getCurPC().constraints);
 
 			// Solve constraints?
-			oos.writeBoolean(false);
+			oos.writeBoolean(true);
 
 			// Dump constraints to file?
 			oos.writeObject(name != null ? new File(name + ".dat") : null);
