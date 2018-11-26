@@ -48,6 +48,7 @@ public class ConstraintFileUtil {
 					deserialTime = end - start;
 					
 					ArrayList<SimpleEntry<String, Object>> solution = new ArrayList<>();
+					HashSet<String> unsat = new HashSet<>();
 
 					if (o instanceof Expression) {
 						start = System.currentTimeMillis();
@@ -63,31 +64,40 @@ public class ConstraintFileUtil {
 						convertToExpressionTime = end - start;
 
 						start = System.currentTimeMillis();
-						ConstraintServerHandler.solve(res, false, solution, new HashSet<String>());
+//						ConstraintServerHandler.solve(res, false, solution, new HashSet<String>());
+						ConstraintServerHandler.solve(c.getExpressionMap(), solution, unsat);
 						end = System.currentTimeMillis();
 						
 					} else throw new UnsupportedOperationException();
 					
 					solveTime = end - start;
 
-					byte[] buf = new byte[solution.size()];
-					int i = 0;
-					for (Entry<String, Object> e: solution) {
-						if (!e.getKey().startsWith("autoVar_"))
-							break;
-						Integer b = (Integer) e.getValue();
-						if (b == null)
-							break;
-
-						buf[i++] = b.byteValue();
-					}
-
 					System.out.println("Time to deserialize: " + deserialTime + "ms");
 					System.out.println("Time to convert: " + convertToExpressionTime + "ms");
 					System.out.println("Time to solve: " + solveTime + "ms");
-					System.out.println("Solution as UTF_8 string:");
-					System.out.println(new String(buf, StandardCharsets.UTF_8));
-					
+
+					if (!unsat.isEmpty()) {
+						System.out.println("UNSAT");
+
+						for (String s : unsat)
+							System.out.println(s);
+					} else {
+						byte[] buf = new byte[solution.size()];
+						int i = 0;
+						for (Entry<String, Object> e: solution) {
+							if (!e.getKey().startsWith("autoVar_"))
+								break;
+							Integer b = (Integer) e.getValue();
+							if (b == null)
+								break;
+
+							buf[i++] = b.byteValue();
+						}
+
+						System.out.println("Solution as UTF_8 string:");
+						System.out.println(new String(buf, StandardCharsets.UTF_8));
+					}
+
 					try {
 						// Allow the timer thread to print the time taken inside the solver
 						Thread.sleep(1000);
