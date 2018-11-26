@@ -140,7 +140,9 @@ public class AllMaxConstraintsMutator extends Mutator {
 //                continue;
 
             } else {
-                throw new Error("Should never happen");
+                System.out.println("Timeout?");
+                return null;
+//                throw new Error("Should never happen");
             }
 
         }

@@ -192,7 +192,8 @@ public class ConstraintMutator extends Mutator {
 //                continue;
 
             } else {
-                throw new Error("Should never happen");
+                System.out.println("\tTimeout or error");
+                return null;
             }
 
         }
