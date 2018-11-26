@@ -172,7 +172,7 @@ public class ConstraintMutator extends Mutator {
                 // UNSAT, maybe we can still find new paths
 
                 System.out.println("\tUNSAT");
-                return null;
+//                return null;
 
 //                System.out.println(toNegate);
 //                System.out.println(negated);
@@ -181,28 +181,37 @@ public class ConstraintMutator extends Mutator {
 //                if (pathSensitive)
 //                    return null;
 //
-//                // Find earliest constraint in UNSAT core
-//                newOrder = new LinkedList<>();
-//                toRemove = new LinkedList<>();
-//                found = false;
-//                for (Expression e : c.getOrder()) {
-//                    if (unsat.contains(e.toString()))
-//                        found = true;
-//
-//                    (!found ? newOrder : toRemove).addLast(e);
-//                }
-//
-//                // Drop it and all later constraints
-//                for (HashSet<Expression> es : c.getCanonical().values())
-//                    es.removeAll(toRemove);
-//
-//                for (HashSet<Expression> es : c.getConstArrayInits().values())
-//                    es.removeAll(toRemove);
-//
-//                c.getNotCanonical().removeAll(toRemove);
-//
-//                // Try again
-//                continue;
+
+                HashSet<String> escapedUnsat = new HashSet<>();
+
+                for (String s : unsat)
+                    escapedUnsat.add(s.replaceAll("\\\\", ""));
+
+                // Find earliest constraint in UNSAT core
+                newOrder = new LinkedList<>();
+                toRemove = new LinkedList<>();
+                found = false;
+                for (Expression e : c.getOrder()) {
+                    if (escapedUnsat.contains(e.toString()))
+                        found = true;
+
+                    (!found ? newOrder : toRemove).addLast(e);
+                }
+
+                if (toRemove.isEmpty())
+                    return null;
+
+                // Drop it and all later constraints
+                for (HashSet<Expression> es : c.getCanonical().values())
+                    es.removeAll(toRemove);
+
+                for (HashSet<Expression> es : c.getConstArrayInits().values())
+                    es.removeAll(toRemove);
+
+                c.getNotCanonical().removeAll(toRemove);
+
+                // Try again
+                continue;
 
             } else {
                 System.out.println("\tTimeout or error");
