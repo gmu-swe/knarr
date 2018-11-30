@@ -11,8 +11,8 @@ public class MaxPathsPicker extends MaxConstraintsPicker {
     private int max = 0;
 
     @Override
-    public Input doPickInput() {
-        return (((TreeSet<Input>)inCirculation)).last();
+    public Input doPickInput(Collection<Input> inputs) {
+        return (((TreeSet<Input>)inputs)).last();
     }
 
     @Override
@@ -21,8 +21,8 @@ public class MaxPathsPicker extends MaxConstraintsPicker {
     }
 
     @Override
-    protected String shouldSaveInput(Input in) {
-        super.shouldSaveInput(in);
+    protected String shouldSaveInput(Input in, Collection<Input> ins) {
+        super.shouldSaveInput(in, ins);
 
         if (in.score > max) {
             max = in.score;

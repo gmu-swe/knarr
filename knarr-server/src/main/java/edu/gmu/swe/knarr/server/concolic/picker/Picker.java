@@ -2,43 +2,56 @@ package edu.gmu.swe.knarr.server.concolic.picker;
 
 import edu.gmu.swe.knarr.runtime.Coverage;
 import edu.gmu.swe.knarr.server.concolic.Input;
+import edu.gmu.swe.knarr.server.concolic.mutator.Mutator;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 
 public abstract class Picker {
     protected Coverage current = Coverage.newCoverage();
 
-    protected Collection<Input> inCirculation = createInCirculation();
-    protected HashSet<Input> outOfCirculation = new HashSet<>();
+    protected HashMap<Mutator, Collection<Input>> inputs = new HashMap<>();
 
-    protected int threshold = Integer.MAX_VALUE;
+    public void initMutators(Mutator[] mutators) {
+        for (Mutator m : mutators)
+            inputs.put(m, createInCirculation());
+    }
 
-    public Input pickInput() {
-        if (inCirculation.isEmpty())
-            return null;
+    public synchronized Input pickInput(Mutator m) {
 
-        Input ret = doPickInput();
+        Input ret;
+        while (true) {
+            Collection<Input> ins = inputs.get(m);
+            ret = doPickInput(ins);
+            if (ret == null) {
+                try {
+                    this.wait();
+                } catch (InterruptedException e) {
+                    continue;
+                }
+            } else {
+                break;
+            }
+        }
 
         return ret;
     }
 
-    protected abstract Input doPickInput();
+    protected abstract Input doPickInput(Collection<Input> inputs);
 
-    public void reset() {
-        inCirculation.addAll(outOfCirculation);
-        outOfCirculation.clear();
+    public synchronized void removeInput(Input in, Mutator mutator) {
+        inputs.get(mutator).remove(in);
     }
 
-    public void removeInput(Input in) {
-        inCirculation.remove(in);
-        outOfCirculation.add(in);
-    }
-
-    public String saveInput(Input in) {
+    public synchronized String saveInput(Mutator m, Input in) {
         String reason;
-        if ((reason = shouldSaveInput(in)) != null) {
-            inCirculation.add(in);
+
+        if ((reason = shouldSaveInput(in, m != null ? inputs.get(m) : null)) != null) {
+            for (Collection<Input> ins : inputs.values())
+                ins.add(in);
+
+            this.notifyAll();
 
             // Update current coverage
             current.merge(in.coverage);
@@ -47,8 +60,11 @@ public abstract class Picker {
         }
 
         if (!current.coversTheSameCodeAs(in.coverage)) {
-            inCirculation.add(in);
+            for (Collection<Input> ins : inputs.values())
+                ins.add(in);
             current.merge(in.coverage);
+
+            this.notifyAll();
 
             return "newCode";
         }
@@ -71,19 +87,11 @@ public abstract class Picker {
         in.score = 0;
     }
 
-    protected abstract String shouldSaveInput(Input in);
+    protected abstract String shouldSaveInput(Input in, Collection<Input> ins);
 
     protected abstract Collection<Input> createInCirculation();
 
     public Coverage getCurrentCoverage() {
         return current;
-    }
-
-    public void setThreshold(int threshold) {
-        this.threshold = threshold;
-    }
-
-    public int getThreshold() {
-        return this.threshold;
     }
 }

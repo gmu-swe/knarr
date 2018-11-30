@@ -9,12 +9,12 @@ import java.util.TreeSet;
 public class MaxStaticCoveragePicker extends Picker {
 
     @Override
-    public Input doPickInput() {
-        return (((TreeSet<Input>)inCirculation)).last();
+    public Input doPickInput(Collection<Input> inputs) {
+        return (((TreeSet<Input>)inputs)).last();
     }
 
     @Override
-    protected String shouldSaveInput(Input in) {
+    protected String shouldSaveInput(Input in, Collection<Input> ins) {
         if (!current.coversTheSameCodeAs(in.coverage))
             return "newCode";
         else

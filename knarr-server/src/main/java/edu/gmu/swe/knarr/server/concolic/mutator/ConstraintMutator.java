@@ -24,21 +24,22 @@ public class ConstraintMutator extends Mutator {
     private Coverage master;
     private boolean reverseDirection;
     private boolean pathSensitive;
+    private boolean breakLoops;
 
     private HashMap<Input, Integer> memory = new HashMap<>();
 
-    public ConstraintMutator(Driver d, Coverage master, boolean reverse, boolean pathSensitive) {
+    public ConstraintMutator(Driver d, Coverage master, boolean reverse, boolean pathSensitive, boolean breakLoops) {
         super(d);
         this.master = master;
         this.reverseDirection = reverse;
         this.pathSensitive = pathSensitive;
+        this.breakLoops = breakLoops;
     }
 
     private HashMap<Input, Set<String>> tried = new HashMap<>();
 
     @Override
     public Input mutateInput(Input in, int which) {
-
         Integer m = memory.get(in);
         if (m != null && m > which) {
             which += m;
@@ -63,9 +64,13 @@ public class ConstraintMutator extends Mutator {
             int i = 0;
             Iterator<Expression> iter = (reverseDirection ? c.getOrder().descendingIterator() : c.getOrder().iterator());
             while (iter.hasNext()) {
+                if (i > (c.getOrder().size() / 2))
+                    // Only search half, other mutators will search other half
+                    return OUT_OF_RANGE;
+
                 newCoverage = null;
                 Expression e  = iter.next();
-                if (e.metadata != null && ((Coverage.BranchData)e.metadata).breaksLoop && !keyConstraints.contains(e)) {
+                if (e.metadata != null && (!this.breakLoops || (this.breakLoops && ((Coverage.BranchData)e.metadata).breaksLoop)) && !keyConstraints.contains(e)) {
 
                     Set<String> tried = this.tried.get(in);
                     if (tried == null)  {

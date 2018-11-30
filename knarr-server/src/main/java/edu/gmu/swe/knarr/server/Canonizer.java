@@ -74,19 +74,22 @@ public class Canonizer implements Serializable {
 	public Canonizer(Canonizer c) {
 		this();
 
-		for (Entry<String, HashSet<Expression>> entry : c.canonical.entrySet())
-			canonical.put(entry.getKey(), new HashSet<>(entry.getValue()));
+		synchronized (c) {
+			for (Entry<String, HashSet<Expression>> entry : c.canonical.entrySet())
+				canonical.put(entry.getKey(), new HashSet<>(entry.getValue()));
 
-		for (Entry<String, HashSet<Expression>> entry : c.constArrayInits.entrySet())
-			constArrayInits.put(entry.getKey(), new HashSet<>(entry.getValue()));
+			for (Entry<String, HashSet<Expression>> entry : c.constArrayInits.entrySet())
+				constArrayInits.put(entry.getKey(), new HashSet<>(entry.getValue()));
 
-		notCanonical.addAll(c.notCanonical);
-		variables.addAll(c.variables);
-		order.addAll(c.order);
+			notCanonical.addAll(c.notCanonical);
+			variables.addAll(c.variables);
+			order.addAll(c.order);
+		}
+
 	}
 	
 	
-	public void canonize(Expression exp) {
+	public synchronized void canonize(Expression exp) {
 		// Expression has the form: ((((exp) AND exp) ...) AND  exp)
 		// Extract each individual expression
 		Expression e = exp;
@@ -150,7 +153,7 @@ public class Canonizer implements Serializable {
 		return variables;
 	}
 	
-	public Expression getExpression() {
+	public synchronized Expression getExpression() {
 		Expression expr = new BoolConstant(true);
 
 		for (HashSet<Expression> es : constArrayInits.values()) {
@@ -169,7 +172,7 @@ public class Canonizer implements Serializable {
 		return expr;
 	}
 
-	public Map<String, Expression> getExpressionMap() {
+	public synchronized Map<String, Expression> getExpressionMap() {
 		HashMap<String, Expression> ret = new HashMap<>();
 		
 		for (HashSet<Expression> es : this.canonical.values())

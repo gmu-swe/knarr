@@ -43,32 +43,61 @@ public class ConstraintServerHandler extends Thread {
 	ObjectOutputStream oos;
 	static AtomicInteger clientID = new AtomicInteger();
 
-	static final Green green;
-	static final ModelFactorizerService slicer;
-	static final ModelCanonizerService canonizer;
-	static final ModelZ3JavaService modeler;
-	static final Map<Variable, Variable> variableMap;
-	static final StateStore stateStore;
-	static final ConstraintOptionGenerator optionGenerator;
-	static {
-		green = new Green();
-		Properties props = new Properties();
-		props.setProperty("green.services", "model");
-		props.setProperty("green.service.model", "(slice (canonize z3))");
-		props.setProperty("green.service.model.slice", "za.ac.sun.cs.green.service.slicer.SATSlicerService");
-		props.setProperty("green.service.model.canonize", "za.ac.sun.cs.green.service.canonizer.ModelCanonizerService");
-		props.setProperty("green.service.model.z3", "za.ac.sun.cs.green.service.z3.ModelZ3JavaService");
-		// props.setProperty("green.store",
-		// "za.ac.sun.cs.green.store.redis.RedisStore");
-		Configuration config = new Configuration(green, props);
-		config.configure();
-		slicer = new ModelFactorizerService(green);
-		canonizer = new ModelCanonizerService(green);
-		variableMap = new HashMap<Variable, Variable>();
-		modeler = new ModelZ3JavaService(green, null);
-		stateStore = new HashMapStateStore();
-		optionGenerator = new ConstraintOptionGenerator();
+	private static class Data {
+		Green green;
+		ModelFactorizerService slicer;
+		ModelCanonizerService canonizer;
+		ModelZ3JavaService modeler;
+		Map<Variable, Variable> variableMap;
+		StateStore stateStore;
+		ConstraintOptionGenerator optionGenerator;
 	}
+
+	private static final ThreadLocal<Data> data = new ThreadLocal<Data>() {
+		@Override
+		protected Data initialValue() {
+		    Data ret = new Data();
+			ret.green = new Green();
+			Properties props = new Properties();
+			props.setProperty("green.services", "model");
+			props.setProperty("green.service.model", "(slice (canonize z3))");
+			props.setProperty("green.service.model.slice", "za.ac.sun.cs.green.service.slicer.SATSlicerService");
+			props.setProperty("green.service.model.canonize", "za.ac.sun.cs.green.service.canonizer.ModelCanonizerService");
+			props.setProperty("green.service.model.z3", "za.ac.sun.cs.green.service.z3.ModelZ3JavaService");
+			// props.setProperty("green.store",
+			// "za.ac.sun.cs.green.store.redis.RedisStore");
+			Configuration config = new Configuration(ret.green, props);
+			config.configure();
+			ret.slicer = new ModelFactorizerService(ret.green);
+			ret.canonizer = new ModelCanonizerService(ret.green);
+			ret.variableMap = new HashMap<Variable, Variable>();
+			ret.modeler = new ModelZ3JavaService(ret.green, null);
+			ret.stateStore = new HashMapStateStore();
+			ret.optionGenerator = new ConstraintOptionGenerator();
+
+			return ret;
+		}
+	};
+
+//	static {
+//		green = new Green();
+//		Properties props = new Properties();
+//		props.setProperty("green.services", "model");
+//		props.setProperty("green.service.model", "(slice (canonize z3))");
+//		props.setProperty("green.service.model.slice", "za.ac.sun.cs.green.service.slicer.SATSlicerService");
+//		props.setProperty("green.service.model.canonize", "za.ac.sun.cs.green.service.canonizer.ModelCanonizerService");
+//		props.setProperty("green.service.model.z3", "za.ac.sun.cs.green.service.z3.ModelZ3JavaService");
+//		// props.setProperty("green.store",
+//		// "za.ac.sun.cs.green.store.redis.RedisStore");
+//		Configuration config = new Configuration(green, props);
+//		config.configure();
+//		slicer = new ModelFactorizerService(green);
+//		canonizer = new ModelCanonizerService(green);
+//		variableMap = new HashMap<Variable, Variable>();
+//		modeler = new ModelZ3JavaService(green, null);
+//		stateStore = new HashMapStateStore();
+//		optionGenerator = new ConstraintOptionGenerator();
+//	}
 
 	public static void main(String[] args) throws Throwable {
 
@@ -93,14 +122,14 @@ public class ConstraintServerHandler extends Thread {
 		// new IntConstant(0)));
 		// e2 = new Operation(Operator.AND, e2, e3);
 
-		Instance i = new Instance(green, null, e2);
+		Instance i = new Instance(data.get().green, null, e2);
 		System.out.println(e2);
 		
-		ModelFactorizerService slicer = new ModelFactorizerService(green);
+		ModelFactorizerService slicer = new ModelFactorizerService(data.get().green);
 		Set<Instance> r = slicer.processRequest(i);
-		ModelCanonizerService cs = new ModelCanonizerService(green);
+		ModelCanonizerService cs = new ModelCanonizerService(data.get().green);
 		final Map<Variable, Variable> variableMap = new HashMap<Variable, Variable>();
-		ModelZ3JavaService m = new ModelZ3JavaService(green, null);
+		ModelZ3JavaService m = new ModelZ3JavaService(data.get().green, null);
 		System.out.println(m.getUnderlyingExpr(i));
 		ConstraintOptionGenerator g = new ConstraintOptionGenerator();
 		for(Z3GreenBridge o : g.generateOptions(m.getUnderlyingExpr(i)))
@@ -136,9 +165,9 @@ public class ConstraintServerHandler extends Thread {
 		// System.out.println(i.request("model"));
 	}
 
-	private static void generateAndAddNewOptions(Z3GreenBridge data) {
+	private static void generateAndAddNewOptions(Z3GreenBridge d) {
 		int nAdded = 0;
-		for (Z3GreenBridge e : optionGenerator.generateOptions(data)) {
+		for (Z3GreenBridge e : data.get().optionGenerator.generateOptions(d)) {
 			// Slice, then canonize, then try to add to list
 //			Instance i = new Instance(green, null, e);
 //			Set<Instance> sliced = slicer.processRequest(i);
@@ -150,7 +179,7 @@ public class ConstraintServerHandler extends Thread {
 //					fact = c;
 //				exps.add(fact);
 //			}
-			if (stateStore.addOption(e))
+			if (data.get().stateStore.addOption(e))
 				nAdded++;
 		}
 	}
@@ -247,9 +276,9 @@ public class ConstraintServerHandler extends Thread {
 		if (dedup) {
 			Canonizer c = new Canonizer();
 			c.canonize(req);
-			in = new Instance(green, null, c.getExpression());
+			in = new Instance(data.get().green, null, c.getExpression());
 		} else {
-			in = new Instance(green, null, req);
+			in = new Instance(data.get().green, null, req);
 		}
 		
 		solve(in, sat, unsat);
@@ -259,14 +288,14 @@ public class ConstraintServerHandler extends Thread {
 		
 //				modeler.processRequest(in);
 
-		Instance in = new Instance(green, null, expressions);
+		Instance in = new Instance(data.get().green, null, expressions);
 		solve(in, sat, unsat);
 	}
 
 	private static void solve(Instance in,  ArrayList<SimpleEntry<String, Object>> sat, Set<String> unsat) {
-		generateAndAddNewOptions(modeler.getUnderlyingExpr(in));
+		generateAndAddNewOptions(data.get().modeler.getUnderlyingExpr(in));
 
-		Z3GreenBridge newExp = stateStore.getNewOption();
+		Z3GreenBridge newExp = data.get().stateStore.getNewOption();
 		boolean issat = false;
 		final String prefix = "autoVar_";
 		while (newExp != null && !issat) {
@@ -278,7 +307,7 @@ public class ConstraintServerHandler extends Thread {
 				long start = System.currentTimeMillis();
 				
 				
-				Solution sol = modeler.solve(newExp);
+				Solution sol = data.get().modeler.solve(newExp);
 				inZ3 += (System.currentTimeMillis()-start);
 				nSolved++;
 
@@ -292,7 +321,7 @@ public class ConstraintServerHandler extends Thread {
 							sat.add(new SimpleEntry<String, Object>(v, sol.data.get(v)));
 					}
 				} else {
-					stateStore.addUnsat(newExp);
+					data.get().stateStore.addUnsat(newExp);
 //					System.out.println("NOT SAT");
 					for (String k : sol.data.keySet()) {
 						unsat.add(k);
@@ -305,7 +334,7 @@ public class ConstraintServerHandler extends Thread {
 				issat = false;
 				System.out.println("Not sat");
 			}
-			newExp = stateStore.getNewOption();
+			newExp = data.get().stateStore.getNewOption();
 		}
 
 		Collections.sort(sat, new Comparator<SimpleEntry<String, Object>>() {

@@ -51,7 +51,7 @@ public class MaxConstraintsMutator extends Mutator {
         Input pickedIn = null;
         {
             int i = 0;
-            for (Variable v : in.constraints.getVariables()) {
+            for (Variable v : c.getVariables()) {
                 if (which == i) {
 
                     // Remove all v from input
@@ -76,10 +76,12 @@ public class MaxConstraintsMutator extends Mutator {
                     // Add max v from picker
                     Input maxIn = picker.getMaxInput(v);
 
-                    if (maxIn.constraints.getCanonical().get(v.toString()) == null)
-                        maxIn.constraints.getCanonical().put(v.toString(), new HashSet<Expression>());
+                    synchronized (maxIn.constraints) {
+                        if (maxIn.constraints.getCanonical().get(v.toString()) == null)
+                            maxIn.constraints.getCanonical().put(v.toString(), new HashSet<Expression>());
 
-                    c.getCanonical().get(v.toString()).addAll(maxIn.constraints.getCanonical().get(v.toString()));
+                        c.getCanonical().get(v.toString()).addAll(maxIn.constraints.getCanonical().get(v.toString()));
+                    }
 
                     {
                         Iterator<Expression> iter = maxIn.constraints.getNotCanonical().iterator();

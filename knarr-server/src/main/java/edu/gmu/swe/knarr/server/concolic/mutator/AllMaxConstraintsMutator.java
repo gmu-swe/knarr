@@ -45,22 +45,29 @@ public class AllMaxConstraintsMutator extends Mutator {
         Coverage newCoverage = null;
 
         // Pick all max constraints for each variable
-        for (Variable v : in.constraints.getVariables()) {
+        ArrayList<Variable> vars = new ArrayList<>();
+        synchronized (in.constraints) {
+            vars.addAll(in.constraints.getVariables());
+        }
+
+        for (Variable v : vars) {
             // Add max v from picker
             Input maxIn = picker.getMaxInput(v);
 
-            if (maxIn.constraints.getCanonical().get(v.toString()) == null)
-                maxIn.constraints.getCanonical().put(v.toString(), new HashSet<Expression>());
+            synchronized (maxIn.constraints) {
+                if (maxIn.constraints.getCanonical().get(v.toString()) == null)
+                    maxIn.constraints.getCanonical().put(v.toString(), new HashSet<Expression>());
 
-            c.getCanonical().put(v.toString(), new HashSet<Expression>());
-            c.getCanonical().get(v.toString()).addAll(maxIn.constraints.getCanonical().get(v.toString()));
+                c.getCanonical().put(v.toString(), new HashSet<Expression>());
+                c.getCanonical().get(v.toString()).addAll(maxIn.constraints.getCanonical().get(v.toString()));
 
-            {
-                Iterator<Expression> iter = maxIn.constraints.getNotCanonical().iterator();
-                while (iter.hasNext()) {
-                    Expression e = iter.next();
-                    if (MaxConstraintsPicker.refersVar(v, e)) {
-                        c.getNotCanonical().add(e);
+                {
+                    Iterator<Expression> iter = maxIn.constraints.getNotCanonical().iterator();
+                    while (iter.hasNext()) {
+                        Expression e = iter.next();
+                        if (MaxConstraintsPicker.refersVar(v, e)) {
+                            c.getNotCanonical().add(e);
+                        }
                     }
                 }
             }

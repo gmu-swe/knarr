@@ -12,8 +12,8 @@ public class MaxDistancePicker extends Picker {
     int max = -1;
 
     @Override
-    public Input doPickInput() {
-        return (((TreeSet<Input>)inCirculation)).last();
+    public Input doPickInput(Collection<Input> inputs) {
+        return (((TreeSet<Input>)inputs)).last();
     }
 
     private static int distance(Input in) {
@@ -28,7 +28,7 @@ public class MaxDistancePicker extends Picker {
     }
 
     @Override
-    protected String shouldSaveInput(Input in) {
+    protected String shouldSaveInput(Input in, Collection<Input> ins) {
         int n = distance(in);
 
         if (n > max) {
