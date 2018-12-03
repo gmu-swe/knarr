@@ -51,6 +51,7 @@ public class Concolic {
 
         c.picker.initMutators(c.mutators);
 
+        c.log = new Log(Paths.get(new File(args[2]).getAbsolutePath(), "log.csv").toFile());
         c.addInitialInput(new File(args[1]), new File(args[2]));
 
 //        c.loop(new File(args[2]));
@@ -86,6 +87,7 @@ public class Concolic {
     private int lastAddedInput = 0;
     private ServerSocket listener;
     private Mutator[] mutators;
+    private Log log;
     protected Picker picker = new MaxBytecodePicker();
 
     private int mutatorInUse = 0;
@@ -108,16 +110,16 @@ public class Concolic {
 //            sorted[i] = i;
 //        }
         mutators = new Mutator[]{
-                new VariableMutator(driver, false),
-                new VariableMutator(driver, true),
+                new VariableMutator(driver, false).setName("VariableMutator"),
+                new VariableMutator(driver, true).setName("VariableMutatorReverse"),
 
-                new ConstraintMutator(driver, picker.getCurrentCoverage(), true, true, true),
-                new ConstraintMutator(driver, picker.getCurrentCoverage(), true, true, false),
+                new ConstraintMutator(driver, picker.getCurrentCoverage(), true, true, true).setName("ConstraintMutatorReverseLoop"),
+                new ConstraintMutator(driver, picker.getCurrentCoverage(), true, true, false).setName("ConstraintMutatorLoop"),
 
 //                new AllMaxConstraintsMutator(driver, (MaxConstraintsPicker) picker),
 
-                new ConstraintMutator(driver, picker.getCurrentCoverage(), false, true, true),
-                new ConstraintMutator(driver, picker.getCurrentCoverage(), false, true, false),
+                new ConstraintMutator(driver, picker.getCurrentCoverage(), false, true, true).setName("ConstraintMutatorLoop"),
+                new ConstraintMutator(driver, picker.getCurrentCoverage(), false, true, false).setName("ConstraintMutator"),
 //
 //                new AllMaxConstraintsMutator(driver, (MaxConstraintsPicker) picker),
 //                new MaxConstraintsMutator(driver, (MaxConstraintsPicker) picker),
@@ -211,18 +213,13 @@ public class Concolic {
 
             try {
                 success = executeInput(mutated);
+
+                // Save input
+                saveInput(mutator, mutated, dirToSave);
             } catch (IOException e) {
                 e.printStackTrace();
-                success = false;
-            }
-
-            if (!success) {
-                // Could not execute this input, try next var
                 continue;
             }
-
-            // Save input
-            saveInput(mutator, mutated, dirToSave);
         }
     }
 
@@ -355,12 +352,13 @@ public class Concolic {
         return true;
     }
 
-    private boolean saveInput(Mutator m, Input candidate, File dirToSave) {
+    private boolean saveInput(Mutator m, Input candidate, File dirToSave) throws IOException {
         String reason;
         if ((reason = picker.saveInput(m, candidate)) != null) {
             // Save input to file-system
             candidate.nth = lastAddedInput++;
-            candidate.toFiles(dirToSave, driver, reason);
+            String fileName = candidate.toFiles(dirToSave, driver, reason);
+            log.log(candidate, reason, fileName, m);
 
 //            for (Input in = candidate ; in != null && in.newConstraint != null ; in = in.parent) {
 //                System.out.print("\t");

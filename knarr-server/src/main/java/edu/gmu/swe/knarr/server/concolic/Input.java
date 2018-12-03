@@ -27,25 +27,20 @@ public class Input {
 
     private static String FORMAT = "id:%06d,src:%06d,score=%d,op:%s,%s";
 
-    public void toFiles(File dirToSave, Driver driver, String reason) {
+    public String toFiles(File dirToSave, Driver driver, String reason) throws IOException {
         URI queue = Paths.get(dirToSave.getAbsolutePath(), "queue").toUri();
         File q = new File(queue);
         q.mkdirs();
-        try {
-//            save(constraints, "constraints_" + nth, dirToSave);
-//            save(coverage, "coverage_" + nth, dirToSave);
-            int score = this.score;
-            String inputFilename;
-            if (this.how.length() > 30)
-                this.how = this.how.substring(0, 29) + "...";
-            if (this.parent != null)
-                inputFilename = String.format(FORMAT, this.nth, this.parent.nth, score, this.how, reason);
-            else
-                inputFilename = String.format(FORMAT, this.nth, 0, score, this.how, reason);
-            save(input, inputFilename, q, driver);
-        } catch (IOException e) {
-            throw new Error(e);
-        }
+        int score = this.score;
+        String inputFilename;
+        if (this.how.length() > 30)
+            this.how = this.how.substring(0, 29) + "...";
+        if (this.parent != null)
+            inputFilename = String.format(FORMAT, this.nth, this.parent.nth, score, this.how, reason);
+        else
+            inputFilename = String.format(FORMAT, this.nth, 0, score, this.how, reason);
+        save(input, inputFilename, q, driver);
+        return inputFilename;
     }
 
     private void save(Object toSave, String fileName, File dirToSave) throws IOException {

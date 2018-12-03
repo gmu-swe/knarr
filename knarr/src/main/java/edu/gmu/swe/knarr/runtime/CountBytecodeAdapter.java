@@ -34,7 +34,6 @@ public class CountBytecodeAdapter extends ClassVisitor implements Opcodes {
     public MethodBlockNode(int access, String name, String descriptor, String signature, String[] exceptions,MethodVisitor mv) {
       super(ASM6, access, name, descriptor, signature, exceptions);
       this.underlyingMV = mv;
-      System.out.println(name);
     }
 
     @Override
