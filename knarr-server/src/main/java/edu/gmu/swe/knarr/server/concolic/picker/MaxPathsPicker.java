@@ -8,7 +8,7 @@ import java.util.TreeSet;
 
 public class MaxPathsPicker extends MaxConstraintsPicker {
 
-    private int max = 0;
+    private long max = 0;
 
     @Override
     public Input doPickInput(Collection<Input> inputs) {

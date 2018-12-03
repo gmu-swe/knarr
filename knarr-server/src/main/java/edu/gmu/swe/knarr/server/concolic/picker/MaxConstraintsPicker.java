@@ -15,7 +15,7 @@ import java.util.TreeSet;
 
 public class MaxConstraintsPicker extends Picker {
 
-    private int max = 0;
+    private long max = 0;
     private Input maxIn = null;
     private HashMap<Variable, Integer> maxVars = new HashMap<>();
     private HashMap<Variable, Input>   maxIns = new HashMap<>();
@@ -105,7 +105,7 @@ public class MaxConstraintsPicker extends Picker {
         return new TreeSet<>(new Comparator<Input>() {
             @Override
             public int compare(Input o1, Input o2) {
-                return Integer.compare(o1.score, o2.score);
+                return Long.compare(o1.score, o2.score);
             }
         });
     }

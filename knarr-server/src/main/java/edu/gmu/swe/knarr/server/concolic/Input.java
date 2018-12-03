@@ -20,7 +20,7 @@ public class Input {
     public Object input;
     public int nth;
     public String how;
-    public int score;
+    public long score;
 
     public Input parent = null;
     public Expression newConstraint;
@@ -31,7 +31,7 @@ public class Input {
         URI queue = Paths.get(dirToSave.getAbsolutePath(), "queue").toUri();
         File q = new File(queue);
         q.mkdirs();
-        int score = this.score;
+        long score = this.score;
         String inputFilename;
         if (this.how.length() > 30)
             this.how = this.how.substring(0, 29) + "...";
