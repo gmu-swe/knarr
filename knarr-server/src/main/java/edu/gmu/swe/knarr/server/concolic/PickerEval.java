@@ -2,10 +2,7 @@ package edu.gmu.swe.knarr.server.concolic;
 
 import edu.gmu.swe.knarr.server.Canonizer;
 import edu.gmu.swe.knarr.server.ConstraintServerHandler;
-import edu.gmu.swe.knarr.server.concolic.picker.MaxConstraintsPicker;
-import edu.gmu.swe.knarr.server.concolic.picker.MaxPathsPicker;
-import edu.gmu.swe.knarr.server.concolic.picker.MaxStaticCoveragePicker;
-import edu.gmu.swe.knarr.server.concolic.picker.Picker;
+import edu.gmu.swe.knarr.server.concolic.picker.*;
 import sun.awt.image.ImageWatched;
 
 import java.io.BufferedReader;
@@ -33,6 +30,9 @@ public class PickerEval {
             case "int":
                 c.setIntDriver();
                 break;
+            case "byte":
+                c.setByteDriver();
+                break;
             default:
                 throw new Error("Unknown drive: " + args[0]);
         }
@@ -43,6 +43,9 @@ public class PickerEval {
                 new MaxPathsPicker(),
                 new MaxConstraintsPicker(),
                 new MaxStaticCoveragePicker(),
+                new MaxBytecodePicker(),
+                new MaxDistancePicker(),
+                new MaxMeanConstraintsPicker(),
         };
 
         LinkedList<File> order = new LinkedList<>();
@@ -145,7 +148,7 @@ public class PickerEval {
         in.input = data;
         p.score(in);
 
-        String reason = p.saveInput(in);
+        String reason = p.saveInput(null, in);
 
         return new Score(in.score, reason);
     }
@@ -163,12 +166,10 @@ public class PickerEval {
     private static class AFL extends Picker {
 
         @Override
-        protected Input doPickInput() {
-            throw new Error();
-        }
+        protected Input doPickInput(Collection<Input> inputs) { throw new Error(); }
 
         @Override
-        protected String shouldSaveInput(Input in) {
+        protected String shouldSaveInput(Input in, Collection<Input> ins) {
             throw new Error();
         }
 

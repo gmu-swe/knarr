@@ -4,15 +4,16 @@ import edu.gmu.swe.knarr.server.Canonizer;
 import edu.gmu.swe.knarr.server.ConstraintServerHandler;
 import edu.gmu.swe.knarr.server.concolic.Input;
 import edu.gmu.swe.knarr.server.concolic.driver.Driver;
-import za.ac.sun.cs.green.expr.*;
+import za.ac.sun.cs.green.expr.BVConstant;
+import za.ac.sun.cs.green.expr.BVVariable;
+import za.ac.sun.cs.green.expr.Expression;
+import za.ac.sun.cs.green.expr.Operation;
 import za.ac.sun.cs.green.expr.Operation.Operator;
+import za.ac.sun.cs.green.expr.Variable;
 
 import java.lang.reflect.Array;
+import java.util.*;
 import java.util.AbstractMap.SimpleEntry;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.Map;
 import java.util.Map.Entry;
 
 /**
@@ -28,9 +29,15 @@ import java.util.Map.Entry;
  *      # Go to (1)
  */
 public class VariableMutator extends Mutator {
+    private boolean reverse = false;
 
-    public VariableMutator(Driver driver) {
+    private HashMap<Input, HashMap<Variable, LinkedList>> state = new HashMap<>();
+
+    private static int N = 5;
+
+    public VariableMutator(Driver driver, boolean reverse) {
         super(driver);
+        this.reverse = reverse;
     }
 
     @Override
@@ -40,32 +47,65 @@ public class VariableMutator extends Mutator {
         Canonizer c = new Canonizer(in.constraints);
 //        in = null;
 
-        Map<String, Expression> res = c.getExpressionMap();
-        ArrayList<SimpleEntry<String, Object>> sat = new ArrayList<>();
-        HashSet<String> unsat = new HashSet<>();
-        ConstraintServerHandler.solve(res, sat, unsat);
-
-        // Solve the initial constraints
-        // TODO maybe we can cache this to avoid one solver call
-        if (sat.isEmpty())
-            throw new Error("UNSAT constraints to start with");
-
         // Find variable holding input to negate
         Variable varToNegate = null;
         {
             int i = 0;
-            for (Variable v : c.getVariables()) {
+            Iterator<Variable> iter = this.reverse ? c.getVariables().descendingIterator() : c.getVariables().iterator();
+            while (iter.hasNext()) {
+                Variable v = iter.next();
                 if (!v.getName().startsWith("autoVar"))
                     continue;
-                if (i++ == inputToNegate) {
+                if (i++ == inputToNegate / N) {
                     varToNegate = v;
                     break;
                 }
             }
         }
 
-        if (varToNegate == null)
+        if (varToNegate == null) {
+            state.remove(in);
             return Mutator.OUT_OF_RANGE;
+        }
+
+        // Add values already negated
+        HashMap<Variable, LinkedList> inputState = state.get(in);
+        if (inputState == null) {
+            inputState = new HashMap<>();
+            state.put(in, inputState);
+        }
+
+        LinkedList negatedValuesAlready  = inputState.get(varToNegate);
+        if (negatedValuesAlready == null) {
+            negatedValuesAlready = new LinkedList();
+            inputState.put(varToNegate, negatedValuesAlready);
+        }
+
+        for (Object v : negatedValuesAlready) {
+            Expression negatedInput = new Operation(
+                    Operator.NOT,
+                    new Operation(Operator.EQUALS, varToNegate, new BVConstant((int)v, ((BVVariable)varToNegate).getSize()))
+            );
+
+            HashSet<Expression> s = c.getCanonical().get(varToNegate.getName());
+            if (s != null)
+                s.add(negatedInput);
+            else {
+                HashSet<Expression> e = new HashSet<>();
+                e.add(negatedInput);
+                c.getCanonical().put(varToNegate.getName(), e);
+            }
+            c.getOrder().addLast(negatedInput);
+        }
+
+        Map<String, Expression> res = c.getExpressionMap();
+        ArrayList<SimpleEntry<String, Object>> sat = new ArrayList<>();
+        HashSet<String> unsat = new HashSet<>();
+        ConstraintServerHandler.solve(res, sat, unsat);
+
+        // Solve the constraints
+        if (sat.isEmpty())
+            return null;
 
         // Find value to negate
         Object valueToNegate = null;
@@ -81,6 +121,8 @@ public class VariableMutator extends Mutator {
 
         System.out.println(varToNegate);
         System.out.println(valueToNegate);
+
+        negatedValuesAlready.add(valueToNegate);
 
         Expression negatedInput = new Operation(
                 Operator.NOT,

@@ -22,7 +22,7 @@ public abstract class Driver<T> {
         this.port = port;
     }
 
-    public final ConstraintServerHandler drive(T in) throws IOException {
+    public final synchronized ConstraintServerHandler drive(T in) throws IOException {
         // Connect to the server
         try(Socket s = new Socket(host, port)) {
             s.setSoTimeout(2000);

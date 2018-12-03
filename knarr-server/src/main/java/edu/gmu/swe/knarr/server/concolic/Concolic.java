@@ -108,19 +108,17 @@ public class Concolic {
 //            sorted[i] = i;
 //        }
         mutators = new Mutator[]{
-//                new ConstraintMutator(driver, picker.getCurrentCoverage(), true, false),
-//                new ConstraintMutator(driver, picker.getCurrentCoverage(), false, false),
-//                new VariableMutator(driver),
+                new VariableMutator(driver, false),
+                new VariableMutator(driver, true),
+
                 new ConstraintMutator(driver, picker.getCurrentCoverage(), true, true, true),
                 new ConstraintMutator(driver, picker.getCurrentCoverage(), true, true, false),
 
-//                new VariableMutator(driver),
 //                new AllMaxConstraintsMutator(driver, (MaxConstraintsPicker) picker),
 
                 new ConstraintMutator(driver, picker.getCurrentCoverage(), false, true, true),
                 new ConstraintMutator(driver, picker.getCurrentCoverage(), false, true, false),
 //
-//                new VariableMutator(driver),
 //                new AllMaxConstraintsMutator(driver, (MaxConstraintsPicker) picker),
 //                new MaxConstraintsMutator(driver, (MaxConstraintsPicker) picker),
 //                new AllMaxConstraintsMutator(driver, (MaxConstraintsPicker) picker),
@@ -130,7 +128,6 @@ public class Concolic {
 //                        new int[] { 3 , 2 , 1 , 0 , 0 },
 //                        new int[] { 10, 9, 8, 7, 6, 5, 4 , 3 , 2 , 1 , 0 }),
 //                        sorted),
-//                new VariableMutator(driver),
         };
 
         if (importDir != null) {
