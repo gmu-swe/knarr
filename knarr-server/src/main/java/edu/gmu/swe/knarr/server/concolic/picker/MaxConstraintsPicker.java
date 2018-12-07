@@ -50,39 +50,47 @@ public class MaxConstraintsPicker extends Picker {
         String maxVar = "";
         String plus = "";
 
-        boolean keepTrackOfMaxVars = false;
+        boolean keepTrackOfMaxVars = true;
 
         if (keepTrackOfMaxVars) {
-            for (Variable v : in.constraints.getVariables()) {
-                HashSet<Expression> exps = in.constraints.getCanonical().get(v.toString());
+            synchronized (in.constraints) {
+                for (Variable v : in.constraints.getVariables()) {
+                    if (!v.getName().startsWith("autoVar"))
+                        continue;
 
-                int vars = 0;
-                if (exps != null)
-                    vars = exps.size();
+                    HashSet<Expression> exps = in.constraints.getCanonical().get(v.toString());
 
-                for (Expression e : in.constraints.getNotCanonical())
-                    if (refersVar(v, e))
-                        vars++;
+                    int vars = 0;
+                    if (exps != null)
+                        vars = exps.size();
 
-                Integer count = maxVars.get(v);
-                if (count == null || vars > count) {
-                    // This input maximizes constraints for a variable, save it
-                    maxVars.put(v, vars);
-                    Input toRemove = maxIns.remove(v);
+                    for (Expression e : in.constraints.getNotCanonical())
+                        if (refersVar(v, e))
+                            vars++;
 
-                    // Remove the previous max input for this var, we don't care about it now
-                    if (toRemove != null && !maxIns.containsValue(toRemove)) {
-                        ins.remove(toRemove);
-                        toRemove.input = null;
-                        toRemove.constraints = null;
-                    }
-                    maxIns.put(v, in);
-                    if (maxVar.length() < 30) {
-                        if (!maxVar.isEmpty())
-                            maxVar += ",";
-                        maxVar += (v.toString() + "=" + vars);
-                    } else {
-                        plus = "...";
+                    Integer count = maxVars.get(v);
+                    Input toRemove = maxIns.get(v);
+                    if (count == null || (vars > count && toRemove != null && in.score > toRemove.score)) {
+                        // This input maximizes constraints for a variable, save it
+                        maxVars.put(v, vars);
+                        maxIns.remove(v);
+
+                        // Remove the previous max input for this var, we don't care about it now
+                        if (toRemove != null && !maxIns.containsValue(toRemove) && maxIn != toRemove) {
+                            synchronized (toRemove.constraints) {
+                                ins.remove(toRemove);
+                                toRemove.input = null;
+                                toRemove.constraints = null;
+                            }
+                        }
+                        maxIns.put(v, in);
+                        if (maxVar.length() < 30) {
+                            if (!maxVar.isEmpty())
+                                maxVar += ",";
+                            maxVar += (v.toString() + "=" + vars);
+                        } else {
+                            plus = "...";
+                        }
                     }
                 }
             }

@@ -123,13 +123,13 @@ public class Concolic {
                 new ConstraintMutator(driver, picker.getCurrentCoverage(), true, true, true).setName("ConstraintMutatorReverseLoop"),
                 new ConstraintMutator(driver, picker.getCurrentCoverage(), true, true, false).setName("ConstraintMutatorLoop"),
 
-//                new AllMaxConstraintsMutator(driver, (MaxConstraintsPicker) picker),
+                new AllMaxConstraintsMutator(driver, (MaxConstraintsPicker) picker),
 
                 new ConstraintMutator(driver, picker.getCurrentCoverage(), false, true, true).setName("ConstraintMutatorLoop"),
                 new ConstraintMutator(driver, picker.getCurrentCoverage(), false, true, false).setName("ConstraintMutator"),
 //
 //                new AllMaxConstraintsMutator(driver, (MaxConstraintsPicker) picker),
-//                new MaxConstraintsMutator(driver, (MaxConstraintsPicker) picker),
+                new MaxConstraintsMutator(driver, (MaxConstraintsPicker) picker),
 //                new AllMaxConstraintsMutator(driver, (MaxConstraintsPicker) picker),
 //                new FixedOutputMutator(driver,
 //                        new int[] { 1 , 0 , 0 , 0 , 0 },
@@ -198,10 +198,16 @@ public class Concolic {
                 var = 0;
             }
 
-            varState.put(in, var+1);
-
             // Mutate input
-            Input mutated = mutator.mutateInput(in, var);
+            Input mutated;
+            try {
+                mutated = mutator.mutateInput(in, var);
+            } catch (Throwable e) {
+                e.printStackTrace();
+                continue;
+            }
+
+            varState.put(in, var+1);
 
             // Nothing more to do for this input, try another one
             if (mutated == Mutator.OUT_OF_RANGE) {

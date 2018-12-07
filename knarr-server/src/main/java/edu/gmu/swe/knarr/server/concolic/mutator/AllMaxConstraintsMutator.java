@@ -33,8 +33,8 @@ public class AllMaxConstraintsMutator extends Mutator {
     @Override
     public Input mutateInput(Input in, int which) {
 
-        if (which > 0 || (last != null && in != last))
-            return Mutator.OUT_OF_RANGE;
+//        if (which > 0 || (last != null && in != last))
+//            return Mutator.OUT_OF_RANGE;
 
         last = in;
 
@@ -51,6 +51,9 @@ public class AllMaxConstraintsMutator extends Mutator {
         }
 
         for (Variable v : vars) {
+            if (!v.getName().startsWith("autoVar"))
+                continue;
+
             // Add max v from picker
             Input maxIn = picker.getMaxInput(v);
 

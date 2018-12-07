@@ -52,6 +52,8 @@ public class MaxConstraintsMutator extends Mutator {
         {
             int i = 0;
             for (Variable v : c.getVariables()) {
+                if (!v.getName().startsWith("autoVar"))
+                    continue;
                 if (which == i) {
 
                     // Remove all v from input
@@ -149,7 +151,7 @@ public class MaxConstraintsMutator extends Mutator {
                         if (unsat.contains(e.toString())) {
                             iter.remove();
                             c.getNotCanonical().remove(e);
-                            continue solving;
+//                            continue solving;
                         }
                     }
                 }

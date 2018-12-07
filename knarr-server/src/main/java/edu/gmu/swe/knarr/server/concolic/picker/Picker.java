@@ -30,6 +30,10 @@ public abstract class Picker {
                 } catch (InterruptedException e) {
                     continue;
                 }
+            } else if (ret.constraints == null) {
+                // Input may have been deleted because it maximized a var and a better input was found for that var
+                ins.remove(ret);
+                continue;
             } else {
                 break;
             }
