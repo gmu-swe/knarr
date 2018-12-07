@@ -15,6 +15,7 @@ import edu.gmu.swe.knarr.server.concolic.mutator.ImportMutator;
 import edu.gmu.swe.knarr.server.concolic.mutator.Mutator;
 import edu.gmu.swe.knarr.server.concolic.mutator.VariableMutator;
 import edu.gmu.swe.knarr.server.concolic.picker.*;
+import za.ac.sun.cs.green.service.z3.Z3JavaTranslator;
 
 import java.io.File;
 import java.io.IOException;
@@ -29,6 +30,12 @@ import java.util.concurrent.locks.ReentrantLock;
 public class Concolic {
 
     public static void main(final String[] args) throws IOException {
+        String to;
+        if ((to = System.getProperty("Z3_TIMEOUT")) != null)
+            Z3JavaTranslator.timeoutMS = Integer.parseInt(to);
+        else
+            Z3JavaTranslator.timeoutMS = 3600 * 1000; // 1h
+
         final Concolic c = new Concolic();
 
         c.startConstraintServer();
