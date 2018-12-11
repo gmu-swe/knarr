@@ -11,6 +11,8 @@ public class ImportMutator extends Mutator {
     private File dir;
     private HashSet<String> imported = new HashSet<>();
 
+    public static int WAIT_TIME = 60*1000; // 60 seconds
+
     public ImportMutator(Driver driver, File dir) {
         super(driver);
         this.dir = dir;
@@ -18,26 +20,40 @@ public class ImportMutator extends Mutator {
 
     @Override
     public Input mutateInput(Input in, int whatToMutate) {
+        while (true) {
+            if (this.dir != null) {
+                for (File f : this.dir.listFiles()) {
+                    if (imported.contains(f.getName()))
+                        continue;
 
-        for (File f : this.dir.listFiles()) {
-            if (imported.contains(f.getName()))
-                continue;
+                    imported.add(f.getName());
+                    Input ret = new Input();
+                    ret.how = "import " + f.getParentFile().getParentFile().getName() + "-" + f.getName();
+                    try {
+                        ret.input = driver.fromFile(f);
+                    } catch (IOException e) {
+                        System.out.println(e);
+                        e.printStackTrace();
+                        continue;
+                    }
 
-            imported.add(f.getName());
-            Input ret = new Input();
-            ret.how = "import " + f.getName();
-            try {
-                ret.input = driver.fromFile(f);
-            } catch (IOException e) {
-                System.out.println(e);
-                e.printStackTrace();
-                continue;
+                    return ret;
+                }
             }
 
-            return ret;
+            synchronized (this) {
+                try {
+                    if (this.dir == null)
+                        // Block since we are not importing results
+                        this.wait();
+                    else
+                        // Wait one minute for more input
+                        this.wait(WAIT_TIME);
+                } catch (InterruptedException e) {
+                    continue;
+                }
+            }
         }
-
-        return Mutator.OUT_OF_RANGE;
     }
 
 }

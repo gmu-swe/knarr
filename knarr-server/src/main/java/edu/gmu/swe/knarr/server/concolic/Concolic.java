@@ -54,7 +54,7 @@ public class Concolic {
                 throw new Error("Unknown drive: " + args[0]);
         }
 
-        c.initMutators(args.length > 3 ? new File(args[3]) : null);
+        c.initMutators(args.length > 3 ? new File(args[3]) : null, args.length > 4 ? new File(args[4]) : null);
 
         c.picker.initMutators(c.mutators);
 
@@ -111,11 +111,12 @@ public class Concolic {
         this.driver = new ByteDriver(listener, "127.0.0.1", 8080);
     }
 
-    private void initMutators(File importDir) {
+    private void initMutators(File importDir1, File importDir2) {
 //        int[] sorted = new int[200];
 //        for (int i = 0 ; i < sorted.length ; i++) {
 //            sorted[i] = i;
 //        }
+
         mutators = new Mutator[]{
                 new VariableMutator(driver, false).setName("VariableMutator"),
                 new VariableMutator(driver, true).setName("VariableMutatorReverse"),
@@ -124,13 +125,14 @@ public class Concolic {
                 new ConstraintMutator(driver, picker.getCurrentCoverage(), true, true, false).setName("ConstraintMutatorLoop"),
 
                 new AllMaxConstraintsMutator(driver, (MaxConstraintsPicker) picker),
+                new MaxConstraintsMutator(driver, (MaxConstraintsPicker) picker),
 
                 new ConstraintMutator(driver, picker.getCurrentCoverage(), false, true, true).setName("ConstraintMutatorLoop"),
                 new ConstraintMutator(driver, picker.getCurrentCoverage(), false, true, false).setName("ConstraintMutator"),
-//
-//                new AllMaxConstraintsMutator(driver, (MaxConstraintsPicker) picker),
-                new MaxConstraintsMutator(driver, (MaxConstraintsPicker) picker),
-//                new AllMaxConstraintsMutator(driver, (MaxConstraintsPicker) picker),
+
+                new ImportMutator(driver, importDir1),
+                new ImportMutator(driver, importDir2),
+
 //                new FixedOutputMutator(driver,
 //                        new int[] { 1 , 0 , 0 , 0 , 0 },
 //                        new int[] { 2 , 1 , 0 , 0 , 0 },
@@ -138,21 +140,6 @@ public class Concolic {
 //                        new int[] { 10, 9, 8, 7, 6, 5, 4 , 3 , 2 , 1 , 0 }),
 //                        sorted),
         };
-
-        if (importDir != null) {
-            Mutator importer = new ImportMutator(driver, importDir);
-            Mutator[] old = mutators;
-            mutators = new Mutator[(old.length * 2)];
-
-            mutators[0] = importer;
-
-            for (int i = 0 ; i < old.length ; i++) {
-                mutators[(i*2) + 1] = old[i];
-
-                if (i != old.length-1)
-                    mutators[(i*2) + 1 + 1] = importer;
-            }
-        }
 
     }
 
