@@ -21,7 +21,7 @@ public class ImportMutator extends Mutator {
     @Override
     public Input mutateInput(Input in, int whatToMutate) {
         while (true) {
-            if (this.dir != null) {
+            if (this.dir != null && this.dir.listFiles() != null) {
                 for (File f : this.dir.listFiles()) {
                     if (imported.contains(f.getName()))
                         continue;
