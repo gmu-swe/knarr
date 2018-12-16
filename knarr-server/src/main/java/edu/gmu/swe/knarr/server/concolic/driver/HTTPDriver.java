@@ -29,6 +29,15 @@ public class HTTPDriver extends Driver<byte[]> {
     @Override
     protected void sendData(byte[] data, Socket s) throws IOException {
         String toSend = new String(data) + "\n\n";
+
+        // Drop everything after a double new line to avoid sending more than one request
+        toSend = toSend.split("\n\n")[0];
+
+        // Add the double end line terminator
+        toSend = toSend + "\n\n";
+
+        System.out.println(toSend);
+
         try (BufferedWriter bw =  new BufferedWriter(new OutputStreamWriter(s.getOutputStream()))) {
             bw.write(toSend);
             bw.flush();
