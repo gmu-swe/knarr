@@ -146,6 +146,10 @@ public class Concolic {
     private void addInitialInput(File f, File dirToSave) throws IOException {
         Object data = driver.fromFile(f);
 
+        // 1st run just to initialize the target program, throw away results
+        driver.drive(data);
+
+        // Keep the results of the 2nd run
         ConstraintServerHandler server = driver.drive(data);
 
         if (server == null)
