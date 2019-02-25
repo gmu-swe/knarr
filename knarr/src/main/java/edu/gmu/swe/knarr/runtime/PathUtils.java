@@ -627,11 +627,14 @@ public class PathUtils {
 
 		return ret;
 	}
+	public static boolean DISABLE_FLOATS = true;
 	public static TaintedFloatWithObjTag I2F(Taint<Expression> val, int i, TaintedFloatWithObjTag ret)
 	{
 		ret.val = (float) i;
 
-		if (val != null) {
+		if (DISABLE_FLOATS) {
+			ret.taint = null;
+		} else if (val != null) {
 			throw new UnsupportedOperationException();
 		}
 		else
@@ -660,7 +663,9 @@ public class PathUtils {
 	{
 		ret.val = (double) i;
 
-		if (val != null) {
+		if (DISABLE_FLOATS) {
+			ret.taint = null;
+		} else if (val != null) {
 			throw new UnsupportedOperationException();
 		}
 		else

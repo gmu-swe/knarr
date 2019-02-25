@@ -3,11 +3,7 @@ package edu.gmu.swe.knarr;
 import edu.columbia.cs.psl.phosphor.Configuration;
 import edu.columbia.cs.psl.phosphor.Instrumenter;
 import edu.columbia.cs.psl.phosphor.PreMain;
-import edu.gmu.swe.knarr.runtime.CountBytecodeAdapter;
-import edu.gmu.swe.knarr.runtime.Coverage;
-import edu.gmu.swe.knarr.runtime.JunitTestAdapter;
-import edu.gmu.swe.knarr.runtime.PathConstraintTagFactory;
-import edu.gmu.swe.knarr.runtime.StringTagFactory;
+import edu.gmu.swe.knarr.runtime.*;
 
 public class Main {
 	public static void main(String[] _args) {
@@ -26,11 +22,14 @@ public class Main {
 		if (Coverage.enabled)
             Configuration.ANNOTATE_LOOPS = true;
 
-		Configuration.extensionMethodVisitor = JunitTestAdapter.class;
+		Configuration.extensionMethodVisitor = RedirectMethodsTaintAdapter.class;
 		Configuration.extensionClassVisitor = CountBytecodeAdapter.class; //StringTagFactory.class;
 
+		PathConstraintTagFactory.isRunning = false;
+
 		Configuration.ignoredMethods.add(new Configuration.Method("parseDouble", "java/lang/Double"));
-		System.out.println(Configuration.ignoredMethods);
+
+		PathUtils.DISABLE_FLOATS = true;
 
 		PreMain.DEBUG = System.getProperty("DEBUG") != null;
 		Configuration.taintTagFactory = new PathConstraintTagFactory();
