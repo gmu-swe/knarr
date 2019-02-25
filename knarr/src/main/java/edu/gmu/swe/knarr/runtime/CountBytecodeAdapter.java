@@ -65,8 +65,6 @@ public class CountBytecodeAdapter extends ClassVisitor implements Opcodes {
         }
       }
 
-      System.out.println(blocks);
-
       accept(underlyingMV);
     }
   }
