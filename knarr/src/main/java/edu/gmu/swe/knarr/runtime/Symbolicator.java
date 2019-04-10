@@ -192,21 +192,7 @@ public class Symbolicator {
 			System.out.println(new String(array, StandardCharsets.UTF_8));
 
 			// Reset
-			PathUtils.getCurPC().constraints = null;
-			serverConnection = null;
-			firstLabel = null;
-			TaintListener.arrayNames.clear();
-			StringUtils.stringName = 0;
-			PathUtils.usedLabels.clear();
-			Coverage.instance.reset();
-			autoLblr.set(0);
-			Coverage.count = 0;
-
-			for (Taint[] b : TaintListener.symbolizedArrays)
-				for (int j = 0 ; j < b.length ; j++)
-                    b[j] = null;
-
-			TaintListener.symbolizedArrays.clear();
+			reset();
 
 			oos.close();
 			return solution;
@@ -220,6 +206,24 @@ public class Symbolicator {
 			e.printStackTrace();
 		}
 		return null;
+	}
+
+	public static void reset() {
+		PathUtils.getCurPC().constraints = null;
+		serverConnection = null;
+		firstLabel = null;
+		TaintListener.arrayNames.clear();
+		StringUtils.stringName = 0;
+		PathUtils.usedLabels.clear();
+		Coverage.instance.reset();
+		autoLblr.set(0);
+		Coverage.count = 0;
+
+		for (Taint[] b : TaintListener.symbolizedArrays)
+			for (int j = 0 ; j < b.length ; j++)
+				b[j] = null;
+
+		TaintListener.symbolizedArrays.clear();
 	}
 
 	public static void solve() {
