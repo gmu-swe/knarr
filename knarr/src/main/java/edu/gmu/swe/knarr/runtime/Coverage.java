@@ -165,14 +165,18 @@ public class Coverage implements Serializable {
     public static class BranchData implements Serializable {
         private static final long serialVersionUID = -2776780881587606089L;
 
+        public final int takenCode;
         public final int notTakenCode;
         public final int notTakenPath;
         public final boolean breaksLoop;
+        public final boolean taken;
 
-        public BranchData(int notTakenCode, int notTakenPath, boolean breaksLoop) {
+        public BranchData(int takenCode, int notTakenCode, int notTakenPath, boolean breaksLoop, boolean taken) {
+            this.takenCode = takenCode;
             this.notTakenCode = notTakenCode;
             this.notTakenPath = notTakenPath;
             this.breaksLoop = breaksLoop;
+            this.taken = taken;
         }
     }
 

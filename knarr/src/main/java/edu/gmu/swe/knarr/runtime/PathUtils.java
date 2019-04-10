@@ -1054,7 +1054,7 @@ public class PathUtils {
 		t.lbl = new Operation(Operator.ADD, t.lbl, new IntConstant(inc));
 	}
 
-	public static void addConstraint(Taint<Expression> t, int opcode, int takenID, int notTakenID, boolean breaksLoop) {
+	public static void addConstraint(Taint<Expression> t, int opcode, int takenID, int notTakenID, boolean breaksLoop, boolean taken) {
 		if (t == null)
 			return;
 		if (!JPFInited)
@@ -1064,33 +1064,37 @@ public class PathUtils {
 		Expression exp = t.lbl;
 		switch (opcode) {
 		case Opcodes.IFEQ:
-			exp = getCurPC()._addDet(Operator.EQ, ICONST_0, exp);
+			exp = new Operation(Operator.EQ, ICONST_0, exp);
 			break;
 		case Opcodes.IFGE:
-			exp = getCurPC()._addDet(Operator.GE, exp, ICONST_0);
+			exp = new Operation(Operator.GE, exp, ICONST_0);
 			break;
 		case Opcodes.IFLE:
-			exp = getCurPC()._addDet(Operator.LE, exp, ICONST_0);
+			exp = new Operation(Operator.LE, exp, ICONST_0);
 			break;
 		case Opcodes.IFLT:
-			exp = getCurPC()._addDet(Operator.LT, exp, ICONST_0);
+			exp = new Operation(Operator.LT, exp, ICONST_0);
 			break;
 		case Opcodes.IFGT:
-			exp = getCurPC()._addDet(Operator.GT, exp, ICONST_0);
+			exp = new Operation(Operator.GT, exp, ICONST_0);
 			break;
 		case Opcodes.IFNE:
-			exp = getCurPC()._addDet(Operator.NE, exp, ICONST_0);
+			exp = new Operation(Operator.NE, exp, ICONST_0);
 			break;
 		default:
 			throw new IllegalArgumentException("Unimplemented branch type: " + Printer.OPCODES[opcode]);
 		}
+
+		exp = (taken ? (Operation)exp : new Operation(Operator.NOT, exp));
+
+		getCurPC()._addDet((Operation)exp);
 
 
 		if (Coverage.enabled && takenID != -1) {
 			// Update current coverage
 			int notTakenPath = Coverage.instance.set(takenID, notTakenID);
 			// Add not taken constraint to map
-			exp.metadata = new Coverage.BranchData(notTakenID, notTakenPath, breaksLoop);
+			exp.metadata = new Coverage.BranchData(takenID, notTakenID, notTakenPath, breaksLoop, taken);
 		}
 	}
 
@@ -1116,13 +1120,14 @@ public class PathUtils {
 				// Update current coverage
 				int notTakenPath = Coverage.instance.set(takenID, notTakenID);
 				// Add not taken constraint to map
-				exp.metadata = new Coverage.BranchData(notTakenID, notTakenPath, breaksLoop);
+				// TODO switch-case not supported
+				exp.metadata = new Coverage.BranchData(takenID, notTakenID, notTakenPath, breaksLoop, false);
 			}
 		}
 
     }
 
-	public static void addConstraint(Taint<Expression> l, Taint<Expression> r, int v1, int v2, int opcode, int takenID, int notTakenID, boolean breaksLoop) {
+	public static void addConstraint(Taint<Expression> l, Taint<Expression> r, int v1, int v2, int opcode, int takenID, int notTakenID, boolean breaksLoop, boolean taken) {
 		// if (VM.isBooted$$INVIVO_PC(new TaintedBoolean()).val &&
 		// values.get(otherTaint) == null)
 		// System.out.println(Printer.OPCODES[opcode] + " - " + taint + " ; " +
@@ -1147,35 +1152,39 @@ public class PathUtils {
 			// TODO - object equality constraints?
 			break;
 		case Opcodes.IF_ICMPEQ:
-			exp = getCurPC()._addDet(Operator.EQ, lExp, rExp);
+			exp = new Operation(Operator.EQ, lExp, rExp);
 			break;
 		case Opcodes.IF_ICMPGE:
-			exp = getCurPC()._addDet(Operator.GE, lExp, rExp);
+			exp = new Operation(Operator.GE, lExp, rExp);
 			break;
 		case Opcodes.IF_ICMPGT:
-			exp = getCurPC()._addDet(Operator.GT, lExp, rExp);
+			exp = new Operation(Operator.GT, lExp, rExp);
 			break;
 		case Opcodes.IF_ICMPLE:
-			exp = getCurPC()._addDet(Operator.LE, lExp, rExp);
+			exp = new Operation(Operator.LE, lExp, rExp);
 			break;
 		case Opcodes.IF_ICMPLT:
 			// System.out.println("Other one is " +
 			// branches[branch].rVal.concreteValue_int+
 			// "...."+branches[branch].rVal.expression);
-			exp = getCurPC()._addDet(Operator.LT, lExp, rExp);
+			exp = new Operation(Operator.LT, lExp, rExp);
 			break;
 		case Opcodes.IF_ICMPNE:
-			exp = getCurPC()._addDet(Operator.NE, lExp, rExp);
+			exp = new Operation(Operator.NE, lExp, rExp);
 			break;
 		default:
 			throw new IllegalArgumentException("Unimplemented branch type: " + Printer.OPCODES[opcode]);
 		}
 
+		exp = (taken ? (Operation)exp : new Operation(Operator.NOT, exp));
+
+		getCurPC()._addDet((Operation)exp);
+
 		if (Coverage.enabled && takenID != -1) {
 			// Update current coverage
 			int notTakenPath = Coverage.instance.set(takenID, notTakenID);
 			// Add not taken constraint to map
-			exp.metadata = new Coverage.BranchData(notTakenID, notTakenPath, breaksLoop);
+			exp.metadata = new Coverage.BranchData(takenID, notTakenID, notTakenPath, breaksLoop, taken);
 		}
 	}
 
