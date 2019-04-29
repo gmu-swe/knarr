@@ -1,5 +1,6 @@
 Manifest-Version: 1.0
 Created-By: 1.6.0_06 (Sun Microsystems Inc.)
 Main-Class: edu.gmu.swe.knarr.Main
+Can-Retransform-Classes: true
 Premain-Class: edu.gmu.swe.knarr.PreMain
 

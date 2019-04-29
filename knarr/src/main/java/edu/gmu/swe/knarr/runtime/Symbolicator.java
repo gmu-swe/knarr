@@ -415,6 +415,14 @@ public class Symbolicator {
 	// return in;
 	// }
 
+	public Object getTaints(Object o) {
+		if (o instanceof TaintedObjectWithObjTag) {
+			return ((TaintedObjectWithObjTag)o).getPHOSPHOR_TAG();
+		}
+
+		return null;
+	}
+
 	@SuppressWarnings("unchecked")
 	public static <T> T symbolic(String label, T in) {
 		if (in instanceof TaintedWithObjTag && ((TaintedWithObjTag) in).getPHOSPHOR_TAG() != null) {
