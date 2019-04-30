@@ -146,15 +146,15 @@ public class TaintListener extends DerivedTaintListener {
 				b.taints = new Taint[b.getLength()];
 
 			Expression var = getArrayVar(b.getVal());
-			Operation select = new Operation(Operator.SELECT, var, (Expression) idxTaint.lbl);
+			Operation select = new Operation(Operator.SELECT, var, (Expression) idxTaint.getSingleLabel());
 			Taint ret = new ExpressionTaint(select);
 			b.taints[idx] = ret;
 
 			PathUtils.getCurPC()._addDet(Operator.EQ, c, select);
 
 			// Index is within the array bounds
-			PathUtils.getCurPC()._addDet(Operator.LT, (Expression)idxTaint.lbl, new BVConstant(b.getLength(), 32));
-			PathUtils.getCurPC()._addDet(Operator.GE, (Expression)idxTaint.lbl, new BVConstant(0, 32));
+			PathUtils.getCurPC()._addDet(Operator.LT, (Expression)idxTaint.getSingleLabel(), new BVConstant(b.getLength(), 32));
+			PathUtils.getCurPC()._addDet(Operator.GE, (Expression)idxTaint.getSingleLabel(), new BVConstant(0, 32));
 
 			symbolizedArrays.add(b.taints);
 
@@ -168,12 +168,12 @@ public class TaintListener extends DerivedTaintListener {
 		    // Symbolic read of symbolic array pos
 			// Return array symb OR return symbolic array read
 			Expression var = getArrayVar(b.getVal());
-			Operation select = new Operation(Operator.SELECT, var, (Expression) idxTaint.lbl);
-			PathUtils.getCurPC()._addDet(Operator.EQ, (Expression) b.taints[idx].lbl, select);
+			Operation select = new Operation(Operator.SELECT, var, (Expression) idxTaint.getSingleLabel());
+			PathUtils.getCurPC()._addDet(Operator.EQ, (Expression) b.taints[idx].getSingleLabel(), select);
 
 			// Index is within the array bounds
-			PathUtils.getCurPC()._addDet(Operator.LT, (Expression)idxTaint.lbl, new BVConstant(b.getLength(), 32));
-			PathUtils.getCurPC()._addDet(Operator.GE, (Expression)idxTaint.lbl, new BVConstant(0, 32));
+			PathUtils.getCurPC()._addDet(Operator.LT, (Expression)idxTaint.getSingleLabel(), new BVConstant(b.getLength(), 32));
+			PathUtils.getCurPC()._addDet(Operator.GE, (Expression)idxTaint.getSingleLabel(), new BVConstant(0, 32));
 
 			return b.taints[idx];
 		} else if (!taintedArray && !taintedIndex) {
@@ -186,12 +186,12 @@ public class TaintListener extends DerivedTaintListener {
 //			Expression var = getArrayVar(b.getVal());
 //			BVConstant idxBV = new BVConstant(idx, 32);
 //
-//			Operation select = new Operation(Operator.SELECT, var, (Expression) idxTaint.lbl);
+//			Operation select = new Operation(Operator.SELECT, var, (Expression) idxTaint.getSingleLabel());
 //			PathUtils.getCurPC()._addDet(Operator.EQ, c, select);
 //
 //			// Index is within the array bounds
-//			PathUtils.getCurPC()._addDet(Operator.LT, (Expression)idxTaint.lbl, new BVConstant(b.getLength(), 32));
-//			PathUtils.getCurPC()._addDet(Operator.GE, (Expression)idxTaint.lbl, new BVConstant(0, 32));
+//			PathUtils.getCurPC()._addDet(Operator.LT, (Expression)idxTaint.getSingleLabel(), new BVConstant(b.getLength(), 32));
+//			PathUtils.getCurPC()._addDet(Operator.GE, (Expression)idxTaint.getSingleLabel(), new BVConstant(0, 32));
 //			Taint ret = new ExpressionTaint(select);
 //
 //			if (b.taints == null)
@@ -236,11 +236,11 @@ public class TaintListener extends DerivedTaintListener {
 		    // Symbolic index on concrete values
 
 			// New value of the array
-			Expression newArray = setArrayVar(b.getVal(), (Expression)idxTaint.lbl, c);
+			Expression newArray = setArrayVar(b.getVal(), (Expression)idxTaint.getSingleLabel(), c);
 
 			// Index is within the array bounds
-			PathUtils.getCurPC()._addDet(Operator.LT, (Expression)idxTaint.lbl, new BVConstant(b.getLength(), 32));
-			PathUtils.getCurPC()._addDet(Operator.GE, (Expression)idxTaint.lbl, new BVConstant(0, 32));
+			PathUtils.getCurPC()._addDet(Operator.LT, (Expression)idxTaint.getSingleLabel(), new BVConstant(b.getLength(), 32));
+			PathUtils.getCurPC()._addDet(Operator.GE, (Expression)idxTaint.getSingleLabel(), new BVConstant(0, 32));
 
 			// Array position becomes new value
 //			return new ExpressionTaint(c);
@@ -254,15 +254,15 @@ public class TaintListener extends DerivedTaintListener {
 			// Make array pos symbolic with new val
 
 			// Index is within the array bounds
-			PathUtils.getCurPC()._addDet(Operator.LT, (Expression)idxTaint.lbl, new BVConstant(b.getLength(), 32));
-			PathUtils.getCurPC()._addDet(Operator.GE, (Expression)idxTaint.lbl, new BVConstant(0, 32));
+			PathUtils.getCurPC()._addDet(Operator.LT, (Expression)idxTaint.getSingleLabel(), new BVConstant(b.getLength(), 32));
+			PathUtils.getCurPC()._addDet(Operator.GE, (Expression)idxTaint.getSingleLabel(), new BVConstant(0, 32));
 
 			return t;
 		} else if(taintedArray && !taintedIndex && taintedVal) {
 			// Symb array pos and symb value with concrete index
 
 			// New array with the change
-			Expression newArray = setArrayVar(b.getVal(), new BVConstant(idx, 32), (Expression) t.lbl);
+			Expression newArray = setArrayVar(b.getVal(), new BVConstant(idx, 32), (Expression) t.getSingleLabel());
 
 			// Array position becomes symbolic new value
 			return t;
@@ -270,11 +270,11 @@ public class TaintListener extends DerivedTaintListener {
 		    // Symbolic array pos being overwritten by concrete value with symbolic index
 
 			// New array with the change
-			Expression newArray = setArrayVar(b.getVal(), (Expression)idxTaint.lbl, c);
+			Expression newArray = setArrayVar(b.getVal(), (Expression)idxTaint.getSingleLabel(), c);
 
 			// Index is within the array bounds
-			PathUtils.getCurPC()._addDet(Operator.LT, (Expression)idxTaint.lbl, new BVConstant(b.getLength(), 32));
-			PathUtils.getCurPC()._addDet(Operator.GE, (Expression)idxTaint.lbl, new BVConstant(0, 32));
+			PathUtils.getCurPC()._addDet(Operator.LT, (Expression)idxTaint.getSingleLabel(), new BVConstant(b.getLength(), 32));
+			PathUtils.getCurPC()._addDet(Operator.GE, (Expression)idxTaint.getSingleLabel(), new BVConstant(0, 32));
 
 //			return new ExpressionTaint(c);
 			return null;
@@ -282,22 +282,22 @@ public class TaintListener extends DerivedTaintListener {
 		    // Symbolic array position overwritten by another symbolic value with a symbolic index
 
 			// New array with the change
-			Expression newArray = setArrayVar(b.getVal(), (Expression)idxTaint.lbl, (Expression) t.lbl);
+			Expression newArray = setArrayVar(b.getVal(), (Expression)idxTaint.getSingleLabel(), (Expression) t.getSingleLabel());
 
 			// Index is within the array bounds
-			PathUtils.getCurPC()._addDet(Operator.LT, (Expression)idxTaint.lbl, new BVConstant(b.getLength(), 32));
-			PathUtils.getCurPC()._addDet(Operator.GE, (Expression)idxTaint.lbl, new BVConstant(0, 32));
+			PathUtils.getCurPC()._addDet(Operator.LT, (Expression)idxTaint.getSingleLabel(), new BVConstant(b.getLength(), 32));
+			PathUtils.getCurPC()._addDet(Operator.GE, (Expression)idxTaint.getSingleLabel(), new BVConstant(0, 32));
 
 			// Array position becomes symbolic new value
 			return t;
 		}
 //		else if(taintedIndex)
 //		{
-//			Expression newArray = setArrayVar(b.getVal(), (Expression)idxTaint.lbl, taintedVal ? (Expression) t.lbl : c);
+//			Expression newArray = setArrayVar(b.getVal(), (Expression)idxTaint.getSingleLabel(), taintedVal ? (Expression) t.getSingleLabel() : c);
 //
 //			// Index is within the array bounds
-//			PathUtils.getCurPC()._addDet(Operator.LT, (Expression)idxTaint.lbl, new BVConstant(b.getLength(), 32));
-//			PathUtils.getCurPC()._addDet(Operator.GE, (Expression)idxTaint.lbl, new BVConstant(0, 32));
+//			PathUtils.getCurPC()._addDet(Operator.LT, (Expression)idxTaint.getSingleLabel(), new BVConstant(b.getLength(), 32));
+//			PathUtils.getCurPC()._addDet(Operator.GE, (Expression)idxTaint.getSingleLabel(), new BVConstant(0, 32));
 //
 ////			return new ExpressionTaint(new Operation(Operator.SELECT, newArray, new BVConstant(idx, 32)));
 //			return new ExpressionTaint(c);

@@ -68,7 +68,7 @@ public class StringUtils {
 					exp = new Operation(Operator.CONCAT, exp, new IntConstant(arr[i]));
 					s.valuePHOSPHOR_TAG.taints[i] = new ExpressionTaint(new BVVariable(var + "_" + i, 32));
 				} else {
-					exp = new Operation(Operator.CONCAT, exp, (Expression) t.lbl);
+					exp = new Operation(Operator.CONCAT, exp, (Expression) t.getSingleLabel());
 				}
 			}
 			
@@ -78,9 +78,9 @@ public class StringUtils {
 	
 	public static void startsWith$$PHOSPHORTAGGED(TaintedBooleanWithObjTag ret, String s, String pref, Taint tStart, int start, TaintedBooleanWithObjTag ret2) {
 		Expression tPref;
-		if (enabled && s.PHOSPHOR_TAG != null && s.PHOSPHOR_TAG.lbl != null) {
-			if (pref.PHOSPHOR_TAG != null && pref.PHOSPHOR_TAG.lbl != null)
-				tPref = (Expression)pref.PHOSPHOR_TAG.lbl;
+		if (enabled && s.PHOSPHOR_TAG != null && s.PHOSPHOR_TAG.getSingleLabel() != null) {
+			if (pref.PHOSPHOR_TAG != null && pref.PHOSPHOR_TAG.getSingleLabel() != null)
+				tPref = (Expression)pref.PHOSPHOR_TAG.getSingleLabel();
 			else
 				tPref = new StringConstant(pref);
 			
@@ -88,7 +88,7 @@ public class StringUtils {
 			if (tStart != null)
 				throw new UnsupportedOperationException();
 			
-			Expression tS = (Expression) s.PHOSPHOR_TAG.lbl;
+			Expression tS = (Expression) s.PHOSPHOR_TAG.getSingleLabel();
 			if (start > 0)
 				throw new UnsupportedOperationException();
 			
@@ -102,37 +102,37 @@ public class StringUtils {
 	
 
 	public static void equals$$PHOSPHORTAGGED(TaintedBooleanWithObjTag ret, String s, Object o, TaintedBooleanWithObjTag ret2) {
-		if (enabled && o != null && o instanceof String && s.PHOSPHOR_TAG != null && s.PHOSPHOR_TAG.lbl != null) {
+		if (enabled && o != null && o instanceof String && s.PHOSPHOR_TAG != null && s.PHOSPHOR_TAG.getSingleLabel() != null) {
 			String s2 = (String)o;
 
 			Expression tO;
-			if (s2.PHOSPHOR_TAG != null && s2.PHOSPHOR_TAG.lbl != null)
-				tO = (Expression)s2.PHOSPHOR_TAG.lbl;
+			if (s2.PHOSPHOR_TAG != null && s2.PHOSPHOR_TAG.getSingleLabel() != null)
+				tO = (Expression)s2.PHOSPHOR_TAG.getSingleLabel();
 			else
 				tO = new StringConstant(s2);
 			
-			Expression tS = (Expression) s.PHOSPHOR_TAG.lbl;
+			Expression tS = (Expression) s.PHOSPHOR_TAG.getSingleLabel();
 			ret.taint = new ExpressionTaint(new Operation(Operator.EQUALS, tS, tO));
 		}
 	}
 	
 	
 	public static void charAt$$PHOSPHORTAGGED(TaintedCharWithObjTag ret, String s, Taint tIndex, int index, TaintedCharWithObjTag ret2) {
-		if (enabled && s.PHOSPHOR_TAG != null && s.PHOSPHOR_TAG.lbl != null) {
+		if (enabled && s.PHOSPHOR_TAG != null && s.PHOSPHOR_TAG.getSingleLabel() != null) {
 			Expression eIndex;
-			if (tIndex != null && tIndex.lbl != null)
-				eIndex = (Expression) tIndex.lbl;
+			if (tIndex != null && tIndex.getSingleLabel() != null)
+				eIndex = (Expression) tIndex.getSingleLabel();
 			else
 				eIndex = new IntConstant(index);
 			
 			
-			Expression tS = (Expression) s.PHOSPHOR_TAG.lbl;
+			Expression tS = (Expression) s.PHOSPHOR_TAG.getSingleLabel();
 			
 			if (s.valuePHOSPHOR_TAG.taints == null || s.valuePHOSPHOR_TAG.taints[index] == null) {
 				throw new Error("Shouldn't happen");
 			}
 
-			Expression pos = (Expression) s.valuePHOSPHOR_TAG.taints[index].lbl;
+			Expression pos = (Expression) s.valuePHOSPHOR_TAG.taints[index].getSingleLabel();
 			PathUtils.getCurPC()._addDet(
 					Operator.EQ,
 					new Operation(Operator.CHARAT, tS, eIndex),
@@ -160,7 +160,7 @@ public class StringUtils {
 	}
 	
 	private static void changeCase(String ret, String s, boolean toUpper) {
-		if (enabled && s.PHOSPHOR_TAG != null && s.PHOSPHOR_TAG.lbl != null) {
+		if (enabled && s.PHOSPHOR_TAG != null && s.PHOSPHOR_TAG.getSingleLabel() != null) {
 			
 			Expression newExp = new StringConstant("");
 			Taint newTaints[] = new Taint[s.length()];
@@ -177,7 +177,7 @@ public class StringUtils {
 					e = new IntConstant(s.charAt(i));
 					s.PHOSPHOR_TAG = tag;
 				} else {
-					e = (Expression) s.valuePHOSPHOR_TAG.taints[i].lbl;
+					e = (Expression) s.valuePHOSPHOR_TAG.taints[i].getSingleLabel();
 				}
 				
 				e = new Operation(Operator.ITE,
@@ -197,8 +197,8 @@ public class StringUtils {
 	}
 	
 	public static void length$$PHOSPHORTAGGED(TaintedIntWithObjTag ret, String s, TaintedIntWithObjTag ret2) {
-		if (enabled && s.PHOSPHOR_TAG != null && s.PHOSPHOR_TAG.lbl != null)
-			ret.taint = new ExpressionTaint(new Operation(Operator.LENGTH, (Expression) s.PHOSPHOR_TAG.lbl));
+		if (enabled && s.PHOSPHOR_TAG != null && s.PHOSPHOR_TAG.getSingleLabel() != null)
+			ret.taint = new ExpressionTaint(new Operation(Operator.LENGTH, (Expression) s.PHOSPHOR_TAG.getSingleLabel()));
 	}
 	
 	public static int stringName;

@@ -16,18 +16,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import edu.columbia.cs.psl.phosphor.struct.LazyArrayObjTags;
-import edu.columbia.cs.psl.phosphor.struct.LazyByteArrayObjTags;
-import edu.columbia.cs.psl.phosphor.struct.LazyIntArrayObjTags;
-import edu.columbia.cs.psl.phosphor.struct.TaintedBooleanWithObjTag;
-import edu.columbia.cs.psl.phosphor.struct.TaintedByteWithObjTag;
-import edu.columbia.cs.psl.phosphor.struct.TaintedCharWithObjTag;
-import edu.columbia.cs.psl.phosphor.struct.TaintedDoubleWithObjTag;
-import edu.columbia.cs.psl.phosphor.struct.TaintedFloatWithObjTag;
-import edu.columbia.cs.psl.phosphor.struct.TaintedIntWithObjTag;
-import edu.columbia.cs.psl.phosphor.struct.TaintedLongWithObjTag;
-import edu.columbia.cs.psl.phosphor.struct.TaintedShortWithObjTag;
-import edu.columbia.cs.psl.phosphor.struct.TaintedWithObjTag;
+import edu.columbia.cs.psl.phosphor.struct.*;
 import za.ac.sun.cs.green.expr.BVConstant;
 import za.ac.sun.cs.green.expr.BVVariable;
 import za.ac.sun.cs.green.expr.BoolConstant;
@@ -653,43 +642,43 @@ public class Symbolicator {
 
 	public static Expression getExpression$$PHOSPHORTAGGED(Taint<Expression> exp, int in) {
 		if (exp != null)
-			return exp.lbl;
+			return exp.getSingleLabel();
 		return null;
 	}
 
 	public static Expression getExpression$$PHOSPHORTAGGED(Taint<Expression> exp, float in) {
 		if (exp != null)
-			return exp.lbl;
+			return exp.getSingleLabel();
 		return null;
 	}
 
 	public static Expression getExpression$$PHOSPHORTAGGED(Taint<Expression> exp, double in) {
 		if (exp != null)
-			return exp.lbl;
+			return exp.getSingleLabel();
 		return null;
 	}
 
 	public static Expression getExpression$$PHOSPHORTAGGED(Taint<Expression> exp, long in) {
 		if (exp != null)
-			return exp.lbl;
+			return exp.getSingleLabel();
 		return null;
 	}
 
 	public static Expression getExpression$$PHOSPHORTAGGED(Taint<Expression> exp, boolean in) {
 		if (exp != null)
-			return exp.lbl;
+			return exp.getSingleLabel();
 		return null;
 	}
 
 	public static Expression getExpression$$PHOSPHORTAGGED(Taint<Expression> exp, byte in) {
 		if (exp != null)
-			return exp.lbl;
+			return exp.getSingleLabel();
 		return null;
 	}
 
 	public static Expression getExpression$$PHOSPHORTAGGED(Taint<Expression> exp, char in) {
 		if (exp != null)
-			return exp.lbl;
+			return exp.getSingleLabel();
 		return null;
 	}
 

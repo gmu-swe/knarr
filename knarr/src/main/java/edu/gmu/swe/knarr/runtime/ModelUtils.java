@@ -22,8 +22,8 @@ public class ModelUtils {
 
          if (cTaint != null) {
              Operation bounds = new Operation(Operator.AND,
-                     new Operation(Operator.GE, (Expression) cTaint.lbl, new IntConstant('0')),
-                     new Operation(Operator.LE, (Expression) cTaint.lbl, new IntConstant('9')));
+                     new Operation(Operator.GE, (Expression) cTaint.getSingleLabel(), new IntConstant('0')),
+                     new Operation(Operator.LE, (Expression) cTaint.getSingleLabel(), new IntConstant('9')));
              PathUtils.getCurPC()._addDet(ret.val != -1 ? bounds : new Operation(Operator.NOT, bounds));
 
              ret.taint = cTaint;
@@ -43,7 +43,7 @@ public class ModelUtils {
                 ret = new Operation(Operator.AND,
                         ret,
                         new Operation(Operator.EQ,
-                                (Expression) receiver.valuePHOSPHOR_TAG.taints[i].lbl,
+                                (Expression) receiver.valuePHOSPHOR_TAG.taints[i].getSingleLabel(),
                                 new IntConstant(s.charAt(i))));
             }
 
@@ -52,7 +52,7 @@ public class ModelUtils {
                 ret = new Operation(Operator.AND,
                         ret,
                         new Operation(Operator.EQ,
-                                (Expression) receiver.valuePHOSPHOR_TAG.taints[i].lbl,
+                                (Expression) receiver.valuePHOSPHOR_TAG.taints[i].getSingleLabel(),
                                 new IntConstant(' ')));
             }
         } else {

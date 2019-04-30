@@ -63,11 +63,11 @@ public class PathUtils {
 			if (lVal == null)
 				l = new RealConstant(v2);
 			else
-				l = lVal.lbl;
+				l = lVal.getSingleLabel();
 			if (rVal == null)
 				r = new RealConstant(v1);
 			else
-				r = rVal.lbl;
+				r = rVal.getSingleLabel();
 			ret.taint = registerBinaryOp(l, r, op);
 		}
 		switch (op) {
@@ -125,11 +125,11 @@ public class PathUtils {
 			if (lVal == null)
 				l = new RealConstant(v2);
 			else
-				l = lVal.lbl;
+				l = lVal.getSingleLabel();
 			if (rVal == null)
 				r = new RealConstant(v1);
 			else
-				r = rVal.lbl;
+				r = rVal.getSingleLabel();
 			ret.taint = registerBinaryOp(l, r, op);
 		}
 		switch (op) {
@@ -161,11 +161,11 @@ public class PathUtils {
 			if (lVal == null)
 				l = new RealConstant(v2);
 			else
-				l = lVal.lbl;
+				l = lVal.getSingleLabel();
 			if (rVal == null)
 				r = new RealConstant(v1);
 			else
-				r = rVal.lbl;
+				r = rVal.getSingleLabel();
 			ret.taint = registerBinaryOp(l, r, op);
 		}
 		switch (op) {
@@ -197,11 +197,11 @@ public class PathUtils {
 			if (lVal == null)
 				l = new RealConstant(v2);
 			else
-				l = lVal.lbl;
+				l = lVal.getSingleLabel();
 			if (rVal == null)
 				r = new RealConstant(v1);
 			else
-				r = rVal.lbl;
+				r = rVal.getSingleLabel();
 		}
 		return registerBinaryOp(l, r, op);
 	}
@@ -209,25 +209,25 @@ public class PathUtils {
 	private static Expression getExpression(Taint<Expression> t, int v) {
 		if (t == null)
 			return new IntConstant(v);
-		return t.lbl;
+		return t.getSingleLabel();
 	}
 
 	private static Expression getExpression(Taint<Expression> t, float v) {
 		if (t == null)
 			return new RealConstant(v);
-		return t.lbl;
+		return t.getSingleLabel();
 	}
 
 	private static Expression getExpression(Taint<Expression> t, long v) {
 		if (t == null)
 			return new IntConstant(v);
-		return t.lbl;
+		return t.getSingleLabel();
 	}
 
 	private static Expression getExpression(Taint<Expression> t, double v) {
 		if (t == null)
 			return new RealConstant(v);
-		return t.lbl;
+		return t.getSingleLabel();
 	}
 
 	public static TaintedIntWithObjTag IADD(Taint<Expression> lVal, int v2, Taint<Expression> rVal, int v1, TaintedIntWithObjTag ret) {
@@ -573,7 +573,7 @@ public class PathUtils {
 		if (val != null) {
 			Expression exp;
 			// Truncate
-			exp = new Operation(Operator.EXTRACT, 7, 0, val.lbl);
+			exp = new Operation(Operator.EXTRACT, 7, 0, val.getSingleLabel());
 			// Sign-extend
 			exp = new Operation(Operator.SIGN_EXT, 24, exp);
 			ret.taint = new ExpressionTaint(exp);
@@ -590,12 +590,12 @@ public class PathUtils {
 		ret.val = (char) b;
 
 		if (val != null) {
-			Expression i2c = new Operation(Operator.BIT_AND, val.lbl, new IntConstant(0x0000FFFF));
+			Expression i2c = new Operation(Operator.BIT_AND, val.getSingleLabel(), new IntConstant(0x0000FFFF));
 			ret.taint = new ExpressionTaint(i2c);
 
 			Expression exp;
 			// Truncate
-			exp = new Operation(Operator.EXTRACT, 15, 0, val.lbl);
+			exp = new Operation(Operator.EXTRACT, 15, 0, val.getSingleLabel());
 			// Zero-extend
 			exp = new Operation(Operator.ZERO_EXT, 16, exp);
 		}
@@ -611,12 +611,12 @@ public class PathUtils {
 		ret.val = (short) i;
 
 		if (val != null) {
-			Expression i2c = new Operation(Operator.BIT_AND, val.lbl, new IntConstant(0x0000FFFF));
+			Expression i2c = new Operation(Operator.BIT_AND, val.getSingleLabel(), new IntConstant(0x0000FFFF));
 			ret.taint = new ExpressionTaint(i2c);
 
 			Expression exp;
 			// Truncate
-			exp = new Operation(Operator.EXTRACT, 15, 0, val.lbl);
+			exp = new Operation(Operator.EXTRACT, 15, 0, val.getSingleLabel());
 			// Sign-extend
 			exp = new Operation(Operator.SIGN_EXT, 16, exp);
 		}
@@ -649,7 +649,7 @@ public class PathUtils {
 		ret.val = (long) i;
 
 		if (val != null) {
-			Expression i2l = new Operation(Operator.SIGN_EXT, 32, val.lbl);
+			Expression i2l = new Operation(Operator.SIGN_EXT, 32, val.getSingleLabel());
 			ret.taint = new ExpressionTaint(i2l);
 		}
 		else
@@ -710,7 +710,7 @@ public class PathUtils {
 		if (val != null) {
 			// Both floats and doubles are represented using reals with the same precision
 			// Just propagate the taint here
-			ret.taint = new ExpressionTaint(val.lbl);
+			ret.taint = new ExpressionTaint(val.getSingleLabel());
 		}
 		else
 		{
@@ -726,7 +726,7 @@ public class PathUtils {
 		if (val != null) {
 			Expression exp;
 			// Truncate
-			exp = new Operation(Operator.EXTRACT, 31, 0, val.lbl);
+			exp = new Operation(Operator.EXTRACT, 31, 0, val.getSingleLabel());
 			ret.taint = new ExpressionTaint(exp);
 		}
 		else
@@ -755,7 +755,7 @@ public class PathUtils {
 		ret.val = (double) l;
 
 		if (val != null) {
-			ret.taint = new ExpressionTaint(new Operation(Operator.I2R, val.lbl));
+			ret.taint = new ExpressionTaint(new Operation(Operator.I2R, val.getSingleLabel()));
 		}
 		else
 		{
@@ -783,7 +783,7 @@ public class PathUtils {
 		ret.val = (long) d;
 
 		if (val != null) {
-			ret.taint = new ExpressionTaint(new Operation(Operator.R2I, val.lbl));
+			ret.taint = new ExpressionTaint(new Operation(Operator.R2I, val.getSingleLabel()));
 		}
 		else
 		{
@@ -851,11 +851,11 @@ public class PathUtils {
 			if (lVal == null)
 				l = new RealConstant(v2);
 			else
-				l = lVal.lbl;
+				l = lVal.getSingleLabel();
 			if (rVal == null)
 				r = new RealConstant(v1);
 			else
-				r = rVal.lbl;
+				r = rVal.getSingleLabel();
 			ret.taint = null;
 			if (v1 == v2)
 				getCurPC()._addDet(Operator.EQ, l, r);
@@ -883,11 +883,11 @@ public class PathUtils {
 			if (lVal == null)
 				l = new RealConstant(v2);
 			else
-				l = lVal.lbl;
+				l = lVal.getSingleLabel();
 			if (rVal == null)
 				r = new RealConstant(v1);
 			else
-				r = rVal.lbl;
+				r = rVal.getSingleLabel();
 			ret.taint = null;
 			if (v1 == v2)
 				getCurPC()._addDet(Operator.EQ, l, r);
@@ -915,11 +915,11 @@ public class PathUtils {
 			if (lVal == null)
 				l = new RealConstant(v2);
 			else
-				l = lVal.lbl;
+				l = lVal.getSingleLabel();
 			if (rVal == null)
 				r = new RealConstant(v1);
 			else
-				r = rVal.lbl;
+				r = rVal.getSingleLabel();
 			ret.taint = null;
 			if (v1 == v2)
 				getCurPC()._addDet(Operator.EQ, l, r);
@@ -947,11 +947,11 @@ public class PathUtils {
 			if (lVal == null)
 				l = new RealConstant(v2);
 			else
-				l = lVal.lbl;
+				l = lVal.getSingleLabel();
 			if (rVal == null)
 				r = new RealConstant(v1);
 			else
-				r = rVal.lbl;
+				r = rVal.getSingleLabel();
 			ret.taint = null;
 			if (v1 == v2)
 				getCurPC()._addDet(Operator.EQ, l, r);
@@ -1051,7 +1051,7 @@ public class PathUtils {
 		if (t == null)
 			return;
 		
-		t.lbl = new Operation(Operator.ADD, t.lbl, new IntConstant(inc));
+		t.setSingleLabel(new Operation(Operator.ADD, t.getSingleLabel(), new IntConstant(inc)));
 	}
 
 	public static void addConstraint(Taint<Expression> t, int opcode, int takenID, int notTakenID, boolean breaksLoop, boolean taken) {
@@ -1059,9 +1059,9 @@ public class PathUtils {
 			return;
 		if (!JPFInited)
 			initJPF();
-//		if (t.lbl.toString().matches(interesting))
+//		if (t.getSingleLabel().toString().matches(interesting))
 //			System.out.print("");
-		Expression exp = t.lbl;
+		Expression exp = t.getSingleLabel();
 		switch (opcode) {
 		case Opcodes.IFEQ:
 			exp = new Operation(Operator.EQ, ICONST_0, exp);
@@ -1105,7 +1105,7 @@ public class PathUtils {
 	public static void addConstraint(Taint<Expression> l, int v, int min, int max, int takenID, int notTakenID, boolean breaksLoop) {
 		if (l == null)
 			return;
-		Expression lExp = l.lbl;
+		Expression lExp = l.getSingleLabel();
 		Operation limit = new Operation(Operator.LE, lExp, new IntConstant(max));
 		limit = new Operation(Operator.AND, limit, new Operation(Operator.GE, lExp, new IntConstant(min)));
 
@@ -1138,11 +1138,11 @@ public class PathUtils {
 		if (l == null)
 			lExp = new IntConstant(v1);
 		else
-			lExp = l.lbl;
+			lExp = l.getSingleLabel();
 		if (r == null)
 			rExp = new IntConstant(v2);
 		else
-			rExp = r.lbl;
+			rExp = r.getSingleLabel();
 //		if (lExp.toString().matches(interesting) || rExp.toString().matches(interesting))
 //			System.out.print("");
 		Expression exp = null;
@@ -1267,7 +1267,7 @@ public class PathUtils {
 			// {
 			// ret.taint = new Taint(new Operation(Operator., operands));
 			// }
-			ret.taint = new Taint<Expression>(new Operation(Operator.LENGTH, t.lbl));
+			ret.taint = new Taint<Expression>(new Operation(Operator.LENGTH, t.getSingleLabel()));
 			break;
 		default:
 			throw new IllegalArgumentException("unimplemented string op: " + opcode);
@@ -1287,11 +1287,11 @@ public class PathUtils {
 		if (lVal == null)
 			l = new StringConstant(strL);
 		else
-			l = lVal.lbl;
+			l = lVal.getSingleLabel();
 		if (rVal == null)
 			r = new StringConstant(strR);
 		else
-			r = rVal.lbl;
+			r = rVal.getSingleLabel();
 		return registerBinaryOp(l, r, opcode);
 	}
 
@@ -1316,7 +1316,7 @@ public class PathUtils {
 		case Opcodes.LNEG:
 		case Opcodes.FNEG:
 		case Opcodes.DNEG:
-			ret = new Operation(Operator.NEG, exp.lbl);
+			ret = new Operation(Operator.NEG, exp.getSingleLabel());
 			break;
 		default:
 			throw new IllegalStateException("Unimplemented opcode handler: " + Printer.OPCODES[opcode]);
@@ -1325,7 +1325,7 @@ public class PathUtils {
 			throw new IllegalArgumentException("Returning null expression!");
 		}
 		// v.expression = ((IntegerExpression)values.get(taint).expression).
-		exp.lbl = ret;
+		exp.setSingleLabel(ret);
 		return exp;
 	}
 
@@ -1341,11 +1341,11 @@ public class PathUtils {
 		if (_t1 == null && _t2 == null)
 			return;
 		if (_t1 != null)
-			t1 = _t1.lbl;
+			t1 = _t1.getSingleLabel();
 		else
 			t1 = new StringConstant((String) str1);
 		if (_t2 != null)
-			t2 = _t2.lbl;
+			t2 = _t2.getSingleLabel();
 		else
 			t2 = new StringConstant((String) str2);
 		Operator strCmp;
@@ -1493,11 +1493,11 @@ public class PathUtils {
 		switch (opcode) {
 		// TODO handle strcpy!!!
 		case StringOpcodes.STR_CPY:
-			ret = rVal.lbl;// StringExpression._valueOf((StringExpression)
+			ret = rVal.getSingleLabel();// StringExpression._valueOf((StringExpression)
 							// c.rVal.expression);
 			break;
 		case StringOpcodes.STR_TRIM:
-			ret = new Operation(Operator.TRIM, rVal.lbl);
+			ret = new Operation(Operator.TRIM, rVal.getSingleLabel());
 			break;
 		case StringOpcodes.STR_TO_DOUBLE: // TODO support for str -> int/double
 			// ret = ((StringExpression) rVal)._RvalueOf();
@@ -1532,7 +1532,7 @@ public class PathUtils {
 			return null;
 		ExpressionTaint t = (ExpressionTaint) tags.lengthTaint;
 		if (t != null)
-			return t.lbl;
+			return t.getSingleLabel();
 		return null;
 	}
 
@@ -1565,7 +1565,7 @@ public class PathUtils {
 	private static Expression getExpression(String origString) {
 		if (origString.PHOSPHOR_TAG == null)
 			return new StringConstant(origString);
-		return (Expression) origString.PHOSPHOR_TAG.lbl;
+		return (Expression) origString.PHOSPHOR_TAG.getSingleLabel();
 	}
 
 	public static void addReplaceConstraint(String returnedString, CharSequence fromString, CharSequence toString, String origString) {
@@ -1589,7 +1589,7 @@ public class PathUtils {
 		// ((Object)origString)).getPHOSPHOR_TAG();
 		// if (taint1 == null && taint1 == null && taint2 == null)
 		// return;
-		// Expression origTaint = taint1.lbl;
+		// Expression origTaint = taint1.getSingleLabel();
 		//
 		// Expression thirdVal = null;
 		// if(!JPFInited) initJPF();
@@ -1678,11 +1678,11 @@ public class PathUtils {
 	public static Taint<Expression> toReal(Taint<Expression> t) {
 		if (t == null)
 			return null;
-		if (t.lbl instanceof IntConstant) {
-			return new ExpressionTaint(new RealConstant(((IntConstant) t.lbl).getValue()));
-		} else if (t.lbl instanceof IntVariable) {
-			throw new IllegalArgumentException("Got: " + t.lbl);
+		if (t.getSingleLabel() instanceof IntConstant) {
+			return new ExpressionTaint(new RealConstant(((IntConstant) t.getSingleLabel()).getValue()));
+		} else if (t.getSingleLabel() instanceof IntVariable) {
+			throw new IllegalArgumentException("Got: " + t.getSingleLabel());
 		} else
-			throw new IllegalArgumentException("Got: " + t.lbl);
+			throw new IllegalArgumentException("Got: " + t.getSingleLabel());
 	}
 }
