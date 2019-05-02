@@ -404,9 +404,12 @@ public class Symbolicator {
 	// return in;
 	// }
 
-	public Object getTaints(Object o) {
+	public static Object getTaints(Object o) {
 		if (o instanceof TaintedObjectWithObjTag) {
-			return ((TaintedObjectWithObjTag)o).getPHOSPHOR_TAG();
+			if (o instanceof String)
+				return ((String)o).valuePHOSPHOR_TAG;
+            else
+                return ((TaintedObjectWithObjTag)o).getPHOSPHOR_TAG();
 		}
 
 		return null;
