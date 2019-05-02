@@ -1054,7 +1054,7 @@ public class PathUtils {
 		t.setSingleLabel(new Operation(Operator.ADD, t.getSingleLabel(), new IntConstant(inc)));
 	}
 
-	public static void addConstraint(Taint<Expression> t, int opcode, int takenID, int notTakenID, boolean breaksLoop, boolean taken) {
+	public static void addConstraint(Taint<Expression> t, int opcode, int takenID, int notTakenID, boolean breaksLoop, boolean taken, String source) {
 		if (t == null)
 			return;
 		if (!JPFInited)
@@ -1094,7 +1094,7 @@ public class PathUtils {
 			// Update current coverage
 			int notTakenPath = Coverage.instance.set(takenID, notTakenID);
 			// Add not taken constraint to map
-			exp.metadata = new Coverage.BranchData(takenID, notTakenID, notTakenPath, breaksLoop, taken);
+			exp.metadata = new Coverage.BranchData(takenID, notTakenID, notTakenPath, breaksLoop, taken, source);
 		}
 	}
 
@@ -1102,7 +1102,7 @@ public class PathUtils {
 
 	}
 
-	public static void addConstraint(Taint<Expression> l, int v, int min, int max, int takenID, int notTakenID, boolean breaksLoop) {
+	public static void addConstraint(Taint<Expression> l, int v, int min, int max, int takenID, int notTakenID, boolean breaksLoop, String source) {
 		if (l == null)
 			return;
 		Expression lExp = l.getSingleLabel();
@@ -1121,13 +1121,13 @@ public class PathUtils {
 				int notTakenPath = Coverage.instance.set(takenID, notTakenID);
 				// Add not taken constraint to map
 				// TODO switch-case not supported
-				exp.metadata = new Coverage.BranchData(takenID, notTakenID, notTakenPath, breaksLoop, false);
+				exp.metadata = new Coverage.BranchData(takenID, notTakenID, notTakenPath, breaksLoop, false, source);
 			}
 		}
 
     }
 
-	public static void addConstraint(Taint<Expression> l, Taint<Expression> r, int v1, int v2, int opcode, int takenID, int notTakenID, boolean breaksLoop, boolean taken) {
+	public static void addConstraint(Taint<Expression> l, Taint<Expression> r, int v1, int v2, int opcode, int takenID, int notTakenID, boolean breaksLoop, boolean taken,String source) {
 		// if (VM.isBooted$$INVIVO_PC(new TaintedBoolean()).val &&
 		// values.get(otherTaint) == null)
 		// System.out.println(Printer.OPCODES[opcode] + " - " + taint + " ; " +
@@ -1145,6 +1145,7 @@ public class PathUtils {
 			rExp = r.getSingleLabel();
 //		if (lExp.toString().matches(interesting) || rExp.toString().matches(interesting))
 //			System.out.print("");
+
 		Expression exp = null;
 		switch (opcode) {
 		case Opcodes.IF_ACMPEQ:
@@ -1184,7 +1185,7 @@ public class PathUtils {
 			// Update current coverage
 			int notTakenPath = Coverage.instance.set(takenID, notTakenID);
 			// Add not taken constraint to map
-			exp.metadata = new Coverage.BranchData(takenID, notTakenID, notTakenPath, breaksLoop, taken);
+			exp.metadata = new Coverage.BranchData(takenID, notTakenID, notTakenPath, breaksLoop, taken, source);
 		}
 	}
 

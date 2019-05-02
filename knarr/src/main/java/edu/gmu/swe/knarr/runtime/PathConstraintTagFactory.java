@@ -25,6 +25,7 @@ import edu.columbia.cs.psl.phosphor.struct.TaintedShortWithObjTag;
 import java.util.HashMap;
 
 public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, StringOpcodes {
+    private final static Type STRING_TYPE = Type.getType(String.class);
 	@Override
 	public void fieldOp(int opcode, String owner, String name, String desc, MethodVisitor mv, LocalVariableManager lvs, TaintPassingMV ta, boolean trackedLoad) {
 		
@@ -511,7 +512,8 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 			mv.visitLdcInsn(notTakenID);
 			mv.visitLdcInsn(loop);
 			mv.visitInsn(ICONST_0);
-			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addConstraint", "(" + Configuration.TAINT_TAG_DESC + "IIIZZ)V", false);
+			getSourceInfo(mv);
+			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addConstraint", "(" + Configuration.TAINT_TAG_DESC + "IIIZZ" + STRING_TYPE.getDescriptor() + ")V", false);
 			FrameNode fn3 = ta.getCurrentFrameNode();
 
 			mv.visitJumpInsn(GOTO, originalEnd);
@@ -524,7 +526,8 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 			mv.visitLdcInsn(notTakenID);
 			mv.visitLdcInsn(loop);
 			mv.visitInsn(ICONST_1);
-			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addConstraint", "(" + Configuration.TAINT_TAG_DESC + "IIIZZ)V", false);
+			getSourceInfo(mv);
+			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addConstraint", "(" + Configuration.TAINT_TAG_DESC + "IIIZZ" + STRING_TYPE.getDescriptor() + ")V", false);
 			mv.visitJumpInsn(GOTO, label);
 			mv.visitLabel(untainted);
 			// need frame
@@ -565,7 +568,8 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 			mv.visitLdcInsn(notTakenID);
 			mv.visitLdcInsn(loop);
 			mv.visitInsn(ICONST_1);
-			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addConstraint", "(" + Configuration.TAINT_TAG_DESC + Configuration.TAINT_TAG_DESC + "IIIIIZZ)V", false);
+			getSourceInfo(mv);
+			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addConstraint", "(" + Configuration.TAINT_TAG_DESC + Configuration.TAINT_TAG_DESC + "IIIIIZZ" + STRING_TYPE.getDescriptor() + ")V", false);
 			mv.visitJumpInsn(GOTO, label);
 			mv.visitLabel(isFalse);
 			ta.acceptFn(fn);
@@ -576,7 +580,8 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 			mv.visitLdcInsn(notTakenID);
 			mv.visitLdcInsn(loop);
 			mv.visitInsn(ICONST_0);
-			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addConstraint", "(" + Configuration.TAINT_TAG_DESC + Configuration.TAINT_TAG_DESC + "IIIIIZZ)V", false);
+			getSourceInfo(mv);
+			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addConstraint", "(" + Configuration.TAINT_TAG_DESC + Configuration.TAINT_TAG_DESC + "IIIIIZZ" + STRING_TYPE.getDescriptor() + ")V", false);
 
 			lvs.freeTmpLV(tmp);
 			break;
@@ -789,7 +794,9 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 
 	boolean inStringClass = false;
 	String name;
+	String owner;
 	Type[] args;
+	int line;
 
 	private boolean enableCov = false;
 
@@ -799,6 +806,8 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 
 		this.name = name;
 		this.args = Type.getArgumentTypes(desc);
+		this.owner = owner;
+		this.line = 0;
 
 		this.enableCov = Coverage.enabled && !owner.startsWith("za/ac/sun/cs/green");
 
@@ -830,7 +839,7 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 
 	@Override
 	public void lineNumberVisited(int line) {
-
+	    this.line = line;
 	}
 
 	@Override
@@ -883,7 +892,8 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 			mv.visitInsn(ICONST_0);
 			mv.visitInsn(ICONST_1);
 			// taint, null, value, switch target, ==
-			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addConstraint", "(" + Configuration.TAINT_TAG_DESC + Configuration.TAINT_TAG_DESC + "IIIIIZZ)V", false);
+			getSourceInfo(mv);
+			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addConstraint", "(" + Configuration.TAINT_TAG_DESC + Configuration.TAINT_TAG_DESC + "IIIIIZZ" + STRING_TYPE.getDescriptor() + ")V", false);
 			mv.visitJumpInsn(GOTO, labels[i]);
 		}
 		
@@ -905,7 +915,8 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 			mv.visitInsn(ICONST_0);
 			mv.visitInsn(ICONST_0);
 			// taint, value, taint, null, value, switch target, !=
-			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addConstraint", "(" + Configuration.TAINT_TAG_DESC + Configuration.TAINT_TAG_DESC + "IIIIIZZ)V", false);
+			getSourceInfo(mv);
+			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addConstraint", "(" + Configuration.TAINT_TAG_DESC + Configuration.TAINT_TAG_DESC + "IIIIIZZ" + STRING_TYPE.getDescriptor() + ")V", false);
 			// taint, value
 		}
 
@@ -957,7 +968,8 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 			mv.visitInsn(ICONST_0);
 			mv.visitInsn(ICONST_1);
 			// taint, null, value, switch target, ==
-			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addConstraint", "(" + Configuration.TAINT_TAG_DESC + Configuration.TAINT_TAG_DESC + "IIIIIZZ)V", false);
+			getSourceInfo(mv);
+			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addConstraint", "(" + Configuration.TAINT_TAG_DESC + Configuration.TAINT_TAG_DESC + "IIIIIZZ" + STRING_TYPE.getDescriptor() + ")V", false);
 			mv.visitJumpInsn(GOTO, labels[i]);
 		}
 		
@@ -979,12 +991,23 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 			mv.visitInsn(ICONST_0);
 			mv.visitInsn(ICONST_0);
 			// taint, value, taint, null, value, switch target, !=
-			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addConstraint", "(" + Configuration.TAINT_TAG_DESC + Configuration.TAINT_TAG_DESC + "IIIIIZZ)V", false);
+			getSourceInfo(mv);
+			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addConstraint", "(" + Configuration.TAINT_TAG_DESC + Configuration.TAINT_TAG_DESC + "IIIIIZZ" + STRING_TYPE.getDescriptor() + ")V", false);
 			// taint, value
 		}
 
 		mv.visitInsn(POP2);
 		mv.visitJumpInsn(GOTO, dflt);
+	}
+
+	private void getSourceInfo(MethodVisitor mv) {
+		if (this.owner.startsWith("java"))
+		    mv.visitInsn(ACONST_NULL);
+        else
+        	mv.visitLdcInsn((this.owner != null ? this.owner : "?")
+					+ ":"
+					+ (this.name != null ? this.name : "?")
+					+ ":" + this.line);
 	}
 
 	@Override

@@ -170,6 +170,7 @@ public class Coverage implements Serializable {
         public final int notTakenPath;
         public final boolean breaksLoop;
         public final boolean taken;
+        public final String source;
 
         public BranchData(int takenCode, int notTakenCode, int notTakenPath, boolean breaksLoop, boolean taken) {
             this.takenCode = takenCode;
@@ -177,6 +178,16 @@ public class Coverage implements Serializable {
             this.notTakenPath = notTakenPath;
             this.breaksLoop = breaksLoop;
             this.taken = taken;
+            this.source = "";
+        }
+
+        public BranchData(int takenCode, int notTakenCode, int notTakenPath, boolean breaksLoop, boolean taken, String source) {
+            this.takenCode = takenCode;
+            this.notTakenCode = notTakenCode;
+            this.notTakenPath = notTakenPath;
+            this.breaksLoop = breaksLoop;
+            this.taken = taken;
+            this.source = source;
         }
     }
 
