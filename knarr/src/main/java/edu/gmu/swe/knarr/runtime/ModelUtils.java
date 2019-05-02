@@ -49,6 +49,9 @@ public class ModelUtils {
 
             // Pad remaining length with spaces
             for (; i < receiver.length(); i++) {
+                if (receiver.valuePHOSPHOR_TAG == null || receiver.valuePHOSPHOR_TAG.taints[i] == null)
+                    continue;
+
                 ret = new Operation(Operator.AND,
                         ret,
                         new Operation(Operator.EQ,
