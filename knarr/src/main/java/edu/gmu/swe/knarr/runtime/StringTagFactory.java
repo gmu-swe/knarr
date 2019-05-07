@@ -24,9 +24,9 @@ public class StringTagFactory extends ClassVisitor implements Opcodes {
 	private final static HashSet<String> redirectedMethods = new HashSet<>(Arrays.asList(new String[] {
 			"startsWith$$PHOSPHORTAGGED",
 			"equals$$PHOSPHORTAGGED",
-			"charAt$$PHOSPHORTAGGED",
-			"toLowerCase",
-			"toUpperCase",
+//			"charAt$$PHOSPHORTAGGED",
+//			"toLowerCase",
+//			"toUpperCase",
 			"length$$PHOSPHORTAGGED",
 	}));
 

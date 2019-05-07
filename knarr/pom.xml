@@ -93,7 +93,7 @@
                     <redirectTestOutputToFile>true</redirectTestOutputToFile>
                     <jvm>${project.build.directory}/jre-inst/bin/java</jvm>
                     <argLine>-Xbootclasspath/p:${project.build.directory}/${project.build.finalName}.jar
-                        -javaagent:${project.build.directory}/${project.build.finalName}.jar</argLine>
+                        -javaagent:${project.build.directory}/${project.build.finalName}.jar -Xdebug -Xrunjdwp:server=y,transport=dt_socket,address=5555,suspend=n</argLine>
                     <reuseForks>false</reuseForks>
                 </configuration>
             </plugin>
@@ -184,7 +184,13 @@
             <artifactId>green</artifactId>
             <version>SNAPSHOT</version>
         </dependency>
-        <!-- <dependency> <groupId>net.jonbell.java</groupId> <artifactId>CRIJ</artifactId> 
+
+        <dependency>
+            <groupId>com.google.javascript</groupId>
+            <artifactId>closure-compiler</artifactId>
+            <version>v20180204</version>
+        </dependency>
+        <!-- <dependency> <groupId>net.jonbell.java</groupId> <artifactId>CRIJ</artifactId>
             <version>0.0.1-SNAPSHOT</version> </dependency> -->
     </dependencies>
     <distributionManagement>

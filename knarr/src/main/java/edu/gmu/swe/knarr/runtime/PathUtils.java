@@ -33,7 +33,7 @@ public class PathUtils {
 	public static final boolean IGNORE_SHIFTS = true;
 	public static final String INTERNAL_NAME = "edu/gmu/swe/knarr/runtime/PathUtils";
 	
-//	public static String interesting = ".*autoVar_15[^0-9].*47.*";
+	public static String interesting = ".*autoVar_63[^0-9].*";
 
 	public static PathConditionWrapper getCurPC() {
 		if (curPC == null)

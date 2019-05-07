@@ -23,7 +23,7 @@ public class Main {
             Configuration.ANNOTATE_LOOPS = true;
 
 		Configuration.extensionMethodVisitor = RedirectMethodsTaintAdapter.class;
-		Configuration.extensionClassVisitor = CountBytecodeAdapter.class; //StringTagFactory.class;
+		Configuration.extensionClassVisitor = StringTagFactory.class; // CountBytecodeAdapter.class;
 
 		PathConstraintTagFactory.isRunning = false;
 
