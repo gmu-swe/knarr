@@ -1,5 +1,7 @@
 package edu.gmu.swe.knarr.runtime;
 
+import java.io.Serializable;
+import java.util.HashSet;
 import java.util.Locale;
 
 import edu.columbia.cs.psl.phosphor.runtime.Taint;
@@ -17,7 +19,7 @@ import za.ac.sun.cs.green.expr.StringConstant;
 import za.ac.sun.cs.green.expr.StringVariable;
 
 public class StringUtils {
-	public static boolean enabled = false;
+	public static boolean enabled = !StringTagFactory.redirectedMethods.isEmpty();
 	public static void setTaints(LazyCharArrayObjTags tags, Object tag) {
 //		if (tags.val.length == 0)
 //			return;
@@ -81,8 +83,14 @@ public class StringUtils {
 		if (enabled && s.PHOSPHOR_TAG != null && s.PHOSPHOR_TAG.getSingleLabel() != null) {
 			if (pref.PHOSPHOR_TAG != null && pref.PHOSPHOR_TAG.getSingleLabel() != null)
 				tPref = (Expression)pref.PHOSPHOR_TAG.getSingleLabel();
-			else
+			else {
 				tPref = new StringConstant(pref);
+				Expression exp = (Expression) s.PHOSPHOR_TAG.getSingleLabel();
+				if (exp.metadata == null)
+					exp.metadata = new HashSet<String>();
+				if (exp.metadata instanceof HashSet)
+					((HashSet) exp.metadata).add(pref);
+			}
 			
 
 			if (tStart != null)
@@ -106,13 +114,21 @@ public class StringUtils {
 			String s2 = (String)o;
 
 			Expression tO;
+			Serializable metadata = null;
 			if (s2.PHOSPHOR_TAG != null && s2.PHOSPHOR_TAG.getSingleLabel() != null)
 				tO = (Expression)s2.PHOSPHOR_TAG.getSingleLabel();
-			else
+			else {
 				tO = new StringConstant(s2);
+				Expression exp = (Expression) s.PHOSPHOR_TAG.getSingleLabel();
+				if (exp.metadata == null)
+				    exp.metadata = new HashSet<String>();
+				if (exp.metadata instanceof HashSet)
+					((HashSet) exp.metadata).add(s2);
+			}
 			
 			Expression tS = (Expression) s.PHOSPHOR_TAG.getSingleLabel();
-			ret.taint = new ExpressionTaint(new Operation(Operator.EQUALS, tS, tO));
+			Expression exp = new Operation(Operator.EQUALS, tS, tO);
+			ret.taint = new ExpressionTaint(exp);
 		}
 	}
 	

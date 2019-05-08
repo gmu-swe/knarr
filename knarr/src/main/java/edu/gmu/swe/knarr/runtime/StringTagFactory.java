@@ -1,7 +1,9 @@
 package edu.gmu.swe.knarr.runtime;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.Set;
 
 import edu.columbia.cs.psl.phosphor.Configuration;
 import edu.columbia.cs.psl.phosphor.org.objectweb.asm.ClassVisitor;
@@ -21,14 +23,45 @@ public class StringTagFactory extends ClassVisitor implements Opcodes {
 	private boolean enabled = false;
 	
 	private static final String suffix = "$$redirected";
-	private final static HashSet<String> redirectedMethods = new HashSet<>(Arrays.asList(new String[] {
-			"startsWith$$PHOSPHORTAGGED",
-			"equals$$PHOSPHORTAGGED",
-			"charAt$$PHOSPHORTAGGED",
-			"toLowerCase",
-			"toUpperCase",
-			"length$$PHOSPHORTAGGED",
-	}));
+	public final static Set<String> redirectedMethods;
+
+	static {
+		HashSet<String> ms = new HashSet<>();
+		String ss = System.getProperty("specialStrings");
+		if (ss == null) {
+		    // Don't add any String methods
+		} else if ("".equals(ss)) {
+			// Add all string methods
+            ms.addAll(Arrays.asList(new String[] {
+					"startsWith$$PHOSPHORTAGGED",
+					"equals$$PHOSPHORTAGGED",
+					"charAt$$PHOSPHORTAGGED",
+					"toLowerCase",
+					"toUpperCase",
+					"length$$PHOSPHORTAGGED",
+			}));
+		} else {
+		    // Add selected methods
+			for (String s : ss.split(",")) {
+				switch (s) {
+					case "startsWith":
+					case "equals":
+					case "charAt":
+					case "length":
+						ms.add(s + "$$PHOSPHORTAGGED");
+						break;
+					case "toLowerCase":
+					case "toUpperCase":
+						ms.add(s);
+						break;
+					default:
+						throw new Error("Unknown String method:" + s);
+				}
+			}
+		}
+
+		redirectedMethods = Collections.unmodifiableSet(ms);
+	}
 
 	public StringTagFactory(ClassVisitor classVisitor, boolean skipFrames) {
 		super(ASM6, classVisitor);
@@ -37,7 +70,7 @@ public class StringTagFactory extends ClassVisitor implements Opcodes {
 	@Override
 	public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
 		super.visit(version, access, name, signature, superName, interfaces);
-		enabled = name.equals(stringType.getInternalName()) && (System.getProperty("specialStrings") != null);
+		enabled = name.equals(stringType.getInternalName()) && !redirectedMethods.isEmpty();
 	}
 
 	@Override
