@@ -19,7 +19,7 @@ import za.ac.sun.cs.green.expr.StringConstant;
 import za.ac.sun.cs.green.expr.StringVariable;
 
 public class StringUtils {
-	public static boolean enabled = !StringTagFactory.redirectedMethods.isEmpty();
+	public static boolean enabled = true;
 	public static void setTaints(LazyCharArrayObjTags tags, Object tag) {
 //		if (tags.val.length == 0)
 //			return;
