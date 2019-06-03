@@ -118,6 +118,7 @@ public class StringUtils {
 
 	public static void equals$$PHOSPHORTAGGED(TaintedBooleanWithObjTag ret, String s, Object o, TaintedBooleanWithObjTag ret2) {
 		if (enabled && o != null && o instanceof String && s.PHOSPHOR_TAG != null && s.PHOSPHOR_TAG.getSingleLabel() != null) {
+			String s1 = s;
 			String s2 = (String)o;
 
 			Expression tO;
@@ -126,14 +127,34 @@ public class StringUtils {
 				tO = (Expression)s2.PHOSPHOR_TAG.getSingleLabel();
 			else {
 				tO = new StringConstant(s2);
-				Expression exp = (Expression) s.PHOSPHOR_TAG.getSingleLabel();
+				Expression exp = (Expression) s1.PHOSPHOR_TAG.getSingleLabel();
 				if (exp.metadata == null)
 				    exp.metadata = new HashSet<String>();
 				if (exp.metadata instanceof HashSet)
 					((HashSet) exp.metadata).add(s2);
 			}
 			
-			Expression tS = (Expression) s.PHOSPHOR_TAG.getSingleLabel();
+			Expression tS = (Expression) s1.PHOSPHOR_TAG.getSingleLabel();
+			Expression exp = new Operation(Operator.EQUALS, tS, tO);
+			ret.taint = new ExpressionTaint(exp);
+		} else if (enabled && o != null && o instanceof String && ((String)o).PHOSPHOR_TAG != null && ((String)o).PHOSPHOR_TAG.getSingleLabel() != null) {
+			String s1 = (String)o;
+			String s2 = s;
+
+			Expression tO;
+			Serializable metadata = null;
+			if (s2.PHOSPHOR_TAG != null && s2.PHOSPHOR_TAG.getSingleLabel() != null)
+				tO = (Expression)s2.PHOSPHOR_TAG.getSingleLabel();
+			else {
+				tO = new StringConstant(s2);
+				Expression exp = (Expression) s1.PHOSPHOR_TAG.getSingleLabel();
+				if (exp.metadata == null)
+					exp.metadata = new HashSet<String>();
+				if (exp.metadata instanceof HashSet)
+					((HashSet) exp.metadata).add(s2);
+			}
+
+			Expression tS = (Expression) s1.PHOSPHOR_TAG.getSingleLabel();
 			Expression exp = new Operation(Operator.EQUALS, tS, tO);
 			ret.taint = new ExpressionTaint(exp);
 		}
