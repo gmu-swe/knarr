@@ -118,20 +118,20 @@ public class Concolic {
 //        }
 
         mutators = new Mutator[]{
-                new VariableMutator(driver, false).setName("VariableMutator"),
-                new VariableMutator(driver, true).setName("VariableMutatorReverse"),
+//                new VariableMutator(driver, false).setName("VariableMutator"),
+//                new VariableMutator(driver, true).setName("VariableMutatorReverse"),
 
                 new ConstraintMutator(driver, picker.getCurrentCoverage(), true, true, true).setName("ConstraintMutatorReverseLoop"),
-                new ConstraintMutator(driver, picker.getCurrentCoverage(), true, true, false).setName("ConstraintMutatorLoop"),
+//                new ConstraintMutator(driver, picker.getCurrentCoverage(), true, true, false).setName("ConstraintMutatorLoop"),
 
-                new AllMaxConstraintsMutator(driver, (MaxConstraintsPicker) picker),
-                new MaxConstraintsMutator(driver, (MaxConstraintsPicker) picker),
+//                new AllMaxConstraintsMutator(driver, (MaxConstraintsPicker) picker),
+//                new MaxConstraintsMutator(driver, (MaxConstraintsPicker) picker),
 
                 new ConstraintMutator(driver, picker.getCurrentCoverage(), false, true, true).setName("ConstraintMutatorLoop"),
-                new ConstraintMutator(driver, picker.getCurrentCoverage(), false, true, false).setName("ConstraintMutator"),
+//                new ConstraintMutator(driver, picker.getCurrentCoverage(), false, true, false).setName("ConstraintMutator"),
 
-                new ImportMutator(driver, importDir1),
-                new ImportMutator(driver, importDir2),
+//                new ImportMutator(driver, importDir1),
+//                new ImportMutator(driver, importDir2),
 
 //                new FixedOutputMutator(driver,
 //                        new int[] { 1 , 0 , 0 , 0 , 0 },

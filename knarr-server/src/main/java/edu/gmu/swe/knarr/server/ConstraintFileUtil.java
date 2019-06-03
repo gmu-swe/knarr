@@ -1,11 +1,6 @@
 package edu.gmu.swe.knarr.server;
 
-import java.io.BufferedOutputStream;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
@@ -35,7 +30,9 @@ import za.ac.sun.cs.green.service.z3.Z3JavaTranslator;
 public class ConstraintFileUtil {
 	
 	public static void main(String[] args) throws IOException, ClassNotFoundException {
-		
+
+		Z3JavaTranslator.timeoutMS = 3600 * 1000; // 1h
+
 		switch (args[0]) {
 			case "solve":
 				try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(args[1]))) {
@@ -86,7 +83,7 @@ public class ConstraintFileUtil {
 						int i = 0;
 						for (Entry<String, Object> e: solution) {
 							if (!e.getKey().startsWith("autoVar_"))
-								break;
+								continue;
 							Integer b = (Integer) e.getValue();
 							if (b == null)
 								break;
@@ -96,6 +93,12 @@ public class ConstraintFileUtil {
 
 						System.out.println("Solution as UTF_8 string:");
 						System.out.println(new String(buf, StandardCharsets.UTF_8));
+
+						if (args.length > 2) {
+							try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(args[2])))) {
+								bw.write(new String(buf, StandardCharsets.UTF_8));
+							}
+						};
 					}
 
 					try {

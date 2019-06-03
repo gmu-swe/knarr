@@ -22,7 +22,7 @@ public class RedirectMethodsTaintAdapter extends TaintAdapter {
     }));
 
     private static Set<String> REDIRECTED_METHODS_FROM_STRING = new HashSet<>(Arrays.asList(new String[]{
-            "equals",
+//            "equals",
     }));
 
     public RedirectMethodsTaintAdapter(int access, String className, String name, String desc, String signature, String[] exceptions, MethodVisitor mv, NeverNullArgAnalyzerAdapter analyzer) {

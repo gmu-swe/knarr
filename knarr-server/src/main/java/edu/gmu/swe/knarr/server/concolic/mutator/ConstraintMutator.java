@@ -191,6 +191,7 @@ public class ConstraintMutator extends Mutator {
                 // UNSAT, maybe we can still find new paths
 
                 System.out.println("\tUNSAT");
+
 //                return null;
 
 //                System.out.println(toNegate);
