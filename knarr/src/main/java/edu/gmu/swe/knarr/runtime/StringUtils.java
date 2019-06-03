@@ -78,7 +78,13 @@ public class StringUtils {
 			s.PHOSPHOR_TAG = new ExpressionTaint(exp);
 		}
 	}
-	
+
+	public static void contains$$PHOSPHORTAGGED(TaintedBooleanWithObjTag ret, String s, CharSequence c, TaintedBooleanWithObjTag ret2) {
+		if (enabled && s.PHOSPHOR_TAG != null && s.PHOSPHOR_TAG.getSingleLabel() != null) {
+			enabled = enabled;
+        }
+    }
+
 	public static void startsWith$$PHOSPHORTAGGED(TaintedBooleanWithObjTag ret, String s, String pref, Taint tStart, int start, TaintedBooleanWithObjTag ret2) {
 		Expression tPref;
 		if (enabled && s.PHOSPHOR_TAG != null && s.PHOSPHOR_TAG.getSingleLabel() != null) {

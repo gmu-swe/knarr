@@ -39,6 +39,7 @@ public class StringTagFactory extends ClassVisitor implements Opcodes {
 					"toLowerCase",
 					"toUpperCase",
 					"length$$PHOSPHORTAGGED",
+					"contains$$PHOSPHORTAGGED",
 			}));
 		} else {
 		    // Add selected methods
@@ -48,6 +49,7 @@ public class StringTagFactory extends ClassVisitor implements Opcodes {
 					case "equals":
 					case "charAt":
 					case "length":
+					case "contains":
 						ms.add(s + "$$PHOSPHORTAGGED");
 						break;
 					case "toLowerCase":
