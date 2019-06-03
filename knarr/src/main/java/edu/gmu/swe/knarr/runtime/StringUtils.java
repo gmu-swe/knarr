@@ -64,8 +64,9 @@ public class StringUtils {
 			StringVariable var = getFreshStringVar();
 			Expression exp = var;
 			char[] arr = s.toCharArray();
-			for (int i = offset ; i < len ; i++) {
-				Taint t = srcTags.taints[i];
+			// Offset is for src, not for s
+			for (int i = 0 ; i < len ; i++) {
+				Taint t = srcTags.taints[offset + i];
 				if (t == null) {
 					exp = new Operation(Operator.CONCAT, exp, new IntConstant(arr[i]));
 					s.valuePHOSPHOR_TAG.taints[i] = new ExpressionTaint(new BVVariable(var + "_" + i, 32));
