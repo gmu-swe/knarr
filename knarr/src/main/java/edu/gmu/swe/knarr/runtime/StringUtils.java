@@ -117,6 +117,9 @@ public class StringUtils {
 	
 
 	public static void equals$$PHOSPHORTAGGED(TaintedBooleanWithObjTag ret, String s, Object o, TaintedBooleanWithObjTag ret2) {
+		registerNewString(s, s.valuePHOSPHOR_TAG, null, null, 0, null, s.length());
+		if (o instanceof String)
+			registerNewString((String)o, ((String)o).valuePHOSPHOR_TAG, null, null, 0, null, ((String)o).length());
 		if (enabled && o != null && o instanceof String && s.PHOSPHOR_TAG != null && s.PHOSPHOR_TAG.getSingleLabel() != null) {
 			String s1 = s;
 			String s2 = (String)o;
