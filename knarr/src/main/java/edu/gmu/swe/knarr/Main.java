@@ -12,7 +12,6 @@ public class Main {
 		args[1] = "-withArrayLengthTags";
 		args[2] = "-disableJumpOptimizations";
 		args[3] = "-withArrayIndexTags";
-		Configuration.STRING_SET_TAG_TAINT_CLASS = "edu/gmu/swe/knarr/runtime/StringUtils";
 		Configuration.IMPLICIT_TRACKING = false;
 		Configuration.ARRAY_LENGTH_TRACKING = true;
 		Configuration.PREALLOC_STACK_OPS = true;
@@ -33,6 +32,7 @@ public class Main {
 
 		PreMain.DEBUG = System.getProperty("DEBUG") != null;
 		Configuration.taintTagFactory = new PathConstraintTagFactory();
+		Configuration.autoTainter = new KnarrAutoTainter();
 		System.arraycopy(_args, 0, args, 4, _args.length);
 		// Instrumenter.addlTransformer = new CRClassFileTransformer();
 		Instrumenter.main(args);
