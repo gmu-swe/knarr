@@ -10,6 +10,7 @@ import edu.columbia.cs.psl.phosphor.struct.LazyCharArrayObjTags;
 import edu.columbia.cs.psl.phosphor.struct.TaintedBooleanWithObjTag;
 import edu.columbia.cs.psl.phosphor.struct.TaintedCharWithObjTag;
 import edu.columbia.cs.psl.phosphor.struct.TaintedIntWithObjTag;
+//import javafx.util.Pair;
 import za.ac.sun.cs.green.expr.BVVariable;
 import za.ac.sun.cs.green.expr.Expression;
 import za.ac.sun.cs.green.expr.IntConstant;
@@ -85,6 +86,73 @@ public class StringUtils {
         }
     }
 
+	public static void indexOf$$PHOSPHORTAGGED(TaintedIntWithObjTag ret, String s, String pref, int start, TaintedIntWithObjTag ret2) {
+
+		Expression tPref;
+		if (enabled && s.PHOSPHOR_TAG != null && s.PHOSPHOR_TAG.getSingleLabel() != null && pref != null) {
+			if (pref.PHOSPHOR_TAG != null && pref.PHOSPHOR_TAG.getSingleLabel() != null)
+				tPref = (Expression)pref.PHOSPHOR_TAG.getSingleLabel();
+			else {
+				tPref = new StringConstant(pref);
+				Expression exp = (Expression) s.PHOSPHOR_TAG.getSingleLabel();
+				if (exp.metadata == null)
+					exp.metadata = new HashSet<String>();
+				if (exp.metadata instanceof HashSet)
+					((HashSet) exp.metadata).add(pref);
+			}
+
+
+//			if (tStart != null)
+//				throw new UnsupportedOperationException();
+//
+			Expression tS = (Expression) s.PHOSPHOR_TAG.getSingleLabel();
+//			if (start > 0)
+//				throw new UnsupportedOperationException();
+
+			ret.taint = new ExpressionTaint(new Operation(Operator.LASTINDEXOFSTRING, tPref, tS));
+		}
+
+		else if(enabled && s.PHOSPHOR_TAG == null) {
+			if(s.valuePHOSPHOR_TAG != null && s.valuePHOSPHOR_TAG.taints != null) {
+				for(int i = 0; i < s.valuePHOSPHOR_TAG.taints.length; i++) {
+					if(s.valuePHOSPHOR_TAG.taints[i] != null) {
+						Expression exp = (Expression) s.valuePHOSPHOR_TAG.taints[i].getSingleLabel();
+						if (exp.metadata == null)
+							exp.metadata = new HashSet<String>();
+						if (exp.metadata instanceof HashSet)
+							((HashSet) exp.metadata).add(pref);
+					}
+				}
+			}
+
+		}
+	}
+
+
+	public static void indexOf$$PHOSPHORTAGGED(TaintedIntWithObjTag ret, String s, Taint t, int c, TaintedIntWithObjTag ret2) {
+		indexOf$$PHOSPHORTAGGED(ret, s, String.valueOf((char)c), 0, ret2);
+	}
+
+	public static void indexOf$$PHOSPHORTAGGED(TaintedIntWithObjTag ret, String s, Taint t1, int c, Taint t2, int start, TaintedIntWithObjTag ret2) {
+		indexOf$$PHOSPHORTAGGED(ret, s, String.valueOf((char)c), 0, ret2);
+	}
+
+
+	public static void indexOf$$PHOSPHORTAGGED(TaintedIntWithObjTag ret, String s, Taint tPref,  String pref, TaintedIntWithObjTag ret2) {
+		indexOf$$PHOSPHORTAGGED(ret, s, pref, 0, ret2);
+	}
+
+	public static void indexOf$$PHOSPHORTAGGED(TaintedIntWithObjTag ret, String s, String pref, Taint tPref, TaintedIntWithObjTag ret2) {
+		indexOf$$PHOSPHORTAGGED(ret, s, pref, 0, ret2);
+	}
+
+	public static void indexOf$$PHOSPHORTAGGED(TaintedIntWithObjTag ret, String s, String pref, TaintedIntWithObjTag ret2) {
+		indexOf$$PHOSPHORTAGGED(ret, s, pref, 0, ret2);
+	}
+
+	public static void indexOf$$PHOSPHORTAGGED(TaintedIntWithObjTag ret, String s, String pref, Taint t, int index, TaintedIntWithObjTag ret2) {
+		indexOf$$PHOSPHORTAGGED(ret, s, pref, 0, ret2);
+	}
 	public static void startsWith$$PHOSPHORTAGGED(TaintedBooleanWithObjTag ret, String s, String pref, Taint tStart, int start, TaintedBooleanWithObjTag ret2) {
 		Expression tPref;
 		if (enabled && s.PHOSPHOR_TAG != null && s.PHOSPHOR_TAG.getSingleLabel() != null) {
