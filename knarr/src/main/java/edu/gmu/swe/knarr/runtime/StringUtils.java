@@ -10,7 +10,8 @@ import edu.columbia.cs.psl.phosphor.struct.LazyCharArrayObjTags;
 import edu.columbia.cs.psl.phosphor.struct.TaintedBooleanWithObjTag;
 import edu.columbia.cs.psl.phosphor.struct.TaintedCharWithObjTag;
 import edu.columbia.cs.psl.phosphor.struct.TaintedIntWithObjTag;
-//import javafx.util.Pair;
+
+import org.jgrapht.alg.util.Pair;
 import za.ac.sun.cs.green.expr.BVVariable;
 import za.ac.sun.cs.green.expr.Expression;
 import za.ac.sun.cs.green.expr.IntConstant;
@@ -86,7 +87,47 @@ public class StringUtils {
         }
     }
 
-	public static void indexOf$$PHOSPHORTAGGED(TaintedIntWithObjTag ret, String s, String pref, int start, TaintedIntWithObjTag ret2) {
+
+    //(Ledu/columbia/cs/psl/phosphor/struct/LazyCharArrayObjTags; tags
+	// [C   paramArrayOfChars
+	// Ledu/columbia/cs/psl/phosphor/runtime/Taint;  t1
+	// I   i1
+	// Ledu/columbia/cs/psl/phosphor/runtime/Taint; t2
+	// I  i2
+	// Ljava/lang/String; s
+	// Ledu/columbia/cs/psl/phosphor/runtime/Taint; t3
+	// I i3
+	// Ledu/columbia/cs/psl/phosphor/struct/TaintedIntWithObjTag;)
+	//
+	// Ledu/columbia/cs/psl/phosphor/struct/TaintedIntWithObjTag;
+    public static void indexOf$$PHOSPHORTAGGED(TaintedIntWithObjTag ret, String str, LazyCharArrayObjTags tags, char[] c, Taint t1 , int i, Taint t2, int i2, String s, Taint t3, TaintedIntWithObjTag ret2) {
+    	return;
+	}
+
+
+
+	public static void indexOf$$PHOSPHORTAGGED(TaintedIntWithObjTag ret, String str,  LazyCharArrayObjTags tags,  char[] paramArrayOfChar, Taint t1, int paramInt1, Taint t2,  int paramInt2, String paramString, Taint t3, int paramInt3, TaintedIntWithObjTag ret2) {
+		return;
+	}
+
+	public static void indexOf$$PHOSPHORTAGGED(TaintedIntWithObjTag ret, LazyCharArrayObjTags tags, char[] paramArrayOfChar, Taint t1, int i1, Taint t2, int i2, String s, Taint t3, int i3, TaintedIntWithObjTag ret2) {
+		return;
+	}
+
+	public static void indexOf$$PHOSPHORTAGGED(TaintedIntWithObjTag ret, String s,  char[] paramArrayOfChar, Taint t1, int paramInt1, Taint t2, int paramInt2,  String paramString,Taint t3, int paramInt3, TaintedIntWithObjTag ret2) {
+		return;
+	}
+
+	public static void indexOf$$PHOSPHORTAGGED  (TaintedIntWithObjTag ret, String s,  LazyCharArrayObjTags tags, String str, char[] paramArrayOfChar, Taint t1, int paramInt1, Taint t2, int paramInt2,  String paramString,Taint t3, int paramInt3, TaintedIntWithObjTag ret2) {
+		return;
+	}
+
+
+	public static void indexOf$$PHOSPHORTAGGED(LazyCharArrayObjTags paramLazyCharArrayObjTags, char[] paramArrayOfChar, Taint paramTaint1, int paramInt1, Taint paramTaint2, int paramInt2, String paramString, Taint paramTaint3, int paramInt3, TaintedIntWithObjTag paramTaintedIntWithObjTag) {
+		return;
+	}
+
+		public static void indexOf$$PHOSPHORTAGGED(TaintedIntWithObjTag ret, String s, String pref, int start, TaintedIntWithObjTag ret2) {
 
 		Expression tPref;
 		if (enabled && s.PHOSPHOR_TAG != null && s.PHOSPHOR_TAG.getSingleLabel() != null && pref != null) {
@@ -96,9 +137,10 @@ public class StringUtils {
 				tPref = new StringConstant(pref);
 				Expression exp = (Expression) s.PHOSPHOR_TAG.getSingleLabel();
 				if (exp.metadata == null)
-					exp.metadata = new HashSet<String>();
+					exp.metadata = new HashSet<Pair<String,String>>();
 				if (exp.metadata instanceof HashSet)
-					((HashSet) exp.metadata).add(pref);
+					//((HashSet) exp.metadata).add(new Pair<>("INDEXOF", pref));
+					((HashSet) exp.metadata).add(new Pair<>("EQUALS", pref));
 			}
 
 
@@ -120,7 +162,8 @@ public class StringUtils {
 						if (exp.metadata == null)
 							exp.metadata = new HashSet<String>();
 						if (exp.metadata instanceof HashSet)
-							((HashSet) exp.metadata).add(pref);
+//							((HashSet) exp.metadata).add(new Pair<>("INDEXOF", pref));
+							((HashSet) exp.metadata).add(new Pair<>("EQUALS", pref));
 					}
 				}
 			}
@@ -132,6 +175,8 @@ public class StringUtils {
 	public static void indexOf$$PHOSPHORTAGGED(TaintedIntWithObjTag ret, String s, Taint t, int c, TaintedIntWithObjTag ret2) {
 		indexOf$$PHOSPHORTAGGED(ret, s, String.valueOf((char)c), 0, ret2);
 	}
+
+
 
 	public static void indexOf$$PHOSPHORTAGGED(TaintedIntWithObjTag ret, String s, Taint t1, int c, Taint t2, int start, TaintedIntWithObjTag ret2) {
 		indexOf$$PHOSPHORTAGGED(ret, s, String.valueOf((char)c), 0, ret2);
@@ -162,9 +207,9 @@ public class StringUtils {
 				tPref = new StringConstant(pref);
 				Expression exp = (Expression) s.PHOSPHOR_TAG.getSingleLabel();
 				if (exp.metadata == null)
-					exp.metadata = new HashSet<String>();
+					exp.metadata = new HashSet<Pair<String,String>>();
 				if (exp.metadata instanceof HashSet)
-					((HashSet) exp.metadata).add(pref);
+					((HashSet) exp.metadata).add(new Pair<>("STARTSWITH",pref));
 			}
 			
 
@@ -200,9 +245,9 @@ public class StringUtils {
 				tO = new StringConstant(s2);
 				Expression exp = (Expression) s1.PHOSPHOR_TAG.getSingleLabel();
 				if (exp.metadata == null)
-				    exp.metadata = new HashSet<String>();
+				    exp.metadata = new HashSet<Pair<String,String>>();
 				if (exp.metadata instanceof HashSet)
-					((HashSet) exp.metadata).add(s2);
+					((HashSet) exp.metadata).add(new Pair<>("EQUALS",s2));
 			}
 			
 			Expression tS = (Expression) s1.PHOSPHOR_TAG.getSingleLabel();
@@ -220,9 +265,9 @@ public class StringUtils {
 				tO = new StringConstant(s2);
 				Expression exp = (Expression) s1.PHOSPHOR_TAG.getSingleLabel();
 				if (exp.metadata == null)
-					exp.metadata = new HashSet<String>();
+					exp.metadata = new HashSet<Pair<String,String>>();
 				if (exp.metadata instanceof HashSet)
-					((HashSet) exp.metadata).add(s2);
+					((HashSet) exp.metadata).add(new Pair<>("EQUALS",s2));
 			}
 
 			Expression tS = (Expression) s1.PHOSPHOR_TAG.getSingleLabel();
