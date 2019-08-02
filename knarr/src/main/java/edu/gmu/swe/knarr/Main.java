@@ -26,7 +26,8 @@ public class Main {
 
 		PathConstraintTagFactory.isRunning = false;
 
-		Configuration.ignoredMethods.add(new Configuration.Method("parseDouble", "java/lang/Double"));
+		Configuration.ignoredMethods.add("java/lang/Double.parseDouble(Ljava/lang/String;)D");
+
 
 		PathUtils.DISABLE_FLOATS = true;
 
