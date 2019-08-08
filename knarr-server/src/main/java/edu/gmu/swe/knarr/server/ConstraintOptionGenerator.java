@@ -31,13 +31,14 @@ import za.ac.sun.cs.green.expr.BVVariable;
 import za.ac.sun.cs.green.expr.BoolConstant;
 import za.ac.sun.cs.green.expr.Constant;
 import za.ac.sun.cs.green.expr.Expression;
+import za.ac.sun.cs.green.expr.FunctionCall;
 import za.ac.sun.cs.green.expr.IntConstant;
 import za.ac.sun.cs.green.expr.IntVariable;
 import za.ac.sun.cs.green.expr.Operation;
-import za.ac.sun.cs.green.expr.StringConstant;
 import za.ac.sun.cs.green.expr.Operation.Operator;
 import za.ac.sun.cs.green.expr.RealConstant;
 import za.ac.sun.cs.green.expr.RealVariable;
+import za.ac.sun.cs.green.expr.StringConstant;
 import za.ac.sun.cs.green.expr.StringVariable;
 import za.ac.sun.cs.green.expr.Variable;
 import za.ac.sun.cs.green.expr.Visitor;
@@ -121,6 +122,18 @@ public class ConstraintOptionGenerator {
 		}
 		
 		int arity = exp.getFuncDecl().getArity();
+
+		if (arity > 0 && exp.getFuncDecl().getDeclKind() == Z3_decl_kind.Z3_OP_UNINTERPRETED) {
+			Expr p[] = exp.getArgs();
+
+            Expression[] arguments = new Expression[p.length];
+
+            for (int i = 0 ; i < arguments.length ; i++)
+                arguments[i] = createExpr(p[i]);
+
+		    return new FunctionCall(exp.getFuncDecl().getName().toString(), arguments);
+		}
+
 		switch (arity) {
 		case 0:
 			switch (exp.getFuncDecl().getDeclKind()) {
