@@ -127,7 +127,7 @@ public class StringUtils {
 		return;
 	}
 
-		public static void indexOf$$PHOSPHORTAGGED(TaintedIntWithObjTag ret, String s, String pref, int start, TaintedIntWithObjTag ret2) {
+	public static void indexOf$$PHOSPHORTAGGED(TaintedIntWithObjTag ret, String s, String pref, int start, TaintedIntWithObjTag ret2) {
 
 		Expression tPref;
 		if (enabled && s.PHOSPHOR_TAG != null && s.PHOSPHOR_TAG.getSingleLabel() != null && pref != null) {
@@ -139,8 +139,8 @@ public class StringUtils {
 				if (exp.metadata == null)
 					exp.metadata = new HashSet<Pair<String,String>>();
 				if (exp.metadata instanceof HashSet)
-					//((HashSet) exp.metadata).add(new Pair<>("INDEXOF", pref));
-					((HashSet) exp.metadata).add(new Pair<>("EQUALS", pref));
+					((HashSet) exp.metadata).add(new Pair<>("INDEXOF", pref));
+					//((HashSet) exp.metadata).add(new Pair<>("EQUALS", pref));
 			}
 
 
@@ -162,8 +162,8 @@ public class StringUtils {
 						if (exp.metadata == null)
 							exp.metadata = new HashSet<String>();
 						if (exp.metadata instanceof HashSet)
-//							((HashSet) exp.metadata).add(new Pair<>("INDEXOF", pref));
-							((HashSet) exp.metadata).add(new Pair<>("EQUALS", pref));
+							((HashSet) exp.metadata).add(new Pair<>("INDEXOF", pref));
+//							((HashSet) exp.metadata).add(new Pair<>("EQUALS", pref));
 					}
 				}
 			}
