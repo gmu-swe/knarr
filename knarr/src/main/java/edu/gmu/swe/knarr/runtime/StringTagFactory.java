@@ -40,6 +40,7 @@ public class StringTagFactory extends ClassVisitor implements Opcodes {
 					"toUpperCase",
 					"length$$PHOSPHORTAGGED",
 					"contains$$PHOSPHORTAGGED",
+					"indexOf$$PHOSPHORTAGGED",
 			}));
 		} else {
 		    // Add selected methods
@@ -50,6 +51,7 @@ public class StringTagFactory extends ClassVisitor implements Opcodes {
 					case "charAt":
 					case "length":
 					case "contains":
+					case "indexOf":
 						ms.add(s + "$$PHOSPHORTAGGED");
 						break;
 					case "toLowerCase":
@@ -92,8 +94,11 @@ public class StringTagFactory extends ClassVisitor implements Opcodes {
 				ret = new ConstructorVisitor(
 						super.visitMethod(access, name, descriptor, signature, exceptions),
 						Type.getArgumentTypes(descriptor));
-			else if (redirectedMethods.contains(name))
+
+			else if (((access & Opcodes.ACC_STATIC) == 0) && redirectedMethods.contains(name) ) {
+				System.out.println("redirecting..." + name + " " + descriptor + " " + signature);
 				ret = redirectWithDisabledValue(access, name, descriptor, signature, exceptions);
+			}
 			else
 				ret = super.visitMethod(access, name, descriptor, signature, exceptions);
 			
@@ -266,7 +271,7 @@ public class StringTagFactory extends ClassVisitor implements Opcodes {
 
 		@Override
 		public void visitMethodInsn(int opcode, String owner, String name, String descriptor, boolean isInterface) {
-			if (owner.equals(stringType.getInternalName()) && redirectedMethods.contains(name))
+			if (opcode != Opcodes.INVOKESTATIC && owner.equals(stringType.getInternalName()) && redirectedMethods.contains(name))
 				name = name + suffix;
 			
 			super.visitMethodInsn(opcode, owner, name, descriptor, isInterface);
