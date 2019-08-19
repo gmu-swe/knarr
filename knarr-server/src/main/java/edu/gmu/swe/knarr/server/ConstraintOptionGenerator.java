@@ -324,6 +324,7 @@ public class ConstraintOptionGenerator {
 			case Z3_OP_SUB:
 				op = Operator.SUB;
 				break;
+            case Z3_OP_BSREM:
 			case Z3_OP_BSMOD:
 			case Z3_OP_BSMOD_I:
 				op = Operator.MOD;
