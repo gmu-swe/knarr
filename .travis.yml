@@ -4,9 +4,9 @@ sudo: false
 jdk: oraclejdk8
 script: mvn -Ddacapo.skip=false verify
 deploy:
- provider: script
- skip_cleanup: true
- script: cd $TRAVIS_BUILD_DIR; bash deployment/deploy.sh
+  provider: script
+  skip_cleanup: true
+  script: cd $TRAVIS_BUILD_DIR; bash deployment/deploy.sh
 env:
   global:
   - secure: DLovo/QNEn50iStFsGkS052n/9LHTy3iv+KQDGFXwv+UmUQxI/Tg9g8JxBeNypOfb2R7qFQiIl5B4Km5F+DJjY1897Tkfr4oq5hwC4QlOZgvU1whtK5NofT95SkDuVioNfRNpD/QhMCjSevS4ZDAPPDKcZeiurthtmrd378524oKMzjyW8dIVKbmF2EDmvW9ha5FcjqWq77jRTSj7XklstEzotmIKddS5Yrs+FwIMIHurQkvWzlhYRCZEjikKTiLFH/UNdoLKa9IOA+vYqA+YbOK08S19axDvxF1dVDvezdDoIE4Iyb/WBWUJ0f+i35ZJnGlfcHZAvYfcclGCKCna1IpfQxEXPi8J3aHTS43Zo6+4G+oh2PRuWmXjAG5rL06DkijRK/cCXwqKbDvxYGokPUm1l7Bi4lJf8kehQsy4zA1MOKVRKw6+1vptro6Rp7neBZVPSsTflixz3y/+DfMbnh+iHGbgQWTbhFC5VcK2J5/HCnLg8S6f2JSOdueaOu4kvO+RYEV1hCI1Jq8hxp2HHaRtKeZIj7gUkwYi5XGLe2tBDbGtKXE3dfva7Fpb3NXdamxQYHAAoYFSzFhg+6nLAC51Fq/G2wp7lIXeC4yidvU+TjcYAuDViVmEbYsbPao8MhZt4dQBp1O/46tytNM+78CgPXeU9UlrTCmMSPPlns=
