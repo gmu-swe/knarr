@@ -189,9 +189,8 @@
     </dependencies>
     <distributionManagement>
         <snapshotRepository>
-            <id>privsnapshots</id>
-            <name>JB PRIVATE Snapshots Repository</name>
-            <url>https://maven.jonbell.net/repository/privatesnaps</url>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
         </snapshotRepository>
     </distributionManagement>
 
