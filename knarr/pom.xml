@@ -5,7 +5,7 @@
     <artifactId>Knarr</artifactId>
     <version>0.0.2-SNAPSHOT</version>
     <repositories>
-        <repository>
+		<repository>
             <id>jb.snapshots</id>
             <name>jons snapshots</name>
             <url>https://maven.jonbell.net/repository/snapshots</url>
@@ -14,9 +14,7 @@
             <id>ossrh</id>
             <name>ossrh</name>
             <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-
         </repository>
-
     </repositories>
     <build>
         <resources>
@@ -180,9 +178,9 @@
             <version>0.0.4-SNAPSHOT</version>
         </dependency>
         <dependency>
-            <groupId>greensolver</groupId>
+            <groupId>edu.gmu.swe.greensolver</groupId>
             <artifactId>green</artifactId>
-            <version>SNAPSHOT</version>
+            <version>1.0-SNAPSHOT</version>
         </dependency>
         <!-- <dependency> <groupId>net.jonbell.java</groupId> <artifactId>CRIJ</artifactId> 
             <version>0.0.1-SNAPSHOT</version> </dependency> -->

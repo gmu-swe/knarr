@@ -5,6 +5,11 @@
     <artifactId>Knarr-Server</artifactId>
     <version>0.0.2-SNAPSHOT</version>
     <repositories>
+	    <repository>
+            <id>ossrh</id>
+            <name>ossrh-snapshots</name>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </repository>
         <repository>
             <id>jb.snapshots</id>
             <name>jons snapshots</name>
@@ -80,9 +85,9 @@
             <version>0.0.2-SNAPSHOT</version>
         </dependency>
         <dependency>
-            <groupId>greensolver</groupId>
+            <groupId>edu.gmu.swe.greensolver</groupId>
             <artifactId>green</artifactId>
-            <version>SNAPSHOT</version>
+            <version>1.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.choco-solver</groupId>
