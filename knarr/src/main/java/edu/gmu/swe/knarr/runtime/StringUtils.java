@@ -357,8 +357,9 @@ public class StringUtils {
 	}
 	
 	public static void length$$PHOSPHORTAGGED(TaintedIntWithObjTag ret, String s, TaintedIntWithObjTag ret2) {
-		if (enabled && s.PHOSPHOR_TAG != null && s.PHOSPHOR_TAG.getSingleLabel() != null)
-			ret.taint = new ExpressionTaint(new Operation(Operator.LENGTH, (Expression) s.PHOSPHOR_TAG.getSingleLabel()));
+		if (enabled && s.PHOSPHOR_TAG != null && s.PHOSPHOR_TAG.getSingleLabel() != null) {
+			ret.taint = new ExpressionTaint(new Operation(Operator.I2BV, 32, new Operation(Operator.LENGTH, (Expression) s.PHOSPHOR_TAG.getSingleLabel())));
+		}
 	}
 	
 	public static int stringName;
