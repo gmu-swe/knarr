@@ -9,6 +9,7 @@ import za.ac.sun.cs.green.expr.Expression;
 import za.ac.sun.cs.green.expr.IntConstant;
 import za.ac.sun.cs.green.expr.Operation;
 import za.ac.sun.cs.green.expr.Operation.Operator;
+import za.ac.sun.cs.green.expr.StringVariable;
 
 public class ModelUtils {
 
@@ -88,6 +89,40 @@ public class ModelUtils {
         } else {
             ret.val = receiver.equals(o);
         }
+
+        return ret;
+    }
+
+    public static String addSymbol$$PHOSPHORTAGGED(com.sun.org.apache.xerces.internal.util.SymbolTable table, LazyCharArrayObjTags buffTaints, char[] buff, Taint offsetTaint, int offset, Taint lengthTaint, int length) {
+        String ret = table.addSymbol(buff, offset, length);
+
+        if (buffTaints != null && buffTaints.taints != null) {
+            // Copy length taints from offset
+            ret.valuePHOSPHOR_TAG = new LazyCharArrayObjTags(length);
+            ret.valuePHOSPHOR_TAG.taints = new Taint[length];
+
+            try {
+                System.arraycopy(buffTaints.taints, offset, ret.valuePHOSPHOR_TAG.taints, 0, length);
+            } catch (RuntimeException e) {
+                throw e;
+            }
+
+        }
+
+        // Set the string taint as the concat of all those taints
+        StringVariable var = StringUtils.getFreshStringVar();
+        Expression exp = var;
+        for (int i = 0 ; i < length ; i++) {
+            Taint t = buffTaints.taints[offset + i];
+            if (t == null) {
+                exp = new Operation(Operator.CONCAT, exp, new IntConstant(buff[offset + i]));
+            } else {
+                exp = new Operation(Operator.CONCAT, exp, (Expression) t.getSingleLabel());
+            }
+        }
+
+        ret.PHOSPHOR_TAG = new ExpressionTaint(exp);
+
 
         return ret;
     }

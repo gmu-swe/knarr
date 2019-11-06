@@ -14,6 +14,11 @@ public class RedirectMethodsTaintAdapter extends TaintAdapter {
     private static Type STRING_TYPE = Type.getType(String.class);
     private static Type MODEL_UTILS_TYPE = Type.getType(ModelUtils.class);
 
+    private static String SYMBOL_TABLE_XERCES_INTERNAL_NAME = "com/sun/org/apache/xerces/internal/util/SymbolTable";
+    private static String SYMBOL_TABLE_XERCES_DESC = "L" + SYMBOL_TABLE_XERCES_INTERNAL_NAME + ";";
+    private static String SYMBOL_TABLE_XERCES_ADD_SYMBOL_DESC = "([CII)Ljava/lang/String;";
+    private static String SYMBOL_TABLE_XERCES_ADD_SYMBOL_INTERCEPT_DESC = "(" + SYMBOL_TABLE_XERCES_DESC + "[CII)Ljava/lang/String;";
+
     private static String NEW_STRING_EQUALS_DESC = Type.getMethodDescriptor(Type.BOOLEAN_TYPE, STRING_TYPE, Type.getType(Object.class));
 
     private static Set<String> REDIRECTED_METHODS_FROM_CHARACTER = new HashSet<>(Arrays.asList(new String[]{
@@ -39,14 +44,19 @@ public class RedirectMethodsTaintAdapter extends TaintAdapter {
             if (REDIRECTED_METHODS_FROM_CHARACTER.contains(name)) {
                 owner = MODEL_UTILS_TYPE.getInternalName();
             }
-        }
-
-        if (owner.equals(STRING_TYPE.getInternalName())) {
+        } else if (owner.equals(STRING_TYPE.getInternalName())) {
             if (REDIRECTED_METHODS_FROM_STRING.contains(name)) {
                 opcode = INVOKESTATIC;
                 owner = MODEL_UTILS_TYPE.getInternalName();
                 descriptor = NEW_STRING_EQUALS_DESC;
             }
+        } else if (
+                owner.equals(SYMBOL_TABLE_XERCES_INTERNAL_NAME) &&
+                        "addSymbol".equals(name) &&
+                        SYMBOL_TABLE_XERCES_ADD_SYMBOL_DESC.equals(descriptor)) {
+            opcode = INVOKESTATIC;
+            owner = MODEL_UTILS_TYPE.getInternalName();
+            descriptor = SYMBOL_TABLE_XERCES_ADD_SYMBOL_INTERCEPT_DESC;
         }
 
         super.visitMethodInsn(opcode, owner, name, descriptor, isInterface);
