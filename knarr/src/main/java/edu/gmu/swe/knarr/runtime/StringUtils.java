@@ -2,6 +2,7 @@ package edu.gmu.swe.knarr.runtime;
 
 import java.io.Serializable;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.Locale;
 
 import edu.columbia.cs.psl.phosphor.runtime.Taint;
@@ -61,6 +62,9 @@ public class StringUtils {
 //			 // TODO: make sustring not break jvm
 //		}
 
+
+	public static LinkedList<String> symbolizedStrings = new LinkedList<>();
+
 	public static void registerNewString(String s, LazyArrayObjTags srcTags, Object src, Taint offset_t, int offset, Taint len_t, int len) {
 		if (enabled && srcTags != null && srcTags.taints != null) {
 			StringVariable var = getFreshStringVar();
@@ -78,6 +82,7 @@ public class StringUtils {
 			}
 			
 			s.PHOSPHOR_TAG = new ExpressionTaint(exp);
+			symbolizedStrings.add(s);
 		}
 	}
 

@@ -213,6 +213,13 @@ public class Symbolicator {
 				b[j] = null;
 
 		TaintListener.symbolizedArrays.clear();
+
+		for (String s : StringUtils.symbolizedStrings) {
+			s.valuePHOSPHOR_TAG = null;
+			s.PHOSPHOR_TAG = null;
+		}
+
+		StringUtils.symbolizedStrings.clear();
 	}
 
 	public static void solve() {
