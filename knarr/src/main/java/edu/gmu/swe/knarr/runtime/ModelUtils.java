@@ -107,21 +107,20 @@ public class ModelUtils {
                 throw e;
             }
 
-        }
-
-        // Set the string taint as the concat of all those taints
-        StringVariable var = StringUtils.getFreshStringVar();
-        Expression exp = var;
-        for (int i = 0 ; i < length ; i++) {
-            Taint t = buffTaints.taints[offset + i];
-            if (t == null) {
-                exp = new Operation(Operator.CONCAT, exp, new IntConstant(buff[offset + i]));
-            } else {
-                exp = new Operation(Operator.CONCAT, exp, (Expression) t.getSingleLabel());
+            // Set the string taint as the concat of all those taints
+            StringVariable var = StringUtils.getFreshStringVar();
+            Expression exp = var;
+            for (int i = 0 ; i < length ; i++) {
+                Taint t = buffTaints.taints[offset + i];
+                if (t == null) {
+                    exp = new Operation(Operator.CONCAT, exp, new IntConstant(buff[offset + i]));
+                } else {
+                    exp = new Operation(Operator.CONCAT, exp, (Expression) t.getSingleLabel());
+                }
             }
-        }
 
-        ret.PHOSPHOR_TAG = new ExpressionTaint(exp);
+            ret.PHOSPHOR_TAG = new ExpressionTaint(exp);
+        }
 
 
         return ret;
