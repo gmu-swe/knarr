@@ -249,14 +249,14 @@ public class StringUtils {
 			else {
 				tO = new StringConstant(s2);
 				Expression exp = (Expression) s1.PHOSPHOR_TAG.getSingleLabel();
-				if (exp.metadata == null)
-				    exp.metadata = new HashSet<Pair<String,String>>();
-				if (exp.metadata instanceof HashSet)
-					((HashSet) exp.metadata).add(new Pair<>("EQUALS",s2));
 			}
 			
 			Expression tS = (Expression) s1.PHOSPHOR_TAG.getSingleLabel();
 			Expression exp = new Operation(Operator.EQUALS, tS, tO);
+			if (exp.metadata == null)
+				exp.metadata = new HashSet<Pair<String,String>>();
+			if (exp.metadata instanceof HashSet)
+				((HashSet) exp.metadata).add(new Pair<>("EQUALS",s2));
 			ret.taint = new ExpressionTaint(exp);
 		} else if (enabled && o != null && o instanceof String && ((String)o).PHOSPHOR_TAG != null && ((String)o).PHOSPHOR_TAG.getSingleLabel() != null) {
 			String s1 = (String)o;
@@ -269,14 +269,14 @@ public class StringUtils {
 			else {
 				tO = new StringConstant(s2);
 				Expression exp = (Expression) s1.PHOSPHOR_TAG.getSingleLabel();
-				if (exp.metadata == null)
-					exp.metadata = new HashSet<Pair<String,String>>();
-				if (exp.metadata instanceof HashSet)
-					((HashSet) exp.metadata).add(new Pair<>("EQUALS",s2));
 			}
 
 			Expression tS = (Expression) s1.PHOSPHOR_TAG.getSingleLabel();
 			Expression exp = new Operation(Operator.EQUALS, tS, tO);
+			if (exp.metadata == null)
+				exp.metadata = new HashSet<Pair<String,String>>();
+			if (exp.metadata instanceof HashSet)
+				((HashSet) exp.metadata).add(new Pair<>("EQUALS",s2));
 			ret.taint = new ExpressionTaint(exp);
 		}
 	}
