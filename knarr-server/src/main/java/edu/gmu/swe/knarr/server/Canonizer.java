@@ -19,16 +19,7 @@ import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import za.ac.sun.cs.green.expr.ArrayVariable;
-import za.ac.sun.cs.green.expr.BVConstant;
-import za.ac.sun.cs.green.expr.BVVariable;
-import za.ac.sun.cs.green.expr.BoolConstant;
-import za.ac.sun.cs.green.expr.Constant;
-import za.ac.sun.cs.green.expr.Expression;
-import za.ac.sun.cs.green.expr.Operation;
-import za.ac.sun.cs.green.expr.Variable;
-import za.ac.sun.cs.green.expr.Visitor;
-import za.ac.sun.cs.green.expr.VisitorException;
+import za.ac.sun.cs.green.expr.*;
 import za.ac.sun.cs.green.expr.Operation.Operator;
 
 @SuppressWarnings("unused")
@@ -437,6 +428,11 @@ public class Canonizer implements Serializable {
 		private void readObject(ObjectInputStream ois) throws IOException, ClassNotFoundException {
 			throw new UnsupportedOperationException();
 		}
+
+		@Override
+		public Expression copy(Copier copier) {
+			throw new Error("not implemented");
+		}
 	}
 	
 	private static class Canonical extends Expression {
@@ -454,6 +450,11 @@ public class Canonizer implements Serializable {
 		@Override
 		public String toString() {
 			return "CAN";
+		}
+
+		@Override
+		public Expression copy(Copier copier) {
+			throw new Error("not implemented");
 		}
 	}
 
