@@ -13,6 +13,8 @@ public class PathConditionWrapper implements Serializable {
 	 */
 	private static final long serialVersionUID = -8116156330739369246L;
 	public Expression constraints = null;
+	public int size = 0;
+	private int max = Integer.parseInt(System.getProperty("MAX_CONSTRAINTS","-1"));
 
 	public PathConditionWrapper() {
 	}
@@ -21,7 +23,10 @@ public class PathConditionWrapper implements Serializable {
 		if (constraints == null)
 			constraints = op;
 		else {
-			constraints = new Operation(Operator.AND, constraints, op);
+			if (max < 0 || size < max) {
+				size += 1;
+				constraints = new Operation(Operator.AND, constraints, op);
+			}
 		}
 	}
 
@@ -30,7 +35,10 @@ public class PathConditionWrapper implements Serializable {
 		if (constraints == null)
 			constraints = ret;
 		else {
-			constraints = new Operation(Operator.AND, constraints, ret);
+			if (max < 0 || size < max) {
+				size += 1;
+				constraints = new Operation(Operator.AND, constraints, ret);
+			}
 		}
 
 		return ret;
@@ -41,7 +49,10 @@ public class PathConditionWrapper implements Serializable {
 		if (constraints == null)
 			constraints = ret;
 		else {
-			constraints = new Operation(Operator.AND, constraints, ret);
+			if (max < 0 || size < max) {
+			    size += 1;
+				constraints = new Operation(Operator.AND, constraints, ret);
+            }
 		}
 
 		return ret;

@@ -199,6 +199,7 @@ public class Symbolicator {
 
 	public static void reset() {
 		PathUtils.getCurPC().constraints = null;
+		PathUtils.getCurPC().size = 0;
 		serverConnection = null;
 		firstLabel = null;
 		TaintListener.arrayNames.clear();
