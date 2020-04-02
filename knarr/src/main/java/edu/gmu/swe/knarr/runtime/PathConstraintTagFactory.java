@@ -13,16 +13,11 @@ import edu.columbia.cs.psl.phosphor.org.objectweb.asm.Type;
 import edu.columbia.cs.psl.phosphor.org.objectweb.asm.tree.FrameNode;
 import edu.columbia.cs.psl.phosphor.org.objectweb.asm.util.Printer;
 import edu.columbia.cs.psl.phosphor.runtime.Taint;
-import edu.columbia.cs.psl.phosphor.struct.LazyArrayObjTags;
-import edu.columbia.cs.psl.phosphor.struct.TaintedByteWithObjTag;
-import edu.columbia.cs.psl.phosphor.struct.TaintedCharWithObjTag;
-import edu.columbia.cs.psl.phosphor.struct.TaintedDoubleWithObjTag;
-import edu.columbia.cs.psl.phosphor.struct.TaintedFloatWithObjTag;
-import edu.columbia.cs.psl.phosphor.struct.TaintedIntWithObjTag;
-import edu.columbia.cs.psl.phosphor.struct.TaintedLongWithObjTag;
-import edu.columbia.cs.psl.phosphor.struct.TaintedShortWithObjTag;
+import edu.columbia.cs.psl.phosphor.struct.*;
 
 import java.util.HashMap;
+
+import static edu.gmu.swe.knarr.runtime.RedirectMethodsTaintAdapter.MODEL_UTILS_TYPE;
 
 public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, StringOpcodes {
     private final static Type STRING_TYPE = Type.getType(String.class);
@@ -426,8 +421,40 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 		case LRETURN:
 		case DRETURN:
 			break;
+		case LALOAD:
+		case DALOAD:
+		case IALOAD:
+		case FALOAD:
+		case BALOAD:
+		case CALOAD:
+		case SALOAD:
+		case AALOAD:
+			//Array Taint Index
+            int tmp = lvs.getTmpLV();
+            mv.visitVarInsn(ISTORE, tmp);
+            //Array Taint
+			mv.visitInsn(DUP2);
+			//Array Taint Array Taint
+			mv.visitVarInsn(ILOAD, tmp);
+			//Array Taint Array Taint Index
+			ta.visitMethodInsn(INVOKESTATIC, MODEL_UTILS_TYPE.getInternalName(), "checkArrayAccess", Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(Object.class), Type.INT_TYPE), false);
+			//Array Taint
+			mv.visitInsn(POP);
+			//Array Index
+            mv.visitVarInsn(ILOAD, tmp);
+			lvs.freeTmpLV(tmp);
+			break;
+		case AASTORE:
+			//Array Taint Index Val
+			mv.visitInsn(DUP2_X1);
+			//Array Index Val Taint Index Val
+			mv.visitInsn(POP2);
+			//Array Index Val Taint
+			mv.visitInsn(POP);
+			//Array Index Val
+			break;
 		default:
-			throw new UnsupportedOperationException();
+			throw new UnsupportedOperationException(Printer.OPCODES[opcode]);
 		}
 	}
 

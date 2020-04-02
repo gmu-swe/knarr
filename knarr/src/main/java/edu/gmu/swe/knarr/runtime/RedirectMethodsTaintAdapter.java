@@ -13,7 +13,7 @@ import java.util.Set;
 public class RedirectMethodsTaintAdapter extends TaintAdapter {
     private static Type CHARACTER_TYPE = Type.getType(Character.class);
     private static Type STRING_TYPE = Type.getType(String.class);
-    private static Type MODEL_UTILS_TYPE = Type.getType(ModelUtils.class);
+    public static Type MODEL_UTILS_TYPE = Type.getType(ModelUtils.class);
 
     private static String SYMBOL_TABLE_XERCES_INTERNAL_NAME = "com/sun/org/apache/xerces/internal/util/SymbolTable";
     private static String SYMBOL_TABLE_XERCES_DESC = "L" + SYMBOL_TABLE_XERCES_INTERNAL_NAME + ";";
@@ -78,17 +78,5 @@ public class RedirectMethodsTaintAdapter extends TaintAdapter {
             mv.visitLdcInsn(this.className + ":" + this.analyzer.name + ":" + this.lineno);
     }
 
-    @Override
-    public void visitInsn(int opcode) {
-        switch (opcode) {
-            case AALOAD:
-                //super.visitInsn(DUP2);
-                //super.visitMethodInsn(INVOKESTATIC, MODEL_UTILS_TYPE.getInternalName(), "checkArrayAccess", Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(Object.class), Type.INT_TYPE), false);
-                super.visitInsn(AALOAD);
-                break;
-            default:
-                super.visitInsn(opcode);
-        }
-    }
 }
 
