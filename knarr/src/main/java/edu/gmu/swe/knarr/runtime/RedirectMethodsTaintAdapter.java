@@ -2,6 +2,7 @@ package edu.gmu.swe.knarr.runtime;
 
 import edu.columbia.cs.psl.phosphor.instrumenter.TaintAdapter;
 import edu.columbia.cs.psl.phosphor.instrumenter.analyzer.NeverNullArgAnalyzerAdapter;
+import edu.columbia.cs.psl.phosphor.org.objectweb.asm.Label;
 import edu.columbia.cs.psl.phosphor.org.objectweb.asm.MethodVisitor;
 import edu.columbia.cs.psl.phosphor.org.objectweb.asm.Type;
 
@@ -60,6 +61,34 @@ public class RedirectMethodsTaintAdapter extends TaintAdapter {
         }
 
         super.visitMethodInsn(opcode, owner, name, descriptor, isInterface);
+    }
+
+    private int lineno = -1;
+
+    @Override
+    public void visitLineNumber(int line, Label start) {
+        this.lineno = line;
+        super.visitLineNumber(line, start);
+    }
+
+    private void getSourceInfo(MethodVisitor mv) {
+        if (this.className.startsWith("java"))
+            mv.visitInsn(ACONST_NULL);
+        else
+            mv.visitLdcInsn(this.className + ":" + this.analyzer.name + ":" + this.lineno);
+    }
+
+    @Override
+    public void visitInsn(int opcode) {
+        switch (opcode) {
+            case AALOAD:
+                //super.visitInsn(DUP2);
+                //super.visitMethodInsn(INVOKESTATIC, MODEL_UTILS_TYPE.getInternalName(), "checkArrayAccess", Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(Object.class), Type.INT_TYPE), false);
+                super.visitInsn(AALOAD);
+                break;
+            default:
+                super.visitInsn(opcode);
+        }
     }
 }
 
