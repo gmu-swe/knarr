@@ -153,8 +153,11 @@ public class TaintListener extends DerivedTaintListener {
 			PathUtils.getCurPC()._addDet(Operator.EQ, c, select);
 
 			// Index is within the array bounds
-			PathUtils.getCurPC()._addDet(Operator.LT, (Expression)idxTaint.getSingleLabel(), new BVConstant(b.getLength(), 32));
-			PathUtils.getCurPC()._addDet(Operator.GE, (Expression)idxTaint.getSingleLabel(), new BVConstant(0, 32));
+			{
+				Expression exp = new Operation(Operator.LT, (Expression) idxTaint.getSingleLabel(), new BVConstant(b.getLength(), 32));
+				PathUtils.getCurPC()._addDet(Operator.LT, (Expression) idxTaint.getSingleLabel(), new BVConstant(b.getLength(), 32));
+				PathUtils.getCurPC()._addDet(Operator.GE, (Expression) idxTaint.getSingleLabel(), new BVConstant(0, 32));
+			}
 
 			symbolizedArrays.add(b.taints);
 

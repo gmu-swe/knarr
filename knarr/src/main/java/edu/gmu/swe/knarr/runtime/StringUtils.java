@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Locale;
+import java.util.concurrent.ConcurrentHashMap;
 
 import edu.columbia.cs.psl.phosphor.runtime.Taint;
 import edu.columbia.cs.psl.phosphor.struct.LazyArrayObjTags;
@@ -71,7 +72,8 @@ public class StringUtils {
 			Expression exp = var;
 			char[] arr = s.toCharArray();
 			// Offset is for src, not for s
-			for (int i = 0 ; i < len ; i++) {
+			// TODO array out of bounds because sometimes arr is shorter than len
+			for (int i = 0 ; i < arr.length ; i++) {
 				Taint t = srcTags.taints[offset + i];
 				if (t == null) {
 					exp = new Operation(Operator.CONCAT, exp, new IntConstant(arr[i]));
@@ -232,7 +234,6 @@ public class StringUtils {
 	public static void startsWith$$PHOSPHORTAGGED(TaintedBooleanWithObjTag ret, String s, String pref, TaintedBooleanWithObjTag ret2) {
 		startsWith$$PHOSPHORTAGGED(ret, s, pref, null, 0, ret2);
 	}
-	
 
 	public static void equals$$PHOSPHORTAGGED(TaintedBooleanWithObjTag ret, String s, Object o, TaintedBooleanWithObjTag ret2) {
 		registerNewString(s, s.valuePHOSPHOR_TAG, null, null, 0, null, s.length());

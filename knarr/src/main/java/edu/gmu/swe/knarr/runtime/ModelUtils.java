@@ -125,4 +125,10 @@ public class ModelUtils {
 
         return ret;
     }
+
+    public static void checkArrayAccess(Object arr, int idx) {
+    }
+
+    public static void checkArrayAccess$$PHOSPHORTAGGED(Object arr, Taint idxTaint, int idx) {
+    }
 }

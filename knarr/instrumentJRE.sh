@@ -9,6 +9,7 @@ else
 	if [ ! -d "target/jre-inst" ]; then
 		echo "Creating instrumented JRE\n";
 		java -Xmx6g "$@" -jar target/Knarr-0.0.2-SNAPSHOT.jar $INST_HOME target/jre-inst;
+		#java -DspecialStrings=equals,startsWith,contains,length -Xmx6g -jar target/Knarr-0.0.2-SNAPSHOT.jar $INST_HOME target/jre-inst;
 		chmod +x target/jre-inst/jre/bin/*;
 		chmod +x target/jre-inst/jre/lib/*;
 		chmod +x target/jre-inst/bin/*;
