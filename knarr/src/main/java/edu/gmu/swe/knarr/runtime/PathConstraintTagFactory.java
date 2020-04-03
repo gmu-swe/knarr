@@ -429,18 +429,20 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 		case CALOAD:
 		case SALOAD:
 		case AALOAD:
-			//Array Taint Index
+			//Taint? Array Taint Index
             int tmp = lvs.getTmpLV();
             mv.visitVarInsn(ISTORE, tmp);
-            //Array Taint
+
+			//Taint? Array Taint
 			mv.visitInsn(DUP2);
-			//Array Taint Array Taint
+
+			//Taint? Array Taint Array Taint
 			mv.visitVarInsn(ILOAD, tmp);
-			//Array Taint Array Taint Index
-			ta.visitMethodInsn(INVOKESTATIC, MODEL_UTILS_TYPE.getInternalName(), "checkArrayAccess", Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(Object.class), Type.INT_TYPE), false);
-			//Array Taint
+			//Taint? Array Taint Array Taint Index
+			mv.visitMethodInsn(INVOKESTATIC, MODEL_UTILS_TYPE.getInternalName(), "checkArrayAccess$$PHOSPHORTAGGED", Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(Object.class), Type.getType(Taint.class), Type.INT_TYPE), false);
+			//Taint? Array Taint
 			mv.visitInsn(POP);
-			//Array Index
+			//Taint? Array Index
             mv.visitVarInsn(ILOAD, tmp);
 			lvs.freeTmpLV(tmp);
 			break;
