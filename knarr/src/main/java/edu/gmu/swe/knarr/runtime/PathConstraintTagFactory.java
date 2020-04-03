@@ -439,7 +439,10 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 			//Taint? Array Taint Array Taint
 			mv.visitVarInsn(ILOAD, tmp);
 			//Taint? Array Taint Array Taint Index
-			mv.visitMethodInsn(INVOKESTATIC, MODEL_UTILS_TYPE.getInternalName(), "checkArrayAccess$$PHOSPHORTAGGED", Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(Object.class), Type.getType(Taint.class), Type.INT_TYPE), false);
+			int arrayAccessID = Coverage.instance.getNewLocationId();
+			mv.visitLdcInsn(arrayAccessID);
+			getSourceInfo(mv, "array");
+			mv.visitMethodInsn(INVOKESTATIC, MODEL_UTILS_TYPE.getInternalName(), "checkArrayAccess$$PHOSPHORTAGGED", Type.getMethodDescriptor(Type.VOID_TYPE, Type.getType(Object.class), Type.getType(Taint.class), Type.INT_TYPE, Type.INT_TYPE, STRING_TYPE), false);
 			//Taint? Array Taint
 			mv.visitInsn(POP);
 			//Taint? Array Index
@@ -1030,10 +1033,15 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 	}
 
 	private void getSourceInfo(MethodVisitor mv) {
+	    getSourceInfo(mv, null);
+	}
+
+	private void getSourceInfo(MethodVisitor mv, String pref) {
 		if (this.owner.startsWith("java"))
 		    mv.visitInsn(ACONST_NULL);
         else
-        	mv.visitLdcInsn((this.owner != null ? this.owner : "?")
+        	mv.visitLdcInsn((pref != null ? pref : "") +
+					(this.owner != null ? this.owner : "?")
 					+ ":"
 					+ (this.name != null ? this.name : "?")
 					+ ":" + this.line);

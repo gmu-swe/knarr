@@ -126,9 +126,53 @@ public class ModelUtils {
         return ret;
     }
 
-    public static void checkArrayAccess(Object arr, int idx) {
+    public static void checkArrayAccess(Object arr, int idx, int id, String source) {
     }
 
-    public static void checkArrayAccess$$PHOSPHORTAGGED(Object arr, Taint idxTaint, int idx) {
+    public static void checkArrayAccess$$PHOSPHORTAGGED(Object o, Taint idxTaint, int idx, int id, String source) {
+        if (idxTaint != null) {
+            Object[] arr = (Object[]) o;
+            if (!(idxTaint.getSingleLabel() instanceof Operation))
+                return;
+
+            Operation op = (Operation) idxTaint.getSingleLabel();
+
+            // Skip power-of-2 sized arrays with access sanitized through bit-wise and
+            {
+                if (op.getOperator().equals(Operator.BIT_AND)) {
+                    if (op.getOperand(1) instanceof IntConstant) {
+                        IntConstant c = (IntConstant) op.getOperand(1);
+                        int max = Integer.MAX_VALUE & (int) c.getValueLong();
+                        if  (max < arr.length)
+                            return;
+                    }
+                }
+            }
+
+            // Skip array accesses sanitized with modulus operation
+            {
+                if (op.getOperator().equals(Operator.MOD)) {
+                    if (op.getOperand(1) instanceof IntConstant) {
+                        IntConstant c = (IntConstant) op.getOperand(1);
+                        if  (c.getValueLong() <= (arr.length))
+                            return;
+                    }
+                }
+            }
+
+            // Skip array accesses sanitized with right shift
+            {
+                if (op.getOperator().equals(Operator.SHIFTUR)) {
+                    if (op.getOperand(1) instanceof IntConstant) {
+                        IntConstant c = (IntConstant) op.getOperand(1);
+                        int max = Integer.MAX_VALUE >>> (int) c.getValueLong();
+                        if  (max < arr.length)
+                            return;
+                    }
+                }
+            }
+
+            idxTaint = null;
+        }
     }
 }
