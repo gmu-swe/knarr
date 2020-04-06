@@ -28,18 +28,21 @@ import com.microsoft.z3.enumerations.Z3_decl_kind;
 import za.ac.sun.cs.green.expr.ArrayVariable;
 import za.ac.sun.cs.green.expr.BVConstant;
 import za.ac.sun.cs.green.expr.BVVariable;
+import za.ac.sun.cs.green.expr.BinaryOperation;
 import za.ac.sun.cs.green.expr.BoolConstant;
 import za.ac.sun.cs.green.expr.Constant;
 import za.ac.sun.cs.green.expr.Expression;
 import za.ac.sun.cs.green.expr.FunctionCall;
 import za.ac.sun.cs.green.expr.IntConstant;
 import za.ac.sun.cs.green.expr.IntVariable;
+import za.ac.sun.cs.green.expr.NaryOperation;
 import za.ac.sun.cs.green.expr.Operation;
 import za.ac.sun.cs.green.expr.Operation.Operator;
 import za.ac.sun.cs.green.expr.RealConstant;
 import za.ac.sun.cs.green.expr.RealVariable;
 import za.ac.sun.cs.green.expr.StringConstant;
 import za.ac.sun.cs.green.expr.StringVariable;
+import za.ac.sun.cs.green.expr.UnaryOperation;
 import za.ac.sun.cs.green.expr.Variable;
 import za.ac.sun.cs.green.expr.Visitor;
 import za.ac.sun.cs.green.expr.VisitorException;
@@ -114,9 +117,9 @@ public class ConstraintOptionGenerator {
 			if (exp.getNumArgs() == 1)
 				return createExpr(exp.getArgs()[0]);
 
-			Operation ret = new Operation(op, createExpr(exp.getArgs()[0]), createExpr(exp.getArgs()[1]));
+			Operation ret = new BinaryOperation(op, createExpr(exp.getArgs()[0]), createExpr(exp.getArgs()[1]));
 			for (int i = 2 ; i < exp.getNumArgs() ; i++)
-				ret = new Operation(op, ret, createExpr(exp.getArgs()[i]));
+				ret = new BinaryOperation(op, ret, createExpr(exp.getArgs()[i]));
 
 			return ret;
 		}
@@ -232,13 +235,13 @@ public class ConstraintOptionGenerator {
 			{
 				op = Operator.EXTRACT;
 				Parameter[] p = exp.getFuncDecl().getParameters();
-				return new Operation(op, p[0].getInt(), p[1].getInt(), createExpr(exp.getArgs()[0]));
+				return new UnaryOperation(op, p[0].getInt(), p[1].getInt(), createExpr(exp.getArgs()[0]));
 			}
 			case Z3_OP_INT2BV:
 			{
 				op = Operator.I2BV;
 				Parameter[] p = exp.getFuncDecl().getParameters();
-				return new Operation(op, p[0].getInt(), createExpr(exp.getArgs()[0]));
+				return new UnaryOperation(op, p[0].getInt(), createExpr(exp.getArgs()[0]));
 			}
 			case Z3_OP_BV2INT:
 				op = Operator.BV2I;
@@ -246,24 +249,24 @@ public class ConstraintOptionGenerator {
 			case Z3_OP_SIGN_EXT:
 				op = Operator.SIGN_EXT;
 				Parameter[] p = exp.getFuncDecl().getParameters();
-				return new Operation(op, p[0].getInt(), createExpr(exp.getArgs()[0]));
+				return new UnaryOperation(op, p[0].getInt(), createExpr(exp.getArgs()[0]));
 			case Z3_OP_ZERO_EXT:
 				op = Operator.ZERO_EXT;
 				p = exp.getFuncDecl().getParameters();
-				return new Operation(op, p[0].getInt(), createExpr(exp.getArgs()[0]));
+				return new UnaryOperation(op, p[0].getInt(), createExpr(exp.getArgs()[0]));
 			case Z3_OP_TO_REAL:
 				op = Operator.I2R;
-				return new Operation(op, createExpr(exp.getArgs()[0]));
+				return new UnaryOperation(op, createExpr(exp.getArgs()[0]));
 			case Z3_OP_UMINUS:
             case Z3_OP_BNEG:
 				op = Operator.NEG;
-				return new Operation(op, createExpr(exp.getArgs()[0]));
+				return new UnaryOperation(op, createExpr(exp.getArgs()[0]));
 			case Z3_OP_SEQ_UNIT:
-				return new Operation(Operator.CONCAT, new StringConstant(""), createExpr(exp.getArgs()[0]));
+				return new BinaryOperation(Operator.CONCAT, new StringConstant(""), createExpr(exp.getArgs()[0]));
 			default:
 				throw new UnsupportedOperationException("Got: " + exp + " " + exp.getFuncDecl().getDeclKind());
 			}
-			return new Operation(op, createExpr(exp.getArgs()[0]));
+			return new UnaryOperation(op, createExpr(exp.getArgs()[0]));
 		case 2:
 			switch (t) {
 			case Z3_OP_BOR:
@@ -343,18 +346,18 @@ public class ConstraintOptionGenerator {
 			}
 			if(exp.getNumArgs() != 2)
 				throw new UnsupportedOperationException("Got: " + exp);
-			return new Operation(op, createExpr(exp.getArgs()[0]), createExpr(exp.getArgs()[1]));
+			return new BinaryOperation(op, createExpr(exp.getArgs()[0]), createExpr(exp.getArgs()[1]));
 		case 3:
 			Expr[] e = exp.getArgs();
 			switch (t) {
 			case Z3_OP_SEQ_EXTRACT:
-				return new Operation(Operator.SUBSTRING, createExpr(exp.getArgs()[0]), createExpr(exp.getArgs()[1]), createExpr(exp.getArgs()[2]));
+				return new NaryOperation(Operator.SUBSTRING, createExpr(exp.getArgs()[0]), createExpr(exp.getArgs()[1]), createExpr(exp.getArgs()[2]));
 			case Z3_OP_ITE:
-				return new Operation(Operator.ITE, createExpr(e[0]), createExpr(e[1]), createExpr(e[2]));
+				return new NaryOperation(Operator.ITE, createExpr(e[0]), createExpr(e[1]), createExpr(e[2]));
 			case Z3_OP_STORE:
-				return new Operation(Operator.STORE, createExpr(e[0]), createExpr(e[1]), createExpr(e[2]));
+				return new NaryOperation(Operator.STORE, createExpr(e[0]), createExpr(e[1]), createExpr(e[2]));
 			case Z3_OP_SEQ_REPLACE:
-				return new Operation(Operator.REPLACEFIRST, createExpr(e[0]), createExpr(e[1]), createExpr(e[2]));
+				return new NaryOperation(Operator.REPLACEFIRST, createExpr(e[0]), createExpr(e[1]), createExpr(e[2]));
 			default:
 				throw new UnsupportedOperationException("Got: " + exp);
 
@@ -375,7 +378,7 @@ public class ConstraintOptionGenerator {
 			if(data.metaConstraints == null)
 				data.metaConstraints = createExpr(b);
 			else
-				data.metaConstraints = new Operation(Operator.AND,data.metaConstraints,createExpr(b));
+				data.metaConstraints = new BinaryOperation(Operator.AND,data.metaConstraints,createExpr(b));
 		}
 //		try {
 //			data.constraints.accept(ctr);
@@ -414,7 +417,7 @@ public class ConstraintOptionGenerator {
 			{
 				newOperands[i] = copyFirstN(c-1,((Operation) exp).getOperand(i));
 			}
-			return new Operation(((Operation) exp).getOperator(), newOperands);
+			return new NaryOperation(((Operation) exp).getOperator(), newOperands);
 		}
 		return null;
 	}
@@ -462,26 +465,26 @@ public class ConstraintOptionGenerator {
 			for (int i = 0; i < newOperands.length; i++)
 				newOperands[i] = copyAndFlip(((Operation) exp).getOperand(i), operationsToFlip);
 			if (!operationsToFlip.contains(exp)) {
-				return new Operation(((Operation) exp).getOperator(), newOperands);
+				return new NaryOperation(((Operation) exp).getOperator(), newOperands);
 			}
 			switch (((Operation) exp).getOperator()) {
 			case EQ:
-				return new Operation(Operator.NE, newOperands);
+				return new BinaryOperation(Operator.NE, newOperands[0], newOperands[1]);
 			case NE:
-				return new Operation(Operator.EQ, newOperands);
+				return new BinaryOperation(Operator.EQ, newOperands[0], newOperands[1]);
 			case LE:
-				return new Operation(Operator.GT, newOperands);
+				return new BinaryOperation(Operator.GT, newOperands[0], newOperands[1]);
 			case GE:
-				return new Operation(Operator.LT, newOperands);
+				return new BinaryOperation(Operator.LT, newOperands[0], newOperands[1]);
 			case GT:
-				return new Operation(Operator.LE, newOperands);
+				return new BinaryOperation(Operator.LE, newOperands[0], newOperands[1]);
 			case LT:
-				return new Operation(Operator.GE, newOperands);
+				return new BinaryOperation(Operator.GE, newOperands[0], newOperands[1]);
 			case EQUALS:
 			case STARTSWITH:
 			case ENDSWITH:
 			case CONTAINS:
-				return new Operation(Operator.NOT, new Operation(((Operation) exp).getOperator(), newOperands));
+				return new UnaryOperation(Operator.NOT, new NaryOperation(((Operation) exp).getOperator(), newOperands));
 			default:
 				break;
 			}

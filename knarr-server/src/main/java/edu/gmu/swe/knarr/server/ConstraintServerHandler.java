@@ -22,13 +22,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 import edu.gmu.swe.knarr.runtime.Coverage;
 import za.ac.sun.cs.green.Green;
 import za.ac.sun.cs.green.Instance;
+import za.ac.sun.cs.green.expr.BinaryOperation;
 import za.ac.sun.cs.green.expr.Expression;
 import za.ac.sun.cs.green.expr.IntConstant;
+import za.ac.sun.cs.green.expr.NaryOperation;
 import za.ac.sun.cs.green.expr.Operation;
+import za.ac.sun.cs.green.expr.Operation.Operator;
 import za.ac.sun.cs.green.expr.StringConstant;
 import za.ac.sun.cs.green.expr.StringVariable;
 import za.ac.sun.cs.green.expr.Variable;
-import za.ac.sun.cs.green.expr.Operation.Operator;
 import za.ac.sun.cs.green.service.canonizer.ModelCanonizerService;
 import za.ac.sun.cs.green.service.factorizer.ModelFactorizerService;
 import za.ac.sun.cs.green.service.z3.ModelZ3JavaService;
@@ -102,10 +104,10 @@ public class ConstraintServerHandler extends Thread {
 	public static void main(String[] args) throws Throwable {
 
 		StringVariable sv = new StringVariable("myStr");
-		Expression e3 = new Operation(Operator.EQUALS, new StringConstant("foo"), new Operation(Operator.SUBSTRING, sv, new IntConstant(4), new IntConstant(3)));
-		Expression e2 = new Operation(Operator.GT, new IntConstant(100), new Operation(Operator.CHARAT,sv,new IntConstant(0)));
-		e2 = new Operation(Operator.AND, e2, e3);
-		e2 = new Operation(Operator.AND, e2, new Operation(Operator.GT, new IntConstant(105), new Operation(Operator.CHARAT,sv,new IntConstant(0))));
+		Expression e3 = new NaryOperation(Operator.EQUALS, new StringConstant("foo"), new NaryOperation(Operator.SUBSTRING, sv, Operation.FOUR, Operation.THREE));
+		Expression e2 = new NaryOperation(Operator.GT, new IntConstant(100), new BinaryOperation(Operator.CHARAT,sv,Operation.ZERO));
+		e2 = new BinaryOperation(Operator.AND, e2, e3);
+		e2 = new BinaryOperation(Operator.AND, e2, new BinaryOperation(Operator.GT, new IntConstant(105), new BinaryOperation(Operator.CHARAT,sv,Operation.ZERO)));
 
 		// e3 = new Operation(Operator.STARTSWITH, new StringConstant("foo"),
 		// sv);

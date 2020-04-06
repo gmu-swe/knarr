@@ -6,9 +6,10 @@ import edu.gmu.swe.knarr.server.concolic.Input;
 import edu.gmu.swe.knarr.server.concolic.driver.Driver;
 import za.ac.sun.cs.green.expr.BVConstant;
 import za.ac.sun.cs.green.expr.BVVariable;
+import za.ac.sun.cs.green.expr.BinaryOperation;
 import za.ac.sun.cs.green.expr.Expression;
-import za.ac.sun.cs.green.expr.Operation;
 import za.ac.sun.cs.green.expr.Operation.Operator;
+import za.ac.sun.cs.green.expr.UnaryOperation;
 import za.ac.sun.cs.green.expr.Variable;
 
 import java.lang.reflect.Array;
@@ -82,9 +83,9 @@ public class VariableMutator extends Mutator {
         }
 
         for (Object v : negatedValuesAlready) {
-            Expression negatedInput = new Operation(
+            Expression negatedInput = new UnaryOperation(
                     Operator.NOT,
-                    new Operation(Operator.EQUALS, varToNegate, new BVConstant((int)v, ((BVVariable)varToNegate).getSize()))
+                    new BinaryOperation(Operator.EQUALS, varToNegate, new BVConstant((int)v, ((BVVariable)varToNegate).getSize()))
             );
 
             HashSet<Expression> s = c.getCanonical().get(varToNegate.getName());
@@ -124,9 +125,9 @@ public class VariableMutator extends Mutator {
 
         negatedValuesAlready.add(valueToNegate);
 
-        Expression negatedInput = new Operation(
+        Expression negatedInput = new UnaryOperation(
                 Operator.NOT,
-                new Operation(Operator.EQUALS, varToNegate, new BVConstant((int)valueToNegate, ((BVVariable)varToNegate).getSize()))
+                new BinaryOperation(Operator.EQUALS, varToNegate, new BVConstant((int)valueToNegate, ((BVVariable)varToNegate).getSize()))
         );
 
         // Solve

@@ -149,16 +149,16 @@ public class Canonizer implements Serializable {
 
 		for (HashSet<Expression> es : constArrayInits.values()) {
 			for (Expression e : es)
-				expr = new Operation(Operator.AND, e, expr);
+				expr = new BinaryOperation(Operator.AND, e, expr);
 		}
 
 		for (HashSet<Expression> es : canonical.values()) {
 			for (Expression e : es)
-				expr = new Operation(Operator.AND, e, expr);
+				expr = new BinaryOperation(Operator.AND, e, expr);
 		}
 
 		for (Expression e : notCanonical)
-			expr = new Operation(Operator.AND, e, expr);
+			expr = new BinaryOperation(Operator.AND, e, expr);
 		
 		return expr;
 	}
@@ -215,7 +215,7 @@ public class Canonizer implements Serializable {
 			for (int i = 0 ; i < operands.length ; i++)
 				operands[i] = anonymizeVars(op.getOperand(i));
 			
-			return new Operation(op.getOperator(), operands);
+			return new NaryOperation(op.getOperator(), operands);
 		}
 		
 		return e;
@@ -244,7 +244,7 @@ public class Canonizer implements Serializable {
 			for (int i = 0 ; i < operands.length ; i++)
 				operands[i] = rewriteVars(op.getOperand(i), rewrites);
 			
-			return new Operation(op.getOperator(), operands);
+			return new NaryOperation(op.getOperator(), operands);
 		}
 		
 		return e;
@@ -557,19 +557,19 @@ public class Canonizer implements Serializable {
 	
 	private class NotOp extends CanonicalForm {
 		NotOp() {
-			pattern = new Operation(Operator.NOT, new Canonical());
+			pattern = new UnaryOperation(Operator.NOT, new Canonical());
 		}
 	}
 
 	private class OpVarConstant extends CanonicalForm {
 		OpVarConstant() {
-			pattern = new Operation(null, AnyVariable.any, new BVConstant(0, 0));
+			pattern = new BinaryOperation(null, AnyVariable.any, new BVConstant(0, 0));
 		}
 	}
 
 	private class OpConstantCanonical extends CanonicalForm {
 		OpConstantCanonical() {
-			pattern = new Operation(null, new BVConstant(0, 0), new Canonical());
+			pattern = new BinaryOperation(null, new BVConstant(0, 0), new Canonical());
 		}
 
 		@Override
@@ -577,7 +577,7 @@ public class Canonizer implements Serializable {
 			Operation op = (Operation) exp;
 			
 			if (commutative.contains(op.getOperator()))
-				return new Operation(op.getOperator(), op.getOperand(1), op.getOperand(0));
+				return new BinaryOperation(op.getOperator(), op.getOperand(1), op.getOperand(0));
 			else
 				return op;
 		}
@@ -585,15 +585,15 @@ public class Canonizer implements Serializable {
 
 	private class OpCanonicalConstant extends CanonicalForm {
 		OpCanonicalConstant() {
-			pattern = new Operation(null, new Canonical(), new BVConstant(0, 0));
+			pattern = new BinaryOperation(null, new Canonical(), new BVConstant(0, 0));
 		}
 	}
 	
 	private class ConstArrayInit extends CanonicalForm {
 		ConstArrayInit() {
-			pattern = new Operation(
+			pattern = new BinaryOperation(
 					Operator.EQ,
-					new Operation(
+					new BinaryOperation(
 							Operator.SELECT,
 							new ArrayVariable("", null),
 							new BVConstant(0, 0)),
@@ -603,7 +603,7 @@ public class Canonizer implements Serializable {
 
 	private class ConstArrayAccessVar extends CanonicalForm {
 		ConstArrayAccessVar() {
-			pattern = new Operation(
+			pattern = new BinaryOperation(
 					Operator.SELECT,
 					new ArrayVariable(null, null),
 					AnyVariable.any);
@@ -612,7 +612,7 @@ public class Canonizer implements Serializable {
 
 	private class ConstArrayAccessCan extends CanonicalForm {
 		ConstArrayAccessCan() {
-			pattern = new Operation(
+			pattern = new BinaryOperation(
 					Operator.SELECT,
 					new ArrayVariable(null, null),
 					new Canonical());

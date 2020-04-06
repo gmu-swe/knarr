@@ -18,11 +18,11 @@ import com.microsoft.z3.Sort;
 
 import za.ac.sun.cs.green.expr.BVConstant;
 import za.ac.sun.cs.green.expr.BVVariable;
-import za.ac.sun.cs.green.expr.BoolConstant;
+import za.ac.sun.cs.green.expr.BinaryOperation;
 import za.ac.sun.cs.green.expr.Expression;
-import za.ac.sun.cs.green.expr.IntConstant;
 import za.ac.sun.cs.green.expr.Operation;
 import za.ac.sun.cs.green.expr.Operation.Operator;
+import za.ac.sun.cs.green.expr.UnaryOperation;
 import za.ac.sun.cs.green.expr.Variable;
 import za.ac.sun.cs.green.expr.VisitorException;
 import za.ac.sun.cs.green.service.z3.Z3JavaTranslator;
@@ -469,9 +469,9 @@ public class ConstraintFileUtil {
 							throw new Error("Value to negate not found in solution");
 
 						// Add negated input to constraints
-						Expression negatedInput = new Operation(
+						Expression negatedInput = new UnaryOperation(
 								Operator.NOT,
-								new Operation(Operator.EQUALS, varToNegate, new BVConstant((int)valueToNegate, ((BVVariable)varToNegate).getSize()))
+								new BinaryOperation(Operator.EQUALS, varToNegate, new BVConstant((int)valueToNegate, ((BVVariable)varToNegate).getSize()))
 								);
 
 						c.getCanonical().get(varToNegate.getName()).add(negatedInput);

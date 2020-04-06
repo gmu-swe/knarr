@@ -8,6 +8,7 @@ import edu.gmu.swe.knarr.server.concolic.driver.Driver;
 import za.ac.sun.cs.green.expr.Expression;
 import za.ac.sun.cs.green.expr.Operation;
 import za.ac.sun.cs.green.expr.Operation.Operator;
+import za.ac.sun.cs.green.expr.UnaryOperation;
 
 import java.util.*;
 import java.util.Map.Entry;
@@ -132,7 +133,7 @@ public class ConstraintMutator extends Mutator {
         c.getNotCanonical().removeAll(toRemove);
 
         // Negate constraint
-        Expression negated = new Operation(Operator.NOT, toNegate);
+        Expression negated = new UnaryOperation(Operator.NOT, toNegate);
 //        System.out.println(negated);
 
         while (true) {
@@ -142,7 +143,7 @@ public class ConstraintMutator extends Mutator {
 
             // Add key constraints to date
             for (Expression e : keyConstraints)
-                c.getNotCanonical().add(new Operation(Operator.NOT, e));
+                c.getNotCanonical().add(new UnaryOperation(Operator.NOT, e));
 
             // Solve
             Map<String, Expression> res = c.getExpressionMap();
