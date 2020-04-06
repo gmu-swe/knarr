@@ -3,9 +3,11 @@ package edu.gmu.swe.knarr.runtime;
 import java.io.Serializable;
 import java.util.LinkedList;
 
+import za.ac.sun.cs.green.expr.BinaryOperation;
 import za.ac.sun.cs.green.expr.Expression;
 import za.ac.sun.cs.green.expr.Operation;
 import za.ac.sun.cs.green.expr.Operation.Operator;
+import za.ac.sun.cs.green.expr.UnaryOperation;
 
 public class PathConditionWrapper implements Serializable {
 	/**
@@ -25,19 +27,19 @@ public class PathConditionWrapper implements Serializable {
 		else {
 			if (max < 0 || size < max) {
 				size += 1;
-				constraints = new Operation(Operator.AND, constraints, op);
+				constraints = new BinaryOperation(Operator.AND, constraints, op);
 			}
 		}
 	}
 
 	public synchronized Expression _addDet(Operator op, Expression l, Expression r) {
-		Operation ret = new Operation(op, l, r);
+		Operation ret = new BinaryOperation(op, l, r);
 		if (constraints == null)
 			constraints = ret;
 		else {
 			if (max < 0 || size < max) {
 				size += 1;
-				constraints = new Operation(Operator.AND, constraints, ret);
+				constraints = new BinaryOperation(Operator.AND, constraints, ret);
 			}
 		}
 
@@ -45,13 +47,13 @@ public class PathConditionWrapper implements Serializable {
 	}
 
 	public synchronized Expression _addDet(Operator op, Expression t1) {
-		Operation ret = new Operation(op, t1);
+		Operation ret = new UnaryOperation(op, t1);
 		if (constraints == null)
 			constraints = ret;
 		else {
 			if (max < 0 || size < max) {
 			    size += 1;
-				constraints = new Operation(Operator.AND, constraints, ret);
+				constraints = new BinaryOperation(Operator.AND, constraints, ret);
             }
 		}
 

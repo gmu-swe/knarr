@@ -17,20 +17,18 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import edu.columbia.cs.psl.phosphor.struct.*;
-import za.ac.sun.cs.green.expr.BVConstant;
 import za.ac.sun.cs.green.expr.BVVariable;
-import za.ac.sun.cs.green.expr.BoolConstant;
-import za.ac.sun.cs.green.expr.Constant;
+import za.ac.sun.cs.green.expr.BinaryOperation;
 import za.ac.sun.cs.green.expr.Expression;
 import za.ac.sun.cs.green.expr.IntConstant;
 import za.ac.sun.cs.green.expr.IntVariable;
 import za.ac.sun.cs.green.expr.Operation;
 import za.ac.sun.cs.green.expr.Operation.Operator;
+import edu.columbia.cs.psl.phosphor.org.objectweb.asm.Type;
+import edu.columbia.cs.psl.phosphor.runtime.Taint;
 import za.ac.sun.cs.green.expr.RealVariable;
 import za.ac.sun.cs.green.expr.StringConstant;
 import za.ac.sun.cs.green.expr.StringVariable;
-import edu.columbia.cs.psl.phosphor.org.objectweb.asm.Type;
-import edu.columbia.cs.psl.phosphor.runtime.Taint;
 
 public class Symbolicator {
 	static Socket serverConnection;
@@ -87,6 +85,11 @@ public class Symbolicator {
 		}
 		return serverConnection;
 	}
+
+	private static final IntConstant FF = new IntConstant(0xFF);
+	private static final IntConstant FFFF = new IntConstant(0xFFFF);
+	private static final IntConstant FFFFFF00 = new IntConstant(0xFFFFFF00);
+	private static final IntConstant FFFF0000 = new IntConstant(0xFFFF0000);
 
 	private static void collectArrayLenConstraints() {
 		// for (Expression v : TaintUtils.arraysHash.values()) {
@@ -273,12 +276,12 @@ public class Symbolicator {
 			String name = label + "_c" + i;
 			Expression c = new BVVariable(name, 32);
 			in.valuePHOSPHOR_TAG.taints[i] = new ExpressionTaint(c);
-			t = new Operation(Operator.CONCAT, t, c);
-			PathUtils.getCurPC()._addDet(Operator.EQ, new Operation(Operator.BIT_AND, new BVVariable(name, 32), new IntConstant(0xFFFFFF00)), new IntConstant(0));
+			t = new BinaryOperation(Operator.CONCAT, t, c);
+			PathUtils.getCurPC()._addDet(Operator.EQ, new BinaryOperation(Operator.BIT_AND, new BVVariable(name, 32), FFFFFF00), Operation.ZERO);
 		}
-		
+
 		in.PHOSPHOR_TAG = new ExpressionTaint(t);
-		
+
 		return in;
 	}
 
@@ -505,10 +508,10 @@ public class Symbolicator {
 			ret = new IntVariable(lbl, 0, 1);
 			break;
 		case Type.BYTE:
-			ret = new Operation(Operator.BIT_AND, new BVVariable(lbl, 32), new IntConstant(0xFF));
+			ret = new BinaryOperation(Operator.BIT_AND, new BVVariable(lbl, 32), FF);
 			break;
 		case Type.CHAR:
-			ret = new Operation(Operator.BIT_AND, new BVVariable(lbl, 32), new IntConstant(0xFFFF));
+			ret = new BinaryOperation(Operator.BIT_AND, new BVVariable(lbl, 32), FFFF);
 			break;
 		case Type.DOUBLE:
 			ret = new RealVariable(lbl, Double.MIN_VALUE, Double.MAX_VALUE);
@@ -523,7 +526,7 @@ public class Symbolicator {
 			ret = new BVVariable(lbl, 64);
 			break;
 		case Type.SHORT:
-			ret = new Operation(Operator.BIT_AND, new BVVariable(lbl, 32), new IntConstant(0xFFFF));
+			ret = new BinaryOperation(Operator.BIT_AND, new BVVariable(lbl, 32), FFFF);
 			break;
 		default:
 			throw new UnsupportedOperationException();
@@ -550,8 +553,8 @@ public class Symbolicator {
 		if (mySoln != null && !mySoln.isUnconstrained)
 			ret.val = ((Integer) mySoln.varMapping.get(label)).byteValue();
 		ret.taint = new ExpressionTaint(new BVVariable((String) label, 32));
-        Expression pos = new Operation(Operator.EQ, new Operation(Operator.BIT_AND, new BVVariable((String) label, 32), new IntConstant(0xFFFFFF00)), new IntConstant(0));
-		Expression neg = new Operation(Operator.EQ, new Operation(Operator.BIT_AND, new BVVariable((String) label, 32), new IntConstant(0xFFFFFF00)), new IntConstant(0xFFFFFF00));
+        Expression pos = new BinaryOperation(Operator.EQ, new BinaryOperation(Operator.BIT_AND, new BVVariable((String) label, 32), FFFFFF00), Operation.ZERO);
+		Expression neg = new BinaryOperation(Operator.EQ, new BinaryOperation(Operator.BIT_AND, new BVVariable((String) label, 32), FFFFFF00), FFFFFF00);
 		PathUtils.getCurPC()._addDet(Operator.OR, pos, neg);
 		symbolicLabels.put((ExpressionTaint) ret.taint, label);
 		return ret;
@@ -573,7 +576,7 @@ public class Symbolicator {
 		if (mySoln != null && !mySoln.isUnconstrained)
 			ret.val = (char) ((Integer) mySoln.varMapping.get(label)).intValue();
 		ret.taint = new ExpressionTaint(new BVVariable((String) label, 32));
-		PathUtils.getCurPC()._addDet(Operator.EQ, new Operation(Operator.BIT_AND, new BVVariable((String) label, 32), new IntConstant(0xFFFF0000)), new IntConstant(0));
+		PathUtils.getCurPC()._addDet(Operator.EQ, new BinaryOperation(Operator.BIT_AND, new BVVariable((String) label, 32), FFFF0000), Operation.ZERO);
 		symbolicLabels.put((ExpressionTaint) ret.taint, label);
 		return ret;
 	}
@@ -614,7 +617,7 @@ public class Symbolicator {
 		if (mySoln != null && !mySoln.isUnconstrained)
 			ret.val = ((Short) mySoln.varMapping.get(label)).shortValue();
 		ret.taint = new ExpressionTaint(new BVVariable((String) label, 32));
-		PathUtils.getCurPC()._addDet(Operator.EQ, new Operation(Operator.BIT_AND, new BVVariable((String) label, 32), new IntConstant(0xFFFF0000)), new IntConstant(0));
+		PathUtils.getCurPC()._addDet(Operator.EQ, new BinaryOperation(Operator.BIT_AND, new BVVariable((String) label, 32), FFFF0000), Operation.ZERO);
 		symbolicLabels.put((ExpressionTaint) ret.taint, label);
 		return ret;
 	}

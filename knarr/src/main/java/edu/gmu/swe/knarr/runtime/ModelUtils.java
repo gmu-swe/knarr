@@ -4,12 +4,8 @@ import edu.columbia.cs.psl.phosphor.runtime.Taint;
 import edu.columbia.cs.psl.phosphor.struct.LazyCharArrayObjTags;
 import edu.columbia.cs.psl.phosphor.struct.TaintedBooleanWithObjTag;
 import edu.columbia.cs.psl.phosphor.struct.TaintedIntWithObjTag;
-import za.ac.sun.cs.green.expr.BoolConstant;
-import za.ac.sun.cs.green.expr.Expression;
-import za.ac.sun.cs.green.expr.IntConstant;
-import za.ac.sun.cs.green.expr.Operation;
+import za.ac.sun.cs.green.expr.*;
 import za.ac.sun.cs.green.expr.Operation.Operator;
-import za.ac.sun.cs.green.expr.StringVariable;
 
 public class ModelUtils {
 
@@ -22,10 +18,10 @@ public class ModelUtils {
         ret.val = Character.digit(c, radix);
 
          if (cTaint != null) {
-             Operation bounds = new Operation(Operator.AND,
-                     new Operation(Operator.GE, (Expression) cTaint.getSingleLabel(), new IntConstant('0')),
-                     new Operation(Operator.LE, (Expression) cTaint.getSingleLabel(), new IntConstant('9')));
-             PathUtils.getCurPC()._addDet(ret.val != -1 ? bounds : new Operation(Operator.NOT, bounds));
+             Operation bounds = new BinaryOperation(Operator.AND,
+                     new BinaryOperation(Operator.GE, (Expression) cTaint.getSingleLabel(), new IntConstant('0')),
+                     new BinaryOperation(Operator.LE, (Expression) cTaint.getSingleLabel(), new IntConstant('9')));
+             PathUtils.getCurPC()._addDet(ret.val != -1 ? bounds : new UnaryOperation(Operator.NOT, bounds));
 
              ret.taint = cTaint;
          }
@@ -41,9 +37,9 @@ public class ModelUtils {
 
             // Add constraints to match same length
             for (; i < s.length(); i++) {
-                ret = new Operation(Operator.AND,
+                ret = new BinaryOperation(Operator.AND,
                         ret,
-                        new Operation(Operator.EQ,
+                        new BinaryOperation(Operator.EQ,
                                 (Expression) receiver.valuePHOSPHOR_TAG.taints[i].getSingleLabel(),
                                 new IntConstant(s.charAt(i))));
             }
@@ -53,9 +49,9 @@ public class ModelUtils {
                 if (receiver.valuePHOSPHOR_TAG == null || receiver.valuePHOSPHOR_TAG.taints[i] == null)
                     continue;
 
-                ret = new Operation(Operator.AND,
+                ret = new BinaryOperation(Operator.AND,
                         ret,
-                        new Operation(Operator.EQ,
+                        new BinaryOperation(Operator.EQ,
                                 (Expression) receiver.valuePHOSPHOR_TAG.taints[i].getSingleLabel(),
                                 new IntConstant(' ')));
             }
@@ -79,7 +75,7 @@ public class ModelUtils {
                     ret.val = receiver.equals(o);
                     receiver.valuePHOSPHOR_TAG = tmp;
 
-                    ret.taint = new ExpressionTaint(ret.val ? e : new Operation(Operator.NOT, e));
+                    ret.taint = new ExpressionTaint(ret.val ? e : new UnaryOperation(Operator.NOT, e));
                 } else {
                     ret.val = receiver.equals(o);
                 }
@@ -113,9 +109,9 @@ public class ModelUtils {
             for (int i = 0 ; i < length ; i++) {
                 Taint t = buffTaints.taints[offset + i];
                 if (t == null) {
-                    exp = new Operation(Operator.CONCAT, exp, new IntConstant(buff[offset + i]));
+                    exp = new BinaryOperation(Operator.CONCAT, exp, new IntConstant(buff[offset + i]));
                 } else {
-                    exp = new Operation(Operator.CONCAT, exp, (Expression) t.getSingleLabel());
+                    exp = new BinaryOperation(Operator.CONCAT, exp, (Expression) t.getSingleLabel());
                 }
             }
 
@@ -165,6 +161,9 @@ public class ModelUtils {
                 if (op.getOperator().equals(Operator.SHIFTUR)) {
                     if (op.getOperand(1) instanceof IntConstant) {
                         IntConstant c = (IntConstant) op.getOperand(1);
+                        if (c.getValueLong() > Integer.MAX_VALUE)
+                            return;
+
                         int max = Integer.MAX_VALUE >>> (int) c.getValueLong();
                         if  (max < arr.length)
                             return;

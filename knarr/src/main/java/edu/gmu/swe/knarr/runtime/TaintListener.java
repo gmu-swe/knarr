@@ -25,14 +25,8 @@ import edu.columbia.cs.psl.phosphor.struct.TaintedFloatWithObjTag;
 import edu.columbia.cs.psl.phosphor.struct.TaintedIntWithObjTag;
 import edu.columbia.cs.psl.phosphor.struct.TaintedLongWithObjTag;
 import edu.columbia.cs.psl.phosphor.struct.TaintedShortWithObjTag;
-import za.ac.sun.cs.green.expr.ArrayVariable;
-import za.ac.sun.cs.green.expr.BVConstant;
-import za.ac.sun.cs.green.expr.BoolConstant;
-import za.ac.sun.cs.green.expr.Constant;
-import za.ac.sun.cs.green.expr.Expression;
-import za.ac.sun.cs.green.expr.Operation;
+import za.ac.sun.cs.green.expr.*;
 import za.ac.sun.cs.green.expr.Operation.Operator;
-import za.ac.sun.cs.green.expr.RealConstant;
 
 public class TaintListener extends DerivedTaintListener {
 
@@ -64,7 +58,7 @@ public class TaintListener extends DerivedTaintListener {
 
 			for (int i = 0 ; i < Array.getLength(arr) ; i++)
 			{
-				Operation select = new Operation(Operator.SELECT, arrVar, new BVConstant(i, 32));
+				Operation select = new BinaryOperation(Operator.SELECT, arrVar, new BVConstant(i, 32));
 				Constant val;
 				switch(arr.getClass().getComponentType().getName()) {
 					case "boolean":
@@ -124,7 +118,7 @@ public class TaintListener extends DerivedTaintListener {
 			ArrayVariable newVar = new ArrayVariable(var.getName() + "_" + (ret.size() + 1), var.getType());
 			ret.addLast(var);
 
-			Operation store = new Operation(Operator.STORE, oldVar, idx, val);
+			Operation store = new NaryOperation(Operator.STORE, oldVar, idx, val);
 			PathUtils.getCurPC()._addDet(Operator.EQ, store, newVar);
 			return newVar;
 		}
@@ -146,7 +140,7 @@ public class TaintListener extends DerivedTaintListener {
 				b.taints = new Taint[b.getLength()];
 
 			Expression var = getArrayVar(b.getVal());
-			Operation select = new Operation(Operator.SELECT, var, (Expression) idxTaint.getSingleLabel());
+			Operation select = new BinaryOperation(Operator.SELECT, var, (Expression) idxTaint.getSingleLabel());
 			Taint ret = new ExpressionTaint(select);
 			b.taints[idx] = ret;
 
@@ -154,9 +148,9 @@ public class TaintListener extends DerivedTaintListener {
 
 			// Index is within the array bounds
 			{
-				Expression exp = new Operation(Operator.LT, (Expression) idxTaint.getSingleLabel(), new BVConstant(b.getLength(), 32));
+				Expression exp = new BinaryOperation(Operator.LT, (Expression) idxTaint.getSingleLabel(), new BVConstant(b.getLength(), 32));
 				PathUtils.getCurPC()._addDet(Operator.LT, (Expression) idxTaint.getSingleLabel(), new BVConstant(b.getLength(), 32));
-				PathUtils.getCurPC()._addDet(Operator.GE, (Expression) idxTaint.getSingleLabel(), new BVConstant(0, 32));
+				PathUtils.getCurPC()._addDet(Operator.GE, (Expression) idxTaint.getSingleLabel(), PathUtils.BV0_32);
 			}
 
 			symbolizedArrays.add(b.taints);
@@ -171,12 +165,12 @@ public class TaintListener extends DerivedTaintListener {
 		    // Symbolic read of symbolic array pos
 			// Return array symb OR return symbolic array read
 			Expression var = getArrayVar(b.getVal());
-			Operation select = new Operation(Operator.SELECT, var, (Expression) idxTaint.getSingleLabel());
+			Operation select = new BinaryOperation(Operator.SELECT, var, (Expression) idxTaint.getSingleLabel());
 			PathUtils.getCurPC()._addDet(Operator.EQ, (Expression) b.taints[idx].getSingleLabel(), select);
 
 			// Index is within the array bounds
 			PathUtils.getCurPC()._addDet(Operator.LT, (Expression)idxTaint.getSingleLabel(), new BVConstant(b.getLength(), 32));
-			PathUtils.getCurPC()._addDet(Operator.GE, (Expression)idxTaint.getSingleLabel(), new BVConstant(0, 32));
+			PathUtils.getCurPC()._addDet(Operator.GE, (Expression)idxTaint.getSingleLabel(), PathUtils.BV0_32);
 
 			return b.taints[idx];
 		} else if (!taintedArray && !taintedIndex) {
@@ -189,7 +183,7 @@ public class TaintListener extends DerivedTaintListener {
 //			Expression var = getArrayVar(b.getVal());
 //			BVConstant idxBV = new BVConstant(idx, 32);
 //
-//			Operation select = new Operation(Operator.SELECT, var, (Expression) idxTaint.getSingleLabel());
+//			Operation select = new BinaryOperation(Operator.SELECT, var, (Expression) idxTaint.getSingleLabel());
 //			PathUtils.getCurPC()._addDet(Operator.EQ, c, select);
 //
 //			// Index is within the array bounds
@@ -302,7 +296,7 @@ public class TaintListener extends DerivedTaintListener {
 //			PathUtils.getCurPC()._addDet(Operator.LT, (Expression)idxTaint.getSingleLabel(), new BVConstant(b.getLength(), 32));
 //			PathUtils.getCurPC()._addDet(Operator.GE, (Expression)idxTaint.getSingleLabel(), new BVConstant(0, 32));
 //
-////			return new ExpressionTaint(new Operation(Operator.SELECT, newArray, new BVConstant(idx, 32)));
+////			return new ExpressionTaint(new BinaryOperation(Operator.SELECT, newArray, new BVConstant(idx, 32)));
 //			return new ExpressionTaint(c);
 //		}
 //		else if (taintedVal)

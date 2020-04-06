@@ -6,9 +6,11 @@ import java.util.HashSet;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import za.ac.sun.cs.green.expr.BVConstant;
+import za.ac.sun.cs.green.expr.BinaryOperation;
 import za.ac.sun.cs.green.expr.Expression;
 import za.ac.sun.cs.green.expr.IntConstant;
 import za.ac.sun.cs.green.expr.IntVariable;
+import za.ac.sun.cs.green.expr.NaryOperation;
 import za.ac.sun.cs.green.expr.Operation;
 import za.ac.sun.cs.green.expr.Operation.Operator;
 import edu.columbia.cs.psl.phosphor.org.objectweb.asm.Opcodes;
@@ -27,13 +29,17 @@ import edu.columbia.cs.psl.phosphor.struct.TaintedShortWithObjTag;
 import edu.columbia.cs.psl.phosphor.struct.TaintedWithObjTag;
 import za.ac.sun.cs.green.expr.RealConstant;
 import za.ac.sun.cs.green.expr.StringConstant;
+import za.ac.sun.cs.green.expr.UnaryOperation;
 
 public class PathUtils {
+	private static IntConstant O000FFFF;
+	public static BVConstant BV0_32;
 	private static PathConditionWrapper curPC;
 	public static final boolean IGNORE_SHIFTS = true;
 	public static final String INTERNAL_NAME = "edu/gmu/swe/knarr/runtime/PathUtils";
 	
 //	public static String interesting = ".*autoVar_4[^0-9].*";
+
 
 	public static PathConditionWrapper getCurPC() {
 		if (curPC == null)
@@ -573,9 +579,9 @@ public class PathUtils {
 		if (val != null) {
 			Expression exp;
 			// Truncate
-			exp = new Operation(Operator.EXTRACT, 7, 0, val.getSingleLabel());
+			exp = new UnaryOperation(Operator.EXTRACT, 7, 0, val.getSingleLabel());
 			// Sign-extend
-			exp = new Operation(Operator.SIGN_EXT, 24, exp);
+			exp = new UnaryOperation(Operator.SIGN_EXT, 24, exp);
 			ret.taint = new ExpressionTaint(exp);
 		}
 		else
@@ -590,14 +596,14 @@ public class PathUtils {
 		ret.val = (char) b;
 
 		if (val != null) {
-			Expression i2c = new Operation(Operator.BIT_AND, val.getSingleLabel(), new IntConstant(0x0000FFFF));
+			Expression i2c = new BinaryOperation(Operator.BIT_AND, val.getSingleLabel(), O000FFFF);
 			ret.taint = new ExpressionTaint(i2c);
 
 			Expression exp;
 			// Truncate
-			exp = new Operation(Operator.EXTRACT, 15, 0, val.getSingleLabel());
+			exp = new UnaryOperation(Operator.EXTRACT, 15, 0, val.getSingleLabel());
 			// Zero-extend
-			exp = new Operation(Operator.ZERO_EXT, 16, exp);
+			exp = new UnaryOperation(Operator.ZERO_EXT, 16, exp);
 		}
 		else
 		{
@@ -611,14 +617,14 @@ public class PathUtils {
 		ret.val = (short) i;
 
 		if (val != null) {
-			Expression i2c = new Operation(Operator.BIT_AND, val.getSingleLabel(), new IntConstant(0x0000FFFF));
+			Expression i2c = new BinaryOperation(Operator.BIT_AND, val.getSingleLabel(), O000FFFF);
 			ret.taint = new ExpressionTaint(i2c);
 
 			Expression exp;
 			// Truncate
-			exp = new Operation(Operator.EXTRACT, 15, 0, val.getSingleLabel());
+			exp = new UnaryOperation(Operator.EXTRACT, 15, 0, val.getSingleLabel());
 			// Sign-extend
-			exp = new Operation(Operator.SIGN_EXT, 16, exp);
+			exp = new UnaryOperation(Operator.SIGN_EXT, 16, exp);
 		}
 		else
 		{
@@ -649,7 +655,7 @@ public class PathUtils {
 		ret.val = (long) i;
 
 		if (val != null) {
-			Expression i2l = new Operation(Operator.SIGN_EXT, 32, val.getSingleLabel());
+			Expression i2l = new UnaryOperation(Operator.SIGN_EXT, 32, val.getSingleLabel());
 			ret.taint = new ExpressionTaint(i2l);
 		}
 		else
@@ -726,7 +732,7 @@ public class PathUtils {
 		if (val != null) {
 			Expression exp;
 			// Truncate
-			exp = new Operation(Operator.EXTRACT, 31, 0, val.getSingleLabel());
+			exp = new UnaryOperation(Operator.EXTRACT, 31, 0, val.getSingleLabel());
 			ret.taint = new ExpressionTaint(exp);
 		}
 		else
@@ -755,7 +761,7 @@ public class PathUtils {
 		ret.val = (double) l;
 
 		if (val != null) {
-			ret.taint = new ExpressionTaint(new Operation(Operator.I2R, val.getSingleLabel()));
+			ret.taint = new ExpressionTaint(new UnaryOperation(Operator.I2R, val.getSingleLabel()));
 		}
 		else
 		{
@@ -783,7 +789,7 @@ public class PathUtils {
 		ret.val = (long) d;
 
 		if (val != null) {
-			ret.taint = new ExpressionTaint(new Operation(Operator.R2I, val.getSingleLabel()));
+			ret.taint = new ExpressionTaint(new UnaryOperation(Operator.R2I, val.getSingleLabel()));
 		}
 		else
 		{
@@ -1031,12 +1037,12 @@ public class PathUtils {
 		}
 	}
 
-	private static IntConstant ICONST_0;
 	static boolean JPFInited = false;
 
 	static void initJPF() {
+		O000FFFF = new IntConstant(0x0000FFFF);
+		BV0_32 = new BVConstant(0, 32);
 		if (!JPFInited) {
-			ICONST_0 = new IntConstant(0);
 			JPFInited = true;
 			// String[] options = { "+symbolic.dp=choco",
 			// "+symbolic.string_dp=sat", "+symbolic.string_dp_timeout_ms=0" };
@@ -1051,7 +1057,7 @@ public class PathUtils {
 		if (t == null)
 			return;
 		
-		t.setSingleLabel(new Operation(Operator.ADD, t.getSingleLabel(), new IntConstant(inc)));
+		t.setSingleLabel(new BinaryOperation(Operator.ADD, t.getSingleLabel(), new IntConstant(inc)));
 	}
 
 	public static void addConstraint(Taint<Expression> t, int opcode, int takenID, int notTakenID, boolean breaksLoop, boolean taken, String source) {
@@ -1064,28 +1070,28 @@ public class PathUtils {
 		Expression exp = t.getSingleLabel();
 		switch (opcode) {
 		case Opcodes.IFEQ:
-			exp = new Operation(Operator.EQ, ICONST_0, exp);
+			exp = new BinaryOperation(Operator.EQ, Operation.ZERO, exp);
 			break;
 		case Opcodes.IFGE:
-			exp = new Operation(Operator.GE, exp, ICONST_0);
+			exp = new BinaryOperation(Operator.GE, exp, Operation.ZERO);
 			break;
 		case Opcodes.IFLE:
-			exp = new Operation(Operator.LE, exp, ICONST_0);
+			exp = new BinaryOperation(Operator.LE, exp, Operation.ZERO);
 			break;
 		case Opcodes.IFLT:
-			exp = new Operation(Operator.LT, exp, ICONST_0);
+			exp = new BinaryOperation(Operator.LT, exp, Operation.ZERO);
 			break;
 		case Opcodes.IFGT:
-			exp = new Operation(Operator.GT, exp, ICONST_0);
+			exp = new BinaryOperation(Operator.GT, exp, Operation.ZERO);
 			break;
 		case Opcodes.IFNE:
-			exp = new Operation(Operator.NE, exp, ICONST_0);
+			exp = new BinaryOperation(Operator.NE, exp, Operation.ZERO);
 			break;
 		default:
 			throw new IllegalArgumentException("Unimplemented branch type: " + Printer.OPCODES[opcode]);
 		}
 
-		exp = (taken ? (Operation)exp : new Operation(Operator.NOT, exp));
+		exp = (taken ? (Operation)exp : new UnaryOperation(Operator.NOT, exp));
 
 		getCurPC()._addDet((Operation)exp);
 
@@ -1106,14 +1112,14 @@ public class PathUtils {
 		if (l == null)
 			return;
 		Expression lExp = l.getSingleLabel();
-		Operation limit = new Operation(Operator.LE, lExp, new IntConstant(max));
-		limit = new Operation(Operator.AND, limit, new Operation(Operator.GE, lExp, new IntConstant(min)));
+		Operation limit = new BinaryOperation(Operator.LE, lExp, new IntConstant(max));
+		limit = new BinaryOperation(Operator.AND, limit, new BinaryOperation(Operator.GE, lExp, new IntConstant(min)));
 
 		for (int i = min ; i < max ; i++) {
 			if (i == v)
 				continue;
 
-			Expression notTaken = new Operation(Operator.NE, lExp, new IntConstant(i));
+			Expression notTaken = new BinaryOperation(Operator.NE, lExp, new IntConstant(i));
 			Expression exp = getCurPC()._addDet(Operator.AND, limit, notTaken);
 
 			if (Coverage.enabled && takenID != -1) {
@@ -1153,31 +1159,31 @@ public class PathUtils {
 			// TODO - object equality constraints?
 			break;
 		case Opcodes.IF_ICMPEQ:
-			exp = new Operation(Operator.EQ, lExp, rExp);
+			exp = new BinaryOperation(Operator.EQ, lExp, rExp);
 			break;
 		case Opcodes.IF_ICMPGE:
-			exp = new Operation(Operator.GE, lExp, rExp);
+			exp = new BinaryOperation(Operator.GE, lExp, rExp);
 			break;
 		case Opcodes.IF_ICMPGT:
-			exp = new Operation(Operator.GT, lExp, rExp);
+			exp = new BinaryOperation(Operator.GT, lExp, rExp);
 			break;
 		case Opcodes.IF_ICMPLE:
-			exp = new Operation(Operator.LE, lExp, rExp);
+			exp = new BinaryOperation(Operator.LE, lExp, rExp);
 			break;
 		case Opcodes.IF_ICMPLT:
 			// System.out.println("Other one is " +
 			// branches[branch].rVal.concreteValue_int+
 			// "...."+branches[branch].rVal.expression);
-			exp = new Operation(Operator.LT, lExp, rExp);
+			exp = new BinaryOperation(Operator.LT, lExp, rExp);
 			break;
 		case Opcodes.IF_ICMPNE:
-			exp = new Operation(Operator.NE, lExp, rExp);
+			exp = new BinaryOperation(Operator.NE, lExp, rExp);
 			break;
 		default:
 			throw new IllegalArgumentException("Unimplemented branch type: " + Printer.OPCODES[opcode]);
 		}
 
-		exp = (taken ? (Operation)exp : new Operation(Operator.NOT, exp));
+		exp = (taken ? (Operation)exp : new UnaryOperation(Operator.NOT, exp));
 
 		getCurPC()._addDet((Operation)exp);
 
@@ -1192,7 +1198,7 @@ public class PathUtils {
 	/**
 	 * Adds a constraint that the xpression passed in an instance of a type
 	 * 
-	 * @param taint
+	 * @param exp
 	 * @param clazz
 	 * @return
 	 */
@@ -1222,7 +1228,7 @@ public class PathUtils {
 	 * Returns a new taint value that has the constraint that it's the result of
 	 * arraylength from the passed taint to clazz
 	 * 
-	 * @param taint
+	 * @param expr
 	 * @return
 	 */
 	public static Expression addArrayLengthConstraint(Expression expr) {
@@ -1266,9 +1272,9 @@ public class PathUtils {
 		case StringOpcodes.STR_LEN:
 			// if (t != null)
 			// {
-			// ret.taint = new Taint(new Operation(Operator., operands));
+			// ret.taint = new Taint(new BinaryOperation(Operator., operands));
 			// }
-			ret.taint = new Taint<Expression>(new Operation(Operator.LENGTH, t.getSingleLabel()));
+			ret.taint = new Taint<Expression>(new UnaryOperation(Operator.LENGTH, t.getSingleLabel()));
 			break;
 		default:
 			throw new IllegalArgumentException("unimplemented string op: " + opcode);
@@ -1300,7 +1306,7 @@ public class PathUtils {
 	 * Returns a new taint value that has a constraint that indiciates that it's
 	 * the result of unary op opcode on taint.
 	 * 
-	 * @param taint
+	 * @param exp
 	 * @param opcode
 	 * @return
 	 */
@@ -1317,7 +1323,7 @@ public class PathUtils {
 		case Opcodes.LNEG:
 		case Opcodes.FNEG:
 		case Opcodes.DNEG:
-			ret = new Operation(Operator.NEG, exp.getSingleLabel());
+			ret = new UnaryOperation(Operator.NEG, exp.getSingleLabel());
 			break;
 		default:
 			throw new IllegalStateException("Unimplemented opcode handler: " + Printer.OPCODES[opcode]);
@@ -1362,7 +1368,7 @@ public class PathUtils {
 			throw new IllegalArgumentException("Unkown op: " + op);
 		}
 
-		res.taint = new Taint<>(new Operation(strCmp, t1, t2));
+		res.taint = new Taint<>(new BinaryOperation(strCmp, t1, t2));
 	}
 
 	public static void registerStringBooleanOp(TaintedBooleanWithObjTag res, String str1, int op) {
@@ -1399,8 +1405,8 @@ public class PathUtils {
 	 * Returns a new taint value that has a constraint that indiciates that it's
 	 * the result of binary op opcode on taint1, taint2.
 	 * 
-	 * @param taint1
-	 * @param taint2
+	 * @param expr1
+	 * @param expr2
 	 * @param opcode
 	 * @return
 	 */
@@ -1416,62 +1422,62 @@ public class PathUtils {
 		case Opcodes.LADD:
 		case Opcodes.FADD:
 		case Opcodes.DADD:
-			ret = new Operation(Operator.ADD, expr1, expr2);
+			ret = new BinaryOperation(Operator.ADD, expr1, expr2);
 			break;
 		case Opcodes.IMUL:
 		case Opcodes.LMUL:
 		case Opcodes.FMUL:
 		case Opcodes.DMUL:
-			ret = new Operation(Operator.MUL, expr1, expr2);
+			ret = new BinaryOperation(Operator.MUL, expr1, expr2);
 			break;
 		case Opcodes.IDIV:
 		case Opcodes.LDIV:
 		case Opcodes.FDIV:
 		case Opcodes.DDIV:
-			ret = new Operation(Operator.DIV, expr1, expr2);
+			ret = new BinaryOperation(Operator.DIV, expr1, expr2);
 			break;
 		case Opcodes.IREM:
 		case Opcodes.LREM:
 		case Opcodes.DREM:
 		case Opcodes.FREM:
-			ret = new Operation(Operator.MOD, expr1, expr2);
+			ret = new BinaryOperation(Operator.MOD, expr1, expr2);
 			break;
 		case Opcodes.ISUB:
 		case Opcodes.LSUB:
 		case Opcodes.DSUB:
 		case Opcodes.FSUB:
-			ret = new Operation(Operator.SUB, expr1, expr2);
+			ret = new BinaryOperation(Operator.SUB, expr1, expr2);
 			break;
 		case Opcodes.IAND:
 		case Opcodes.LAND:
-			ret = new Operation(Operator.BIT_AND, expr1, expr2);
+			ret = new BinaryOperation(Operator.BIT_AND, expr1, expr2);
 			break;
 		case Opcodes.IOR:
 		case Opcodes.LOR:
-			ret = new Operation(Operator.BIT_OR, expr1, expr2);
+			ret = new BinaryOperation(Operator.BIT_OR, expr1, expr2);
 			break;
 		case Opcodes.ISHL:
-			ret = new Operation(Operator.SHIFTL, expr1, expr2);
+			ret = new BinaryOperation(Operator.SHIFTL, expr1, expr2);
 			break;
 		case Opcodes.LSHL:
 			if (expr1 instanceof IntConstant)
 				expr1 = new BVConstant(((IntConstant)expr1).getValueLong(), 64);
-			ret = new Operation(Operator.SHIFTL, expr1, expr2);
+			ret = new BinaryOperation(Operator.SHIFTL, expr1, expr2);
 			break;
 		case Opcodes.ISHR:
 		case Opcodes.LSHR:
-			ret = new Operation(Operator.SHIFTR, expr1, expr2);
+			ret = new BinaryOperation(Operator.SHIFTR, expr1, expr2);
 			break;
 		case Opcodes.IUSHR:
 		case Opcodes.LUSHR:
-			ret = new Operation(Operator.SHIFTUR, expr1, expr2);
+			ret = new BinaryOperation(Operator.SHIFTUR, expr1, expr2);
 			break;
 		case Opcodes.IXOR:
 		case Opcodes.LXOR:
-			ret = new Operation(Operator.BIT_XOR, expr1, expr2);
+			ret = new BinaryOperation(Operator.BIT_XOR, expr1, expr2);
 			break;
 		case StringOpcodes.STR_CONCAT:
-			ret = new Operation(Operator.CONCAT, expr1, expr2);
+			ret = new BinaryOperation(Operator.CONCAT, expr1, expr2);
 			break;
 		case Opcodes.LCMP:
 		case Opcodes.DCMPG:
@@ -1498,7 +1504,7 @@ public class PathUtils {
 							// c.rVal.expression);
 			break;
 		case StringOpcodes.STR_TRIM:
-			ret = new Operation(Operator.TRIM, rVal.getSingleLabel());
+			ret = new UnaryOperation(Operator.TRIM, rVal.getSingleLabel());
 			break;
 		case StringOpcodes.STR_TO_DOUBLE: // TODO support for str -> int/double
 			// ret = ((StringExpression) rVal)._RvalueOf();
@@ -1554,10 +1560,10 @@ public class PathUtils {
 
 		switch (opCode) {
 		case StringOpcodes.STR_REPLACE:
-			returnedString.setPHOSPHOR_TAG(new Operation(Operator.REPLACEFIRST, firstPart, exp2, exp3));
+			returnedString.setPHOSPHOR_TAG(new NaryOperation(Operator.REPLACEFIRST, firstPart, exp2, exp3));
 			break;
 		case StringOpcodes.STR_REPLACEALL:
-			returnedString.setPHOSPHOR_TAG(new Operation(Operator.REPLACE, firstPart, exp2, exp3));
+			returnedString.setPHOSPHOR_TAG(new NaryOperation(Operator.REPLACE, firstPart, exp2, exp3));
 			break;
 		}
 

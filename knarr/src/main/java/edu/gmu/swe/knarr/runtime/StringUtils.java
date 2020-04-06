@@ -14,13 +14,8 @@ import edu.columbia.cs.psl.phosphor.struct.TaintedCharWithObjTag;
 import edu.columbia.cs.psl.phosphor.struct.TaintedIntWithObjTag;
 
 import org.jgrapht.alg.util.Pair;
-import za.ac.sun.cs.green.expr.BVVariable;
-import za.ac.sun.cs.green.expr.Expression;
-import za.ac.sun.cs.green.expr.IntConstant;
-import za.ac.sun.cs.green.expr.Operation;
+import za.ac.sun.cs.green.expr.*;
 import za.ac.sun.cs.green.expr.Operation.Operator;
-import za.ac.sun.cs.green.expr.StringConstant;
-import za.ac.sun.cs.green.expr.StringVariable;
 
 public class StringUtils {
 	public static boolean enabled = true;
@@ -76,10 +71,10 @@ public class StringUtils {
 			for (int i = 0 ; i < arr.length ; i++) {
 				Taint t = srcTags.taints[offset + i];
 				if (t == null) {
-					exp = new Operation(Operator.CONCAT, exp, new IntConstant(arr[i]));
+					exp = new BinaryOperation(Operator.CONCAT, exp, new IntConstant(arr[i]));
 					s.valuePHOSPHOR_TAG.taints[i] = new ExpressionTaint(new BVVariable(var + "_" + i, 32));
 				} else {
-					exp = new Operation(Operator.CONCAT, exp, (Expression) t.getSingleLabel());
+					exp = new BinaryOperation(Operator.CONCAT, exp, (Expression) t.getSingleLabel());
 				}
 			}
 			
@@ -158,7 +153,7 @@ public class StringUtils {
 //			if (start > 0)
 //				throw new UnsupportedOperationException();
 
-			ret.taint = new ExpressionTaint(new Operation(Operator.LASTINDEXOFSTRING, tPref, tS));
+			ret.taint = new ExpressionTaint(new BinaryOperation(Operator.LASTINDEXOFSTRING, tPref, tS));
 		}
 
 		else if(enabled && s.PHOSPHOR_TAG == null) {
@@ -227,7 +222,7 @@ public class StringUtils {
 			if (start > 0)
 				throw new UnsupportedOperationException();
 			
-			ret.taint = new ExpressionTaint(new Operation(Operator.STARTSWITH, tPref, tS));
+			ret.taint = new ExpressionTaint(new BinaryOperation(Operator.STARTSWITH, tPref, tS));
 		}
 	}
 	
@@ -253,7 +248,7 @@ public class StringUtils {
 			}
 			
 			Expression tS = (Expression) s1.PHOSPHOR_TAG.getSingleLabel();
-			Expression exp = new Operation(Operator.EQUALS, tS, tO);
+			Expression exp = new BinaryOperation(Operator.EQUALS, tS, tO);
 			if (exp.metadata == null)
 				exp.metadata = new HashSet<Pair<String,String>>();
 			if (exp.metadata instanceof HashSet)
@@ -273,7 +268,7 @@ public class StringUtils {
 			}
 
 			Expression tS = (Expression) s1.PHOSPHOR_TAG.getSingleLabel();
-			Expression exp = new Operation(Operator.EQUALS, tS, tO);
+			Expression exp = new BinaryOperation(Operator.EQUALS, tS, tO);
 			if (exp.metadata == null)
 				exp.metadata = new HashSet<Pair<String,String>>();
 			if (exp.metadata instanceof HashSet)
@@ -301,8 +296,8 @@ public class StringUtils {
 			Expression pos = (Expression) s.valuePHOSPHOR_TAG.taints[index].getSingleLabel();
 			PathUtils.getCurPC()._addDet(
 					Operator.EQ,
-					new Operation(Operator.CHARAT, tS, eIndex),
-					new Operation(Operator.CONCAT, new StringConstant(""), pos));
+					new BinaryOperation(Operator.CHARAT, tS, eIndex),
+					new BinaryOperation(Operator.CONCAT, new StringConstant(""), pos));
 
 			ret.taint = new ExpressionTaint(pos);
 		}
@@ -346,15 +341,15 @@ public class StringUtils {
 					e = (Expression) s.valuePHOSPHOR_TAG.taints[i].getSingleLabel();
 				}
 				
-				e = new Operation(Operator.ITE,
-						new Operation(Operator.AND,
-							new Operation(Operator.GE, e, start),
-							new Operation(Operator.LE, e, end)),
-						new Operation(toUpper ? Operator.SUB : Operator.ADD, e, distance),
+				e = new NaryOperation(Operator.ITE,
+						new BinaryOperation(Operator.AND,
+							new BinaryOperation(Operator.GE, e, start),
+							new BinaryOperation(Operator.LE, e, end)),
+						new BinaryOperation(toUpper ? Operator.SUB : Operator.ADD, e, distance),
 						e);
 				
 				newTaints[i] = new ExpressionTaint(e);
-				newExp = new Operation(Operator.CONCAT, newExp, e);
+				newExp = new BinaryOperation(Operator.CONCAT, newExp, e);
 			}
 			
 			ret.PHOSPHOR_TAG = new ExpressionTaint(newExp);
@@ -364,7 +359,7 @@ public class StringUtils {
 	
 	public static void length$$PHOSPHORTAGGED(TaintedIntWithObjTag ret, String s, TaintedIntWithObjTag ret2) {
 		if (enabled && s.PHOSPHOR_TAG != null && s.PHOSPHOR_TAG.getSingleLabel() != null) {
-			ret.taint = new ExpressionTaint(new Operation(Operator.I2BV, 32, new Operation(Operator.LENGTH, (Expression) s.PHOSPHOR_TAG.getSingleLabel())));
+			ret.taint = new ExpressionTaint(new UnaryOperation(Operator.I2BV, 32, new UnaryOperation(Operator.LENGTH, (Expression) s.PHOSPHOR_TAG.getSingleLabel())));
 		}
 	}
 	
