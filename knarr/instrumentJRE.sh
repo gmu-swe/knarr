@@ -8,7 +8,8 @@ else
 	echo "Ensuring instrumented JREs exist for tests... to refresh, do mvn clean\n";
 	if [ ! -d "target/jre-inst" ]; then
 		echo "Creating instrumented JRE\n";
-		java -Xmx6g "$@" -jar target/Knarr-0.0.2-SNAPSHOT.jar $INST_HOME target/jre-inst;
+		#java -Xmx6g "$@" -jar target/Knarr-0.0.2-SNAPSHOT.jar $INST_HOME target/jre-inst;
+		java -DspecialStrings=equals -Xmx6g -jar target/Knarr-0.0.2-SNAPSHOT.jar $INST_HOME target/jre-inst;
 		#java -DspecialStrings=equals,startsWith,contains,length -Xmx6g -jar target/Knarr-0.0.2-SNAPSHOT.jar $INST_HOME target/jre-inst;
 		chmod +x target/jre-inst/jre/bin/*;
 		chmod +x target/jre-inst/jre/lib/*;
