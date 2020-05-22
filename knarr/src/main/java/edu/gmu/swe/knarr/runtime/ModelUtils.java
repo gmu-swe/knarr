@@ -94,7 +94,7 @@ public class ModelUtils {
 
         if (buffTaints != null && buffTaints.taints != null) {
             // Copy length taints from offset
-            ret.valuePHOSPHOR_TAG = new LazyCharArrayObjTags(length);
+//            ret.valuePHOSPHOR_TAG = new LazyCharArrayObjTags(length);
             ret.valuePHOSPHOR_TAG.taints = new Taint[length];
 
             try {

@@ -220,7 +220,9 @@ public class Symbolicator {
 		TaintListener.symbolizedArrays.clear();
 
 		for (String s : StringUtils.symbolizedStrings) {
-			s.valuePHOSPHOR_TAG = null;
+//			s.valuePHOSPHOR_TAG = null;
+			s.valuePHOSPHOR_TAG.taints = null;
+			s.valuePHOSPHOR_TAG.lengthTaint = null;
 			s.PHOSPHOR_TAG = null;
 		}
 
