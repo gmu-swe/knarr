@@ -1,4 +1,5 @@
 #!/bin/sh
+#DEBUG="-Xdebug -Xrunjdwp:server=y,transport=dt_socket,address=5555,suspend=n"
 if [ -z "$INST_HOME" ]; then
 	INST_HOME=$JAVA_HOME;
 fi
@@ -9,7 +10,7 @@ else
 	if [ ! -d "target/jre-inst" ]; then
 		echo "Creating instrumented JRE\n";
 		#java -Xmx6g "$@" -jar target/Knarr-0.0.2-SNAPSHOT.jar $INST_HOME target/jre-inst;
-		java -DspecialStrings=equals -Xmx6g -jar target/Knarr-0.0.2-SNAPSHOT.jar $INST_HOME target/jre-inst;
+		java -DspecialStrings=equals  -DaddCov="javax/imageio" $DEBUG -Xmx6g -jar target/Knarr-0.0.2-SNAPSHOT.jar $INST_HOME target/jre-inst;
 		#java -DspecialStrings=equals,startsWith,contains,length -Xmx6g -jar target/Knarr-0.0.2-SNAPSHOT.jar $INST_HOME target/jre-inst;
 		chmod +x target/jre-inst/jre/bin/*;
 		chmod +x target/jre-inst/jre/lib/*;

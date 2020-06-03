@@ -18,8 +18,10 @@ public class Main {
 		Configuration.WITH_TAGS_FOR_JUMPS = true;
 		Configuration.WITH_HEAVY_OBJ_EQUALS_HASHCODE = true;
 
-		if (Coverage.enabled)
-            Configuration.ANNOTATE_LOOPS = true;
+//		Configuration.ANNOTATE_LOOPS = true;
+//      Luís
+//      Not sure ANOTATE_LOOPS is working correctly, and we weren't using it
+//      I'm disabling it for now
 
 		Configuration.extensionMethodVisitor = RedirectMethodsTaintAdapter.class;
 		Configuration.extensionClassVisitor = StringTagFactory.class; // CountBytecodeAdapter.class;

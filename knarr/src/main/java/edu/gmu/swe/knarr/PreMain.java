@@ -1,6 +1,7 @@
 package edu.gmu.swe.knarr;
 
 import java.lang.instrument.Instrumentation;
+import java.util.Optional;
 
 import edu.columbia.cs.psl.phosphor.Configuration;
 import edu.gmu.swe.knarr.runtime.Coverage;
@@ -23,7 +24,8 @@ public class PreMain {
 		// DependencyTrackingClassVisitor.class;
 		edu.columbia.cs.psl.phosphor.PreMain.DEBUG = true;
 
-		Coverage.enabled = true; // Enable coverage for dynamically instrumented classes by default
+		Optional<String[]> o = Optional.empty(); // Java's type inference really sucks
+		Coverage.setCov(true, o);
 
 		Configuration.init();
 		edu.columbia.cs.psl.phosphor.PreMain.premain(args, inst);

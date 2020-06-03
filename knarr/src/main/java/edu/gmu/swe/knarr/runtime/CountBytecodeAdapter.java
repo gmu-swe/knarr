@@ -14,18 +14,25 @@ import edu.columbia.cs.psl.phosphor.org.objectweb.asm.tree.*;
 
 public class CountBytecodeAdapter extends ClassVisitor implements Opcodes {
 
-  public static boolean enabled = Coverage.enabled;
   private static final int LIKELY_NUMBER_OF_LINES_PER_BLOCK = 7;
 
   public CountBytecodeAdapter(ClassVisitor classVisitor, boolean skipFrames) {
     super(ASM6, classVisitor);
   }
 
+  private String className;
+
+  @Override
+  public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
+    this.className = name;
+    super.visit(version, access, name, signature, superName, interfaces);
+  }
+
   @Override
   public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
     MethodVisitor mv = super.visitMethod(access, name, descriptor, signature, exceptions);
     MethodBlockNode mbn = new MethodBlockNode(access, name, descriptor, signature, exceptions,mv);
-    return (enabled ? mbn : mv);
+    return (Coverage.isCovEnabled(className) ? mbn : mv);
   }
 
   private static class MethodBlockNode extends MethodNode {

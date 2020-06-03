@@ -1096,7 +1096,7 @@ public class PathUtils {
 		getCurPC()._addDet((Operation)exp);
 
 
-		if (Coverage.enabled && takenID != -1) {
+		if (takenID != -1) {
 			// Update current coverage
 			int notTakenPath = Coverage.instance.set(takenID, notTakenID);
 			// Add not taken constraint to map
@@ -1122,7 +1122,7 @@ public class PathUtils {
 			Expression notTaken = new BinaryOperation(Operator.NE, lExp, new IntConstant(i));
 			Expression exp = getCurPC()._addDet(Operator.AND, limit, notTaken);
 
-			if (Coverage.enabled && takenID != -1) {
+			if (takenID != -1) {
 				// Update current coverage
 				int notTakenPath = Coverage.instance.set(takenID, notTakenID);
 				// Add not taken constraint to map
@@ -1187,7 +1187,7 @@ public class PathUtils {
 
 		getCurPC()._addDet((Operation)exp);
 
-		if (Coverage.enabled && takenID != -1) {
+		if (takenID != -1) {
 			// Update current coverage
 			int notTakenPath = Coverage.instance.set(takenID, notTakenID);
 			// Add not taken constraint to map

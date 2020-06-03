@@ -841,7 +841,7 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 		this.owner = owner;
 		this.line = 0;
 
-		this.enableCov = Coverage.enabled && !owner.startsWith("za/ac/sun/cs/green");
+		this.enableCov = (Coverage.isCovEnabled(owner) && !owner.startsWith("za/ac/sun/cs/green"));
 
 		if (enableCov) {
 			labelToID.clear();

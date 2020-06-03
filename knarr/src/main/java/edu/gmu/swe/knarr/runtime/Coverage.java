@@ -5,6 +5,7 @@ import edu.columbia.cs.psl.phosphor.org.objectweb.asm.Type;
 import java.io.Serializable;
 import java.util.BitSet;
 import java.util.LinkedList;
+import java.util.Optional;
 import java.util.Random;
 
 public class Coverage implements Serializable {
@@ -17,8 +18,54 @@ public class Coverage implements Serializable {
     public static final String INTERNAL_NAME = Type.getType(Coverage.class).getInternalName();
     public static final String DESCRIPTOR = Type.getType(Coverage.class).getDescriptor();
 
-    public static boolean enabled = (System.getProperty("addCov") != null);
     public static transient Coverage instance = new Coverage();
+
+    private static boolean enabled;
+    private static transient Optional<String[]> whitelist;
+
+    static {
+        String c = System.getProperty("addCov");
+        if (c == null) {
+            // Disable
+            enabled = false;
+            whitelist = Optional.empty();
+        } else if ("".equals(c)) {
+            // Without arguments -DaddCov adds coverage to all classes
+            // Add universal prefix: "/"
+            enabled = true;
+            whitelist = Optional.empty();
+        } else {
+            // Add individual packages
+            enabled = true;
+            LinkedList<String> paks = new LinkedList<>();
+            for (String pak : c.split(":")) {
+                paks.addLast(pak);
+            }
+
+            whitelist = Optional.of(paks.toArray(new String[0]));
+        }
+    }
+
+    public static boolean isCovEnabled(String className) {
+        if (!enabled)
+            return false;
+
+        if (!whitelist.isPresent())
+            return true;
+
+        for (String prefix : whitelist.get()) {
+            if (className.startsWith(prefix)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public static void setCov(boolean enabled, Optional<String[]> whitelist) {
+        Coverage.enabled = enabled;
+        Coverage.whitelist = whitelist;
+    }
 
     public static int count = 0;
     public int thisCount;
