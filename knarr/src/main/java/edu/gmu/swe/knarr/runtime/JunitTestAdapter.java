@@ -2,6 +2,7 @@ package edu.gmu.swe.knarr.runtime;
 
 import java.util.ArrayList;
 
+import edu.columbia.cs.psl.phosphor.instrumenter.TaintTagFactory;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -20,8 +21,8 @@ public class JunitTestAdapter extends TaintAdapter {
 	private String methodName;
 
 	public JunitTestAdapter(int access, String className, String name, String desc, String signature,
-			String[] exceptions, MethodVisitor mv, NeverNullArgAnalyzerAdapter analyzer) {
-		super(access, className, name, desc, signature, exceptions, mv, analyzer);
+							String[] exceptions, MethodVisitor mv, NeverNullArgAnalyzerAdapter analyzer, TaintTagFactory taintTagFactory) {
+		super(access, className, name, desc, signature, exceptions, mv, analyzer, taintTagFactory);
 		methodName = name;
 	}
 	

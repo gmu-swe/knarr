@@ -15,7 +15,7 @@ public class PreMain {
 		Configuration.WITH_TAGS_FOR_JUMPS = true;
 		Configuration.ARRAY_INDEX_TRACKING = true;
 		Configuration.ARRAY_INDEX_TRACKING = true;
-		Configuration.taintTagFactory = new PathConstraintTagFactory();
+		Configuration.setTaintTagFactory(PathConstraintTagFactory.class);
 		Configuration.derivedTaintListener = new TaintListener();
 		Configuration.WITH_HEAVY_OBJ_EQUALS_HASHCODE = true;
 		Configuration.PREALLOC_STACK_OPS = true;

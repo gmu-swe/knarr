@@ -1,6 +1,7 @@
 package edu.gmu.swe.knarr.runtime;
 
 import edu.columbia.cs.psl.phosphor.instrumenter.TaintAdapter;
+import edu.columbia.cs.psl.phosphor.instrumenter.TaintTagFactory;
 import edu.columbia.cs.psl.phosphor.instrumenter.analyzer.NeverNullArgAnalyzerAdapter;
 import edu.columbia.cs.psl.phosphor.org.objectweb.asm.Label;
 import edu.columbia.cs.psl.phosphor.org.objectweb.asm.MethodVisitor;
@@ -31,8 +32,8 @@ public class RedirectMethodsTaintAdapter extends TaintAdapter {
 //            "equals",
     }));
 
-    public RedirectMethodsTaintAdapter(int access, String className, String name, String desc, String signature, String[] exceptions, MethodVisitor mv, NeverNullArgAnalyzerAdapter analyzer) {
-        super(access, className, name, desc, signature, exceptions, mv, analyzer);
+    public RedirectMethodsTaintAdapter(int access, String className, String name, String desc, String signature, String[] exceptions, MethodVisitor mv, NeverNullArgAnalyzerAdapter analyzer, TaintTagFactory taintTagFactory) {
+        super(access, className, name, desc, signature, exceptions, mv, analyzer, taintTagFactory);
     }
 
     public RedirectMethodsTaintAdapter(int access, String className, String name, String desc, String signature, String[] exceptions, MethodVisitor mv, NeverNullArgAnalyzerAdapter analyzer, String classSource, String classDebug) {

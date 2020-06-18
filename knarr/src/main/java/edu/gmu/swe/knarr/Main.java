@@ -34,7 +34,8 @@ public class Main {
 		PathUtils.DISABLE_FLOATS = true;
 
 		PreMain.DEBUG = System.getProperty("DEBUG") != null;
-		Configuration.taintTagFactory = new PathConstraintTagFactory();
+		Configuration.setTaintTagFactory(PathConstraintTagFactory.class);
+//		Configuration.taintTagFactory = new PathConstraintTagFactory();
 		Configuration.autoTainter = new KnarrAutoTainter();
 		System.arraycopy(_args, 0, args, 4, _args.length);
 		// Instrumenter.addlTransformer = new CRClassFileTransformer();
