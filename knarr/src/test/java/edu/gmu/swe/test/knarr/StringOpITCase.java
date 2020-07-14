@@ -7,6 +7,11 @@ import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import edu.columbia.cs.psl.phosphor.runtime.Taint;
+import edu.columbia.cs.psl.phosphor.struct.LazyArrayObjTags;
+import edu.columbia.cs.psl.phosphor.struct.LazyCharArrayObjTags;
+import edu.columbia.cs.psl.phosphor.struct.LazyIntArrayObjTags;
+import edu.columbia.cs.psl.phosphor.struct.TaintedWithObjTag;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
@@ -15,7 +20,6 @@ import org.junit.Test;
 import edu.gmu.swe.knarr.runtime.StringUtils;
 import edu.gmu.swe.knarr.runtime.Symbolicator;
 
-@Ignore
 public class StringOpITCase {
 	
 	private static boolean isStringUtilsEnabled;
@@ -31,7 +35,7 @@ public class StringOpITCase {
 		StringUtils.enabled = isStringUtilsEnabled;
 	}
 	
-	@Test
+//	@Test
 	public void testLength() throws Exception {
 		String test = "This is a test";
 		char tainted[] = new char[test.length()];
@@ -56,7 +60,7 @@ public class StringOpITCase {
 	public void testSubstring() throws Exception {
 	}
 	
-	@Test
+//	@Test
 	public void testCharAt() throws Exception {
 		String test = "This is a test";
 		char tainted[] = new char[test.length()];
@@ -89,7 +93,7 @@ public class StringOpITCase {
 		}
 	}
 
-	@Test
+//	@Test
 	public void testTaintedEquals() throws Exception {
 		String test = "This is a test";
 		char tainted[] = new char[test.length()];
@@ -120,7 +124,7 @@ public class StringOpITCase {
 		}
 	}
 
-	@Test
+//	@Test
 	public void testEqualsTainted() throws Exception {
 		String test = "This is a test";
 		char tainted[] = new char[test.length()];
@@ -151,7 +155,7 @@ public class StringOpITCase {
 		}
 	}
 
-	@Test
+//	@Test
 	public void testToLowerUpper() throws Exception {
 		String test = "This is a test";
 		char tainted[] = new char[test.length()];
@@ -184,7 +188,7 @@ public class StringOpITCase {
 	}
 		
 
-	@Test
+//	@Test
 	public void testStartsWith() throws Exception {
 		String test = "This is a test";
 		char tainted[] = new char[test.length()];
@@ -225,7 +229,20 @@ public class StringOpITCase {
 	public void testReferenceEq() throws Exception {
 		
 	}
+
+	@Test
+	public void testCodepoints() {
+	    String test = "I \uD800\uDF1E UTF-16";
+	    int[] codepoints = test.codePoints().toArray();
+
+	    for (int i = 0 ; i < codepoints.length ; i++)
+	    	codepoints[i] = Symbolicator.symbolic("utf16_" + i, codepoints[i]);
+
+		String s = new String(codepoints,0 , codepoints.length);
+	}
+
+
 	public static void main(String[] args) throws Exception {
-		new StringOpITCase().testStringOps();
+		new StringOpITCase().testCodepoints();
 	}
 }
