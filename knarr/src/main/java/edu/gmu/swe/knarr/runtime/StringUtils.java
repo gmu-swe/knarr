@@ -116,12 +116,11 @@ public class StringUtils {
 
 			s.valuePHOSPHOR_TAG.taints = new Taint[s.length()];
 
-			LazyIntArrayObjTags intSrcTags = (LazyIntArrayObjTags) srcTags;
 			for (int i = 0 , j = 0 ; i < s.length() ; i++ , j++) {
 				// i iterates over the string, may be incremented twice during each loop iteration
 				// j iterates over the taints
-				Taint t = intSrcTags.taints[j];
-				if (isBmpCodePoint(intSrcTags.val[j])) {
+				Taint t = srcTags.taints[j];
+				if (!(srcTags instanceof LazyIntArrayObjTags) || isBmpCodePoint(((LazyIntArrayObjTags)(srcTags)).val[j])) {
 					// Single char for this codepoint
 					if (t == null) {
 						exp = new BinaryOperation(Operator.CONCAT, exp, new IntConstant(arr[i]));

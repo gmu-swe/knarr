@@ -231,8 +231,19 @@ public class StringOpITCase {
 	}
 
 	@Test
+	public void testNoCodepoints() {
+		String test = "No fancy codepoints here";
+		char[] codepoints = test.toCharArray();
+
+		for (int i = 0 ; i < codepoints.length ; i++)
+			codepoints[i] = Symbolicator.symbolic("nocp_" + i, codepoints[i]);
+
+		String s = new String(codepoints,0 , codepoints.length);
+	}
+
+	@Test
 	public void testCodepoints() {
-	    String test = "I \uD800\uDF1E UTF-16";
+		String test = "I \uD800\uDF1E UTF-16";
 	    int[] codepoints = test.codePoints().toArray();
 
 	    for (int i = 0 ; i < codepoints.length ; i++)
