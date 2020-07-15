@@ -7,11 +7,7 @@ import java.util.Locale;
 import java.util.concurrent.ConcurrentHashMap;
 
 import edu.columbia.cs.psl.phosphor.runtime.Taint;
-import edu.columbia.cs.psl.phosphor.struct.LazyArrayObjTags;
-import edu.columbia.cs.psl.phosphor.struct.LazyCharArrayObjTags;
-import edu.columbia.cs.psl.phosphor.struct.TaintedBooleanWithObjTag;
-import edu.columbia.cs.psl.phosphor.struct.TaintedCharWithObjTag;
-import edu.columbia.cs.psl.phosphor.struct.TaintedIntWithObjTag;
+import edu.columbia.cs.psl.phosphor.struct.*;
 
 import org.jgrapht.alg.util.Pair;
 import za.ac.sun.cs.green.expr.*;
@@ -61,23 +57,108 @@ public class StringUtils {
 
 	public static LinkedList<String> symbolizedStrings = new LinkedList<>();
 
+	/**
+	 * Determines whether the specified character (Unicode code point)
+	 * is in the <a href="#BMP">Basic Multilingual Plane (BMP)</a>.
+	 * Such code points can be represented using a single {@code char}.
+	 *
+	 * @param  codePoint the character (Unicode code point) to be tested
+	 * @return {@code true} if the specified code point is between
+	 *         Character.MIN_VALUE and Character.MAX_VALUE inclusive;
+	 *         {@code false} otherwise.
+	 * @since  1.7
+	 */
+	private static boolean isBmpCodePoint(int codePoint) {
+		return codePoint >>> 16 == 0;
+		// Optimized form of:
+		//     codePoint >= MIN_VALUE && codePoint <= MAX_VALUE
+		// We consistently use logical shift (>>>) to facilitate
+		// additional runtime optimizations.
+	}
+
+
+	// Reuse common constants
+	private static BVConstant BV10 = new BVConstant(10, 32);
+	private static BVConstant BV3FFF = new BVConstant(0x3FFF, 32);
+	private static BVConstant CHAR_MIN_HIGH_SURR = new BVConstant(Character.MIN_HIGH_SURROGATE, 32);
+	private static BVConstant CHAR_MIN_LOW_SURR  = new BVConstant(Character.MIN_LOW_SURROGATE, 32);
+	private static BVConstant CHAR_MIN_SUPP_CP   = new BVConstant(Character.MIN_SUPPLEMENTARY_CODE_POINT, 32);
+	private static BVConstant MAX_CHAR           = new BVConstant(Character.MAX_VALUE, 32);
+
+	private static Expression extractFirstCharFromCodepoint(Expression codePoint) {
+		// ((codePoint >>> 10) + (MIN_HIGH_SURROGATE - (MIN_SUPPLEMENTARY_CODE_POINT >>> 10)));
+		return new BinaryOperation(
+				Operator.ADD,
+				new BinaryOperation(Operator.SHIFTUR, codePoint, BV10),
+				new BinaryOperation(
+						Operator.SUB,
+						CHAR_MIN_HIGH_SURR,
+						new BinaryOperation(Operator.SHIFTUR, CHAR_MIN_SUPP_CP, BV10)
+				)
+		);
+	}
+
+	private static Expression extractSecondCharFromCodepoint(Expression codePoint) {
+		// ((codePoint & 0x3ff) + MIN_LOW_SURROGATE);
+		return new BinaryOperation(
+				Operator.ADD,
+				new BinaryOperation(Operator.BIT_AND, codePoint, BV3FFF),
+				CHAR_MIN_LOW_SURR
+		);
+	}
+
 	public static void registerNewString(String s, LazyArrayObjTags srcTags, Object src, Taint offset_t, int offset, Taint len_t, int len) {
 		if (enabled && srcTags != null && srcTags.taints != null) {
 			StringVariable var = getFreshStringVar();
 			Expression exp = var;
 			char[] arr = s.toCharArray();
 			// Offset is for src, not for s
-			// TODO array out of bounds because sometimes arr is shorter than len
-			for (int i = 0 ; i < arr.length ; i++) {
-				Taint t = srcTags.taints[offset + i];
-				if (t == null) {
-					exp = new BinaryOperation(Operator.CONCAT, exp, new IntConstant(arr[i]));
-					s.valuePHOSPHOR_TAG.taints[i] = new ExpressionTaint(new BVVariable(var + "_" + i, 32));
+
+			s.valuePHOSPHOR_TAG.taints = new Taint[s.length()];
+
+			LazyIntArrayObjTags intSrcTags = (LazyIntArrayObjTags) srcTags;
+			for (int i = 0 , j = 0 ; i < s.length() ; i++ , j++) {
+				// i iterates over the string, may be incremented twice during each loop iteration
+				// j iterates over the taints
+				Taint t = intSrcTags.taints[j];
+				if (isBmpCodePoint(intSrcTags.val[j])) {
+					// Single char for this codepoint
+					if (t == null) {
+						exp = new BinaryOperation(Operator.CONCAT, exp, new IntConstant(arr[i]));
+						s.valuePHOSPHOR_TAG.taints[i] = new ExpressionTaint(new BVVariable(var + "_" + i, 32));
+						// Not sure if I should bound the new BVVariable within ther Character range
+					} else {
+						exp = new BinaryOperation(Operator.CONCAT, exp, (Expression) t.getSingleLabel());
+						s.valuePHOSPHOR_TAG.taints[i] = new ExpressionTaint(
+						        new BinaryOperation(Operator.BIT_AND, (Expression) t.getSingleLabel(), MAX_CHAR)
+						);
+					}
 				} else {
-					exp = new BinaryOperation(Operator.CONCAT, exp, (Expression) t.getSingleLabel());
+					// Two chars for this codepoint
+					if (t == null) {
+						exp = new BinaryOperation(Operator.CONCAT, exp, new IntConstant(arr[i]));
+						exp = new BinaryOperation(Operator.CONCAT, exp, new IntConstant(arr[i+1]));
+
+						Expression newVariable = new BVVariable(var + "_" + i, 32);
+
+						s.valuePHOSPHOR_TAG.taints[i]   = new ExpressionTaint(extractFirstCharFromCodepoint(newVariable));
+						s.valuePHOSPHOR_TAG.taints[i+1] = new ExpressionTaint(extractSecondCharFromCodepoint(newVariable));
+					} else {
+
+						Expression existingConstraint = (Expression) t.getSingleLabel();
+
+						exp = new BinaryOperation(Operator.CONCAT, exp, extractFirstCharFromCodepoint(existingConstraint));
+						exp = new BinaryOperation(Operator.CONCAT, exp, extractSecondCharFromCodepoint(existingConstraint));
+
+						s.valuePHOSPHOR_TAG.taints[i]   = new ExpressionTaint(extractFirstCharFromCodepoint(existingConstraint));
+						s.valuePHOSPHOR_TAG.taints[i+1] = new ExpressionTaint(extractSecondCharFromCodepoint(existingConstraint));
+					}
+
+					// We've processed two chars for one codepoint, increment i again
+					i += 1;
 				}
 			}
-			
+
 			s.PHOSPHOR_TAG = new ExpressionTaint(exp);
 			symbolizedStrings.add(s);
 		}
