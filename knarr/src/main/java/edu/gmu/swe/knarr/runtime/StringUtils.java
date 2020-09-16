@@ -114,21 +114,26 @@ public class StringUtils {
 			char[] arr = s.toCharArray();
 			// Offset is for src, not for s
 
-			s.valuePHOSPHOR_TAG.taints = new Taint[s.length()];
+
+			//LazyIntArrayObjTags intSrcTags = (LazyIntArrayObjTags) s.valuePHOSPHOR_TAG.taints;
+			Taint[] taintCopy = new Taint[s.length()];
+
+
+
 
 			for (int i = 0 , j = 0 ; i < s.length() ; i++ , j++) {
 				// i iterates over the string, may be incremented twice during each loop iteration
 				// j iterates over the taints
-				Taint t = srcTags.taints[j];
-				if (!(srcTags instanceof LazyIntArrayObjTags) || isBmpCodePoint(((LazyIntArrayObjTags)(srcTags)).val[j])) {
+				Taint t = s.valuePHOSPHOR_TAG.taints[j];
+				if (!(srcTags instanceof LazyIntArrayObjTags)) {
 					// Single char for this codepoint
 					if (t == null) {
 						exp = new BinaryOperation(Operator.CONCAT, exp, new IntConstant(arr[i]));
-						s.valuePHOSPHOR_TAG.taints[i] = new ExpressionTaint(new BVVariable(var + "_" + i, 32));
+						taintCopy[i] = new ExpressionTaint(new BVVariable(var + "_" + i, 32));
 						// Not sure if I should bound the new BVVariable within ther Character range
 					} else {
 						exp = new BinaryOperation(Operator.CONCAT, exp, (Expression) t.getSingleLabel());
-						s.valuePHOSPHOR_TAG.taints[i] = new ExpressionTaint(
+						taintCopy[i] = new ExpressionTaint(
 						        new BinaryOperation(Operator.BIT_AND, (Expression) t.getSingleLabel(), MAX_CHAR)
 						);
 					}
@@ -140,8 +145,8 @@ public class StringUtils {
 
 						Expression newVariable = new BVVariable(var + "_" + i, 32);
 
-						s.valuePHOSPHOR_TAG.taints[i]   = new ExpressionTaint(extractFirstCharFromCodepoint(newVariable));
-						s.valuePHOSPHOR_TAG.taints[i+1] = new ExpressionTaint(extractSecondCharFromCodepoint(newVariable));
+						taintCopy[i]   = new ExpressionTaint(extractFirstCharFromCodepoint(newVariable));
+						taintCopy[i+1] = new ExpressionTaint(extractSecondCharFromCodepoint(newVariable));
 					} else {
 
 						Expression existingConstraint = (Expression) t.getSingleLabel();
@@ -149,15 +154,15 @@ public class StringUtils {
 						exp = new BinaryOperation(Operator.CONCAT, exp, extractFirstCharFromCodepoint(existingConstraint));
 						exp = new BinaryOperation(Operator.CONCAT, exp, extractSecondCharFromCodepoint(existingConstraint));
 
-						s.valuePHOSPHOR_TAG.taints[i]   = new ExpressionTaint(extractFirstCharFromCodepoint(existingConstraint));
-						s.valuePHOSPHOR_TAG.taints[i+1] = new ExpressionTaint(extractSecondCharFromCodepoint(existingConstraint));
+						taintCopy[i]   = new ExpressionTaint(extractFirstCharFromCodepoint(existingConstraint));
+						taintCopy[i+1] = new ExpressionTaint(extractSecondCharFromCodepoint(existingConstraint));
 					}
 
 					// We've processed two chars for one codepoint, increment i again
 					i += 1;
 				}
 			}
-
+			s.valuePHOSPHOR_TAG.taints = taintCopy;
 			s.PHOSPHOR_TAG = new ExpressionTaint(exp);
 			symbolizedStrings.add(s);
 		}
