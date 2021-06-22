@@ -5,11 +5,6 @@
     <artifactId>Knarr</artifactId>
     <version>0.0.2-SNAPSHOT</version>
     <repositories>
-		<repository>
-            <id>jb.snapshots</id>
-            <name>jons snapshots</name>
-            <url>https://maven.jonbell.net/repository/snapshots</url>
-        </repository>
         <repository>
             <id>ossrh</id>
             <name>ossrh</name>
