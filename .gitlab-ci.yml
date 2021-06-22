@@ -35,6 +35,7 @@ cache:
 .verify: &verify
   stage: test
   script:
+    - 'mvn $MAVEN_CLI_OPTS -DskipTests=true package'
     - 'mvn $MAVEN_CLI_OPTS -Ddacapo.skip=false verify'
 
 # Verify merge requests using JDK8
