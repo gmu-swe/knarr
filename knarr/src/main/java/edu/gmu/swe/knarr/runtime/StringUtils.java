@@ -125,7 +125,7 @@ public class StringUtils {
 				// i iterates over the string, may be incremented twice during each loop iteration
 				// j iterates over the taints
 				Taint t = s.valuePHOSPHOR_TAG.taints[j];
-				if (!(srcTags instanceof LazyIntArrayObjTags)) {
+				if (!(srcTags instanceof LazyIntArrayObjTags) || isBmpCodePoint(((LazyIntArrayObjTags)(srcTags)).val[j])) {
 					// Single char for this codepoint
 					if (t == null) {
 						exp = new BinaryOperation(Operator.CONCAT, exp, new IntConstant(arr[i]));
@@ -298,19 +298,19 @@ public class StringUtils {
 				if (exp.metadata instanceof HashSet)
 					((HashSet) exp.metadata).add(new Pair<>("STARTSWITH",pref));
 			}
-			
+
 
 			if (tStart != null)
 				throw new UnsupportedOperationException();
-			
+
 			Expression tS = (Expression) s.PHOSPHOR_TAG.getSingleLabel();
 			if (start > 0)
 				throw new UnsupportedOperationException();
-			
+
 			ret.taint = new ExpressionTaint(new BinaryOperation(Operator.STARTSWITH, tPref, tS));
 		}
 	}
-	
+
 	public static void startsWith$$PHOSPHORTAGGED(TaintedBooleanWithObjTag ret, String s, String pref, TaintedBooleanWithObjTag ret2) {
 		startsWith$$PHOSPHORTAGGED(ret, s, pref, null, 0, ret2);
 	}
@@ -331,7 +331,7 @@ public class StringUtils {
 				tO = new StringConstant(s2);
 				Expression exp = (Expression) s1.PHOSPHOR_TAG.getSingleLabel();
 			}
-			
+
 			Expression tS = (Expression) s1.PHOSPHOR_TAG.getSingleLabel();
 			Expression exp = new BinaryOperation(Operator.EQUALS, tS, tO);
 			if (exp.metadata == null)
@@ -361,8 +361,8 @@ public class StringUtils {
 			ret.taint = new ExpressionTaint(exp);
 		}
 	}
-	
-	
+
+
 	public static void charAt$$PHOSPHORTAGGED(TaintedCharWithObjTag ret, String s, Taint tIndex, int index, TaintedCharWithObjTag ret2) {
 		if (enabled && s.PHOSPHOR_TAG != null && s.PHOSPHOR_TAG.getSingleLabel() != null) {
 			Expression eIndex;
@@ -370,10 +370,10 @@ public class StringUtils {
 				eIndex = (Expression) tIndex.getSingleLabel();
 			else
 				eIndex = new IntConstant(index);
-			
-			
+
+
 			Expression tS = (Expression) s.PHOSPHOR_TAG.getSingleLabel();
-			
+
 			if (s.valuePHOSPHOR_TAG.taints == null || s.valuePHOSPHOR_TAG.taints[index] == null) {
 				throw new Error("Shouldn't happen");
 			}
@@ -387,34 +387,34 @@ public class StringUtils {
 			ret.taint = new ExpressionTaint(pos);
 		}
 	}
-	
-	
+
+
 	public static void toLowerCase(String ret, String s, Locale l) {
 		changeCase(ret, s, false);
 	}
-	
+
 	public static void toLowerCase(String ret, String s) {
 		changeCase(ret, s, false);
 	}
-	
+
 	public static void toUpperCase(String ret, String s, Locale l) {
 		changeCase(ret, s, true);
 	}
-	
+
 	public static void toUpperCase(String ret, String s) {
 		changeCase(ret, s, true);
 	}
-	
+
 	private static void changeCase(String ret, String s, boolean toUpper) {
 		if (enabled && s.PHOSPHOR_TAG != null && s.PHOSPHOR_TAG.getSingleLabel() != null) {
-			
+
 			Expression newExp = new StringConstant("");
 			Taint newTaints[] = new Taint[s.length()];
 
 			IntConstant distance = new IntConstant('a' - 'A');
 			IntConstant start = new IntConstant(toUpper ? 'a' : 'A');
 			IntConstant end = new IntConstant(toUpper ? 'z' : 'Z');
-			
+
 			for (int i = 0 ; i < s.length() ; i++) {
 				Expression e;
 				if (s.valuePHOSPHOR_TAG.taints == null || s.valuePHOSPHOR_TAG.taints[i] == null) {
@@ -425,33 +425,33 @@ public class StringUtils {
 				} else {
 					e = (Expression) s.valuePHOSPHOR_TAG.taints[i].getSingleLabel();
 				}
-				
+
 				e = new NaryOperation(Operator.ITE,
 						new BinaryOperation(Operator.AND,
 							new BinaryOperation(Operator.GE, e, start),
 							new BinaryOperation(Operator.LE, e, end)),
 						new BinaryOperation(toUpper ? Operator.SUB : Operator.ADD, e, distance),
 						e);
-				
+
 				newTaints[i] = new ExpressionTaint(e);
 				newExp = new BinaryOperation(Operator.CONCAT, newExp, e);
 			}
-			
+
 			ret.PHOSPHOR_TAG = new ExpressionTaint(newExp);
 			ret.valuePHOSPHOR_TAG.taints = newTaints;
 		}
 	}
-	
+
 	public static void length$$PHOSPHORTAGGED(TaintedIntWithObjTag ret, String s, TaintedIntWithObjTag ret2) {
 		if (enabled && s.PHOSPHOR_TAG != null && s.PHOSPHOR_TAG.getSingleLabel() != null) {
 			ret.taint = new ExpressionTaint(new UnaryOperation(Operator.I2BV, 32, new UnaryOperation(Operator.LENGTH, (Expression) s.PHOSPHOR_TAG.getSingleLabel())));
 		}
 	}
-	
+
 	public static int stringName;
-	
+
 	public static StringVariable getFreshStringVar() {
 		return new StringVariable("string_var_" + (stringName++));
 	}
-	
+
 }
