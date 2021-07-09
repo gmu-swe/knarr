@@ -292,6 +292,14 @@ public class Symbolicator {
 		return in;
 	}
 
+	public static int symbolic(int in, Taint tagToCopy) {
+		return in;
+	}
+
+	public static boolean symbolic(boolean in, Taint tagToCopy){
+		return in;
+	}
+
 	public static short symbolic(short in) {
 		return in;
 	}
@@ -547,6 +555,26 @@ public class Symbolicator {
 			ret.val = (Integer) mySoln.varMapping.get(label);
 		ret.taint = new ExpressionTaint(new BVVariable((String) label, 32));
 		symbolicLabels.put((ExpressionTaint) ret.taint, label);
+		return ret;
+	}
+
+	public static TaintedIntWithObjTag symbolic$$PHOSPHORTAGGED(Taint<Expression> tag, int in, Taint<Expression> tagToCopy, TaintedIntWithObjTag ret) {
+		//TODO we are purposely propagating taints even though the constraint will be wrong. Do something to stop Z3 from solving this since the result is meaningless.
+		ret.val = in;
+		ret.taint = tagToCopy;
+		Expression exp = (Expression) ret.taint.getSingleLabel();
+		exp = new UnaryOperation(Operator.LASTINDEXOFSTRING, exp); //temp hack to make sure we never solve a constraint involving this
+		ret.taint.setSingleLabel(exp);
+		return ret;
+	}
+
+	public static TaintedBooleanWithObjTag symbolic$$PHOSPHORTAGGED(Taint<Expression> tag, boolean in, Taint<Expression> tagToCopy, TaintedBooleanWithObjTag ret) {
+		//TODO we are purposely propagating taints even though the constraint will be wrong. Do something to stop Z3 from solving this since the result is meaningless.
+		ret.val = in;
+		ret.taint = tagToCopy;
+		Expression exp = (Expression) ret.taint.getSingleLabel();
+		exp = new UnaryOperation(Operator.LASTINDEXOFSTRING, exp); //temp hack to make sure we never solve a constraint involving this
+		ret.taint.setSingleLabel(exp);
 		return ret;
 	}
 

@@ -124,7 +124,9 @@ public class StringUtils {
 			for (int i = 0 , j = 0 ; i < s.length() ; i++ , j++) {
 				// i iterates over the string, may be incremented twice during each loop iteration
 				// j iterates over the taints
-				Taint t = s.valuePHOSPHOR_TAG.taints[j];
+				Taint t = null;
+				if(s.valuePHOSPHOR_TAG != null && s.valuePHOSPHOR_TAG.taints != null)
+					t = s.valuePHOSPHOR_TAG.taints[j];
 				if (!(srcTags instanceof LazyIntArrayObjTags) || isBmpCodePoint(((LazyIntArrayObjTags)(srcTags)).val[j])) {
 					// Single char for this codepoint
 					if (t == null) {

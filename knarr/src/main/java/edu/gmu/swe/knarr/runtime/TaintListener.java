@@ -365,11 +365,7 @@ public class TaintListener extends DerivedTaintListener {
 	public TaintedFloatWithObjTag arrayGet(LazyFloatArrayObjTags b, Taint idxTaint, int idx, TaintedFloatWithObjTag ret, ControlTaintTagStack ctrl) {
 		// Read array
 		ret.val = b.val[idx];
-		
-		// Adjust taint
-		if(idxTaint != null || b.taints != null) {
-			throw new Error("Not implemented");
-		}
+		ret.taint = genericReadArray(b, idxTaint, idx, new RealConstant(ret.val));
 
 		return ret;
 	}
