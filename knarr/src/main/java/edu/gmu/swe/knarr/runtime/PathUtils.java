@@ -641,7 +641,8 @@ public class PathUtils {
 		if (DISABLE_FLOATS) {
 			ret.taint = null;
 		} else if (val != null) {
-			throw new UnsupportedOperationException();
+			//throw new UnsupportedOperationException();
+            ret.taint = null;
 		}
 		else
 		{
@@ -672,7 +673,8 @@ public class PathUtils {
 		if (DISABLE_FLOATS) {
 			ret.taint = null;
 		} else if (val != null) {
-			throw new UnsupportedOperationException();
+		    ret.taint = null;
+			//throw new UnsupportedOperationException();
 		}
 		else
 		{
@@ -686,7 +688,8 @@ public class PathUtils {
 		ret.val = (int) f;
 
 		if (val != null) {
-			throw new UnsupportedOperationException();
+			ret.taint = null;
+			//throw new UnsupportedOperationException();
 		}
 		else
 		{
@@ -700,7 +703,8 @@ public class PathUtils {
 		ret.val = (long) f;
 
 		if (val != null) {
-			throw new UnsupportedOperationException();
+		    ret.taint = null;
+			//throw new UnsupportedOperationException();
 		}
 		else
 		{
@@ -747,7 +751,8 @@ public class PathUtils {
 		ret.val = (float) l;
 
 		if (val != null) {
-			throw new UnsupportedOperationException();
+			ret.taint = null;
+			//throw new UnsupportedOperationException();
 		}
 		else
 		{
@@ -775,7 +780,8 @@ public class PathUtils {
 		ret.val = (int) d;
 
 		if (val != null) {
-			throw new UnsupportedOperationException();
+		    ret.taint = null;
+			//throw new UnsupportedOperationException();
 		}
 		else
 		{
@@ -803,7 +809,8 @@ public class PathUtils {
 		ret.val = (float) d;
 
 		if (val != null) {
-			throw new UnsupportedOperationException();
+			//throw new UnsupportedOperationException();
+            ret.taint = null;
 		}
 		else
 		{
