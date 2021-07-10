@@ -10,7 +10,7 @@ else
 	if [ ! -d "target/jre-inst" ]; then
 		echo "Creating instrumented JRE\n";
 		#java -Xmx6g "$@" -jar target/Knarr-0.0.2-SNAPSHOT.jar $INST_HOME target/jre-inst;
-		java -DspecialStrings=equals,startsWith,indexOf,contains,endsWith  -DaddCov="javax/imageio" $DEBUG -Xmx6g -jar target/Knarr-0.0.2-SNAPSHOT.jar $INST_HOME target/jre-inst;
+		java -DspecialStrings=equals,startsWith,indexOf,contains,endsWith,isEmpty -DaddCov="javax/imageio" $DEBUG -Xmx6g -jar target/Knarr-0.0.2-SNAPSHOT.jar $INST_HOME target/jre-inst;
 		#java -DspecialStrings=equals,startsWith,contains,length -Xmx6g -jar target/Knarr-0.0.2-SNAPSHOT.jar $INST_HOME target/jre-inst;
 		chmod +x target/jre-inst/jre/bin/*;
 		chmod +x target/jre-inst/jre/lib/*;

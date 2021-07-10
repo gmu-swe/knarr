@@ -51,6 +51,7 @@ public class StringTagFactory extends ClassVisitor implements Opcodes {
 					case "equals":
 					case "charAt":
 					case "length":
+					case "isEmpty":
 					case "contains":
 					case "indexOf":
 						ms.add(s + "$$PHOSPHORTAGGED");

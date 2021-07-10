@@ -470,7 +470,24 @@ public class StringUtils {
 
 	public static void length$$PHOSPHORTAGGED(TaintedIntWithObjTag ret, String s, TaintedIntWithObjTag ret2) {
 		if (enabled && s.PHOSPHOR_TAG != null && s.PHOSPHOR_TAG.getSingleLabel() != null) {
-			ret.taint = new ExpressionTaint(new UnaryOperation(Operator.I2BV, 32, new UnaryOperation(Operator.LENGTH, (Expression) s.PHOSPHOR_TAG.getSingleLabel())));
+			Expression exp = new UnaryOperation(Operator.I2BV, 32, new UnaryOperation(Operator.LENGTH, (Expression) s.PHOSPHOR_TAG.getSingleLabel()));
+			//if (exp.metadata == null)
+			//	exp.metadata = new HashSet<Pair<String,String>>();
+			//if (exp.metadata instanceof HashSet)
+			//	((HashSet) exp.metadata).add(new Pair<>("LENGTH", Integer.toString(s.length())));
+			ret.taint = new ExpressionTaint(exp);
+		}
+	}
+
+	public static void isEmpty$$PHOSPHORTAGGED(TaintedBooleanWithObjTag ret, String s, TaintedBooleanWithObjTag ret2) {
+		if (enabled && s.PHOSPHOR_TAG != null && s.PHOSPHOR_TAG.getSingleLabel() != null) {
+			Expression lengthExpr  = new UnaryOperation(Operator.LENGTH, (Expression) s.PHOSPHOR_TAG.getSingleLabel());
+			Expression exp = new BinaryOperation(Operator.EQUALS, lengthExpr, new IntConstant(0));
+			if (exp.metadata == null)
+				exp.metadata = new HashSet<Pair<String,String>>();
+			if (exp.metadata instanceof HashSet)
+				((HashSet) exp.metadata).add(new Pair<>("ISEMPTY",""));
+			ret.taint = new ExpressionTaint(exp);
 		}
 	}
 
