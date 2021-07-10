@@ -7,11 +7,13 @@ import edu.gmu.swe.knarr.runtime.*;
 
 public class Main {
 	public static void main(String[] _args) {
-		String[] args = new String[_args.length + 4];
+		String[] args = new String[_args.length + 6];
 		args[0] = "-multiTaint";
 		args[1] = "-withArrayLengthTags";
 		args[2] = "-disableJumpOptimizations";
 		args[3] = "-withArrayIndexTags";
+		args[4] = "-forceUnboxAcmpEq";
+		args[5] = "-withEnumsByValue";
 		Configuration.IMPLICIT_TRACKING = false;
 		Configuration.ARRAY_LENGTH_TRACKING = true;
 		Configuration.PREALLOC_STACK_OPS = true;
@@ -37,7 +39,7 @@ public class Main {
 		Configuration.setTaintTagFactory(PathConstraintTagFactory.class);
 //		Configuration.taintTagFactory = new PathConstraintTagFactory();
 		Configuration.autoTainter = new KnarrAutoTainter();
-		System.arraycopy(_args, 0, args, 4, _args.length);
+		System.arraycopy(_args, 0, args, 6, _args.length);
 		// Instrumenter.addlTransformer = new CRClassFileTransformer();
 		Instrumenter.main(args);
 	}

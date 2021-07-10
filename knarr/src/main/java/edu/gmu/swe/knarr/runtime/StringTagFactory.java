@@ -19,9 +19,9 @@ public class StringTagFactory extends ClassVisitor implements Opcodes {
 	private static final Type stringUtilsType = Type.getType(StringUtils.class);
 	private static final Type stringType = Type.getType(String.class);
 
-	
+
 	private boolean enabled = false;
-	
+
 	private static final String suffix = "$$redirected";
 	public final static Set<String> redirectedMethods;
 
@@ -47,6 +47,7 @@ public class StringTagFactory extends ClassVisitor implements Opcodes {
 			for (String s : ss.split(",")) {
 				switch (s) {
 					case "startsWith":
+					case "endsWith":
 					case "equals":
 					case "charAt":
 					case "length":
@@ -81,7 +82,7 @@ public class StringTagFactory extends ClassVisitor implements Opcodes {
 	public void visitEnd() {
 		if (enabled)
 			super.visitField(ACC_PRIVATE, "valuePHOSPHOR_TAG_2", lazyCharArrayType.getDescriptor(), null, null);
-		
+
 		super.visitEnd();
 	}
 
@@ -101,23 +102,23 @@ public class StringTagFactory extends ClassVisitor implements Opcodes {
 			}
 			else
 				ret = super.visitMethod(access, name, descriptor, signature, exceptions);
-			
+
 			return new RedirectMethodVisitor(ret);
 		}
 
 		return super.visitMethod(access, name, descriptor, signature, exceptions);
 	}
-	
+
 	private MethodVisitor redirectWithDisabledValue(int access, String name, String descriptor, String signature, String[] exceptions) {
 		MethodVisitor mv = super.visitMethod(access, name, descriptor, signature, exceptions);
 		mv.visitCode();
-		
+
 		Label l0 = new Label();
 		Label l1 = new Label();
 		Label l2 = new Label();
 		// try-finally to reset taints
 		mv.visitTryCatchBlock(l0, l1, l2, null);
-		
+
 		// Hide taints
 		mv.visitVarInsn(ALOAD, 0);
 		mv.visitVarInsn(ALOAD, 0);
@@ -127,7 +128,7 @@ public class StringTagFactory extends ClassVisitor implements Opcodes {
 		mv.visitInsn(ACONST_NULL);
 		mv.visitFieldInsn(PUTFIELD, stringType.getInternalName(), "valuePHOSPHOR_TAG", lazyCharArrayType.getDescriptor());
 		mv.visitLabel(l0);
-		
+
 		// Call original method
 		Type args[] = Type.getArgumentTypes(descriptor);
 		mv.visitIntInsn(ALOAD, 0);
@@ -136,7 +137,7 @@ public class StringTagFactory extends ClassVisitor implements Opcodes {
 		mv.visitMethodInsn(INVOKESPECIAL, stringType.getInternalName(), name + suffix, descriptor, false);
 
 		mv.visitLabel(l1);
-		
+
 		// Reset taints when no exception
 		mv.visitVarInsn(ALOAD, 0);
 		mv.visitVarInsn(ALOAD, 0);
@@ -145,7 +146,7 @@ public class StringTagFactory extends ClassVisitor implements Opcodes {
 		mv.visitVarInsn(ALOAD, 0);
 		mv.visitInsn(ACONST_NULL);
 		mv.visitFieldInsn(PUTFIELD, stringType.getInternalName(), "valuePHOSPHOR_TAG_2", lazyCharArrayType.getDescriptor());
-		
+
 		// Call interceptor from StringUtils
 		Type ret = Type.getReturnType(descriptor);
 		mv.visitInsn(ret.getSize() == 1 ? DUP : DUP2);
@@ -157,7 +158,7 @@ public class StringTagFactory extends ClassVisitor implements Opcodes {
 		utilArgs[1] = stringType;
 		System.arraycopy(args, 0, utilArgs, 2, args.length);
 		mv.visitMethodInsn(INVOKESTATIC, stringUtilsType.getInternalName(), name, Type.getMethodDescriptor(Type.VOID_TYPE, utilArgs), false);
-		
+
 		// Return
 		mv.visitInsn(Type.getReturnType(descriptor).getOpcode(IRETURN));
 
@@ -172,13 +173,13 @@ public class StringTagFactory extends ClassVisitor implements Opcodes {
 		mv.visitVarInsn(ALOAD, 0);
 		mv.visitInsn(ACONST_NULL);
 		mv.visitFieldInsn(PUTFIELD, stringType.getInternalName(), "valuePHOSPHOR_TAG_2", lazyCharArrayType.getDescriptor());
-		
+
 		// TODO Call interceptor when exception?
 
 		mv.visitInsn(ATHROW);
 		mv.visitMaxs(0, 0);
 		mv.visitEnd();
-		
+
 		return super.visitMethod(access, name + suffix, descriptor, signature, exceptions);
 	}
 
@@ -206,14 +207,14 @@ public class StringTagFactory extends ClassVisitor implements Opcodes {
 //			mv.visitVarInsn(ILOAD, 6);
 //			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "registerNewString", "(" +
 //					Type.getType(String.class) +
-//					Type.getType(LazyArrayObjTags.class) + Type.getType(Object.class).getDescriptor() + 
+//					Type.getType(LazyArrayObjTags.class) + Type.getType(Object.class).getDescriptor() +
 //					Configuration.TAINT_TAG_DESC + "I" +
 //					Configuration.TAINT_TAG_DESC + "I)" +
 //					Configuration.TAINT_TAG_DESC, false);
 //			putTaintField(mv);
 //		}
 //	}
-	
+
 	private static class ConstructorVisitor extends MethodVisitor {
 		Type[] args;
 
@@ -249,7 +250,7 @@ public class StringTagFactory extends ClassVisitor implements Opcodes {
 						mv.visitVarInsn(ILOAD, 6);
 						mv.visitMethodInsn(INVOKESTATIC, stringUtilsType.getInternalName(), "registerNewString", "(" +
 								stringType +
-								Type.getType(LazyArrayObjTags.class) + Type.getType(Object.class).getDescriptor() + 
+								Type.getType(LazyArrayObjTags.class) + Type.getType(Object.class).getDescriptor() +
 								Configuration.TAINT_TAG_DESC + "I" +
 								Configuration.TAINT_TAG_DESC + "I)V",
 								false);
@@ -262,7 +263,7 @@ public class StringTagFactory extends ClassVisitor implements Opcodes {
 		}
 
 	}
-	
+
 	private class RedirectMethodVisitor extends MethodVisitor {
 
 		public RedirectMethodVisitor(MethodVisitor methodVisitor) {
@@ -273,12 +274,12 @@ public class StringTagFactory extends ClassVisitor implements Opcodes {
 		public void visitMethodInsn(int opcode, String owner, String name, String descriptor, boolean isInterface) {
 			if (opcode != Opcodes.INVOKESTATIC && owner.equals(stringType.getInternalName()) && redirectedMethods.contains(name))
 				name = name + suffix;
-			
+
 			super.visitMethodInsn(opcode, owner, name, descriptor, isInterface);
 		}
-		
-		
-		
+
+
+
 	}
 
 }

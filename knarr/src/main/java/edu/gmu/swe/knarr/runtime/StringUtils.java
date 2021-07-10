@@ -302,12 +302,13 @@ public class StringUtils {
 			}
 
 
-			if (tStart != null)
-				throw new UnsupportedOperationException();
+			//Let's not throw exceptions here that will be swallowed by the app... but note that this is not supported!
+			//if (tStart != null)
+			//	throw new UnsupportedOperationException();
 
 			Expression tS = (Expression) s.PHOSPHOR_TAG.getSingleLabel();
-			if (start > 0)
-				throw new UnsupportedOperationException();
+			//if (start > 0)
+			//	throw new UnsupportedOperationException();
 
 			ret.taint = new ExpressionTaint(new BinaryOperation(Operator.STARTSWITH, tPref, tS));
 		}
@@ -316,6 +317,29 @@ public class StringUtils {
 	public static void startsWith$$PHOSPHORTAGGED(TaintedBooleanWithObjTag ret, String s, String pref, TaintedBooleanWithObjTag ret2) {
 		startsWith$$PHOSPHORTAGGED(ret, s, pref, null, 0, ret2);
 	}
+
+	public static void endsWith$$PHOSPHORTAGGED(TaintedBooleanWithObjTag ret, String s, String suffix, TaintedBooleanWithObjTag ret2) {
+		Expression tPref;
+		if (enabled && s.PHOSPHOR_TAG != null && s.PHOSPHOR_TAG.getSingleLabel() != null) {
+			if (suffix.PHOSPHOR_TAG != null && suffix.PHOSPHOR_TAG.getSingleLabel() != null)
+				tPref = (Expression)suffix.PHOSPHOR_TAG.getSingleLabel();
+			else {
+				tPref = new StringConstant(suffix);
+				Expression exp = (Expression) s.PHOSPHOR_TAG.getSingleLabel();
+				if (exp.metadata == null)
+					exp.metadata = new HashSet<Pair<String,String>>();
+				if (exp.metadata instanceof HashSet)
+					((HashSet) exp.metadata).add(new Pair<>("ENDSWITH",suffix));
+			}
+
+
+
+			Expression tS = (Expression) s.PHOSPHOR_TAG.getSingleLabel();
+
+			ret.taint = new ExpressionTaint(new BinaryOperation(Operator.ENDSWITH, tPref, tS));
+		}
+	}
+
 
 	public static void equals$$PHOSPHORTAGGED(TaintedBooleanWithObjTag ret, String s, Object o, TaintedBooleanWithObjTag ret2) {
 		registerNewString(s, s.valuePHOSPHOR_TAG, null, null, 0, null, s.length());

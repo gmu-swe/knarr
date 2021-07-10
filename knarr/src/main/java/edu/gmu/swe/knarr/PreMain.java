@@ -18,6 +18,7 @@ public class PreMain {
 		Configuration.setTaintTagFactory(PathConstraintTagFactory.class);
 		Configuration.derivedTaintListener = new TaintListener();
 		Configuration.WITH_HEAVY_OBJ_EQUALS_HASHCODE = true;
+		Configuration.WITH_ENUM_BY_VAL = true;
 		Configuration.PREALLOC_STACK_OPS = true;
 		Configuration.SINGLE_TAINT_LABEL = true;
 		// Configuration.extensionClassVisitor =

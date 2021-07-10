@@ -23,7 +23,7 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
     private final static Type STRING_TYPE = Type.getType(String.class);
 	@Override
 	public void fieldOp(int opcode, String owner, String name, String desc, MethodVisitor mv, LocalVariableManager lvs, TaintPassingMV ta, boolean trackedLoad) {
-		
+
 	}
 	@Override
 	public Taint<?> getAutoTaint(String source) {
@@ -573,7 +573,7 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 			// jump?
 			if(!hasFrameAtEnd)
 				ta.acceptFn(fn3);
-			
+
 			break;
 		case Opcodes.IF_ICMPEQ:
 		case Opcodes.IF_ICMPNE:
@@ -617,6 +617,14 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 
 			lvs.freeTmpLV(tmp);
 			break;
+			case Opcodes.IF_ACMPEQ:
+			case Opcodes.IF_ACMPNE:
+				mv.visitMethodInsn(Opcodes.INVOKESTATIC, Type.getInternalName(TaintUtils.class), "ensureUnboxed", "(Ljava/lang/Object;)Ljava/lang/Object;", false);
+				mv.visitInsn(SWAP);
+				mv.visitMethodInsn(Opcodes.INVOKESTATIC, Type.getInternalName(TaintUtils.class), "ensureUnboxed", "(Ljava/lang/Object;)Ljava/lang/Object;", false);
+				mv.visitInsn(SWAP);
+				mv.visitJumpInsn(opcode, label);
+				break;
 		// case Opcodes.IF_ACMPEQ:
 		// case Opcodes.IF_ACMPNE:
 		// Type typeOnStack = getTopOfStackType();
@@ -805,7 +813,7 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 		} else {
 			shadowVar = lvs.varToShadowVar.get(var);
 		}
-		
+
 		mv.visitVarInsn(ALOAD, shadowVar);
 		mv.visitLdcInsn(increment);
 		mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addIincConstraint", "(" + Configuration.TAINT_TAG_DESC + "I)V", false);
@@ -885,10 +893,10 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 
 		// Generate fresh labels
 		Label[] freshLabels = new Label[labels.length];
-		
+
 		for (int i = 0 ; i < freshLabels.length ; i++)
 			freshLabels[i] = new Label();
-		
+
 		Label freshDflt = new Label();
 
 		// Generate coverage IDs
@@ -901,7 +909,7 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 
 		// Duplicate value, needed for later
 		mv.visitInsn(DUP);
-		
+
 		// Issue switch
 		mv.visitLookupSwitchInsn(freshDflt, keys, freshLabels);
 
@@ -928,7 +936,7 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addConstraint", "(" + Configuration.TAINT_TAG_DESC + Configuration.TAINT_TAG_DESC + "IIIIIZZ" + STRING_TYPE.getDescriptor() + ")V", false);
 			mv.visitJumpInsn(GOTO, labels[i]);
 		}
-		
+
 		// Default label is not equal to any of the above
 		mv.visitLabel(freshDflt);
 		ta.acceptFn(fn);
@@ -962,10 +970,10 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 
 		// Generate fresh labels
 		Label[] freshLabels = new Label[labels.length];
-		
+
 		for (int i = 0 ; i < freshLabels.length ; i++)
 			freshLabels[i] = new Label();
-		
+
 		Label freshDflt = new Label();
 
 		// Generate coverage IDs
@@ -978,7 +986,7 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 
 		// Duplicate value, needed for later
 		mv.visitInsn(DUP);
-		
+
 		// Issue switch
 		mv.visitTableSwitchInsn(min, max, freshDflt, freshLabels);
 
@@ -1004,7 +1012,7 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addConstraint", "(" + Configuration.TAINT_TAG_DESC + Configuration.TAINT_TAG_DESC + "IIIIIZZ" + STRING_TYPE.getDescriptor() + ")V", false);
 			mv.visitJumpInsn(GOTO, labels[i]);
 		}
-		
+
 		// Default label is not equal to any of the above
 		mv.visitLabel(freshDflt);
 		ta.acceptFn(fn);
