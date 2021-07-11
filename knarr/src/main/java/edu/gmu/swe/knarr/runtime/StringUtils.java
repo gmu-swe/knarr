@@ -1,15 +1,14 @@
 package edu.gmu.swe.knarr.runtime;
 
-import java.io.Serializable;
+import java.io.*;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Locale;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Objects;
 
 import edu.columbia.cs.psl.phosphor.runtime.Taint;
 import edu.columbia.cs.psl.phosphor.struct.*;
 
-import org.jgrapht.alg.util.Pair;
 import za.ac.sun.cs.green.expr.*;
 import za.ac.sun.cs.green.expr.Operation.Operator;
 
@@ -226,10 +225,9 @@ public class StringUtils {
 				tPref = new StringConstant(pref);
 				Expression exp = (Expression) s.PHOSPHOR_TAG.getSingleLabel();
 				if (exp.metadata == null)
-					exp.metadata = new HashSet<Pair<String,String>>();
+					exp.metadata = new HashSet<StringComparisonRecord>();
 				if (exp.metadata instanceof HashSet)
-					((HashSet) exp.metadata).add(new Pair<>("INDEXOF", pref));
-					//((HashSet) exp.metadata).add(new Pair<>("EQUALS", pref));
+					((HashSet) exp.metadata).add(new StringComparisonRecord(StringComparisonType.INDEXOF, pref));
 			}
 
 
@@ -249,9 +247,9 @@ public class StringUtils {
 					if(s.valuePHOSPHOR_TAG.taints[i] != null) {
 						Expression exp = (Expression) s.valuePHOSPHOR_TAG.taints[i].getSingleLabel();
 						if (exp.metadata == null)
-							exp.metadata = new HashSet<String>();
+							exp.metadata = new HashSet<StringComparisonRecord>();
 						if (exp.metadata instanceof HashSet)
-							((HashSet) exp.metadata).add(new Pair<>("INDEXOF", pref));
+							((HashSet) exp.metadata).add(new StringComparisonRecord(StringComparisonType.INDEXOF, pref));
 //							((HashSet) exp.metadata).add(new Pair<>("EQUALS", pref));
 					}
 				}
@@ -296,9 +294,8 @@ public class StringUtils {
 				tPref = new StringConstant(pref);
 				Expression exp = (Expression) s.PHOSPHOR_TAG.getSingleLabel();
 				if (exp.metadata == null)
-					exp.metadata = new HashSet<Pair<String,String>>();
-				if (exp.metadata instanceof HashSet)
-					((HashSet) exp.metadata).add(new Pair<>("STARTSWITH",pref));
+					exp.metadata = new HashSet<StringComparisonRecord>();
+				((HashSet) exp.metadata).add(new StringComparisonRecord(StringComparisonType.STARTSWITH, pref));
 			}
 
 
@@ -327,9 +324,8 @@ public class StringUtils {
 				tPref = new StringConstant(suffix);
 				Expression exp = (Expression) s.PHOSPHOR_TAG.getSingleLabel();
 				if (exp.metadata == null)
-					exp.metadata = new HashSet<Pair<String,String>>();
-				if (exp.metadata instanceof HashSet)
-					((HashSet) exp.metadata).add(new Pair<>("ENDSWITH",suffix));
+					exp.metadata = new HashSet<StringComparisonRecord>();
+				((HashSet) exp.metadata).add(new StringComparisonRecord(StringComparisonType.ENDWITH, suffix));
 			}
 
 
@@ -361,9 +357,8 @@ public class StringUtils {
 			Expression tS = (Expression) s1.PHOSPHOR_TAG.getSingleLabel();
 			Expression exp = new BinaryOperation(Operator.EQUALS, tS, tO);
 			if (exp.metadata == null)
-				exp.metadata = new HashSet<Pair<String,String>>();
-			if (exp.metadata instanceof HashSet)
-				((HashSet) exp.metadata).add(new Pair<>("EQUALS",s2));
+				exp.metadata = new HashSet<StringComparisonRecord>();
+			((HashSet) exp.metadata).add(new StringComparisonRecord(StringComparisonType.EQUALS, s2));
 			ret.taint = new ExpressionTaint(exp);
 		} else if (enabled && o != null && o instanceof String && ((String)o).PHOSPHOR_TAG != null && ((String)o).PHOSPHOR_TAG.getSingleLabel() != null) {
 			String s1 = (String)o;
@@ -381,9 +376,8 @@ public class StringUtils {
 			Expression tS = (Expression) s1.PHOSPHOR_TAG.getSingleLabel();
 			Expression exp = new BinaryOperation(Operator.EQUALS, tS, tO);
 			if (exp.metadata == null)
-				exp.metadata = new HashSet<Pair<String,String>>();
-			if (exp.metadata instanceof HashSet)
-				((HashSet) exp.metadata).add(new Pair<>("EQUALS",s2));
+				exp.metadata = new HashSet<StringComparisonRecord>();
+			((HashSet) exp.metadata).add(new StringComparisonRecord(StringComparisonType.EQUALS,s2));
 			ret.taint = new ExpressionTaint(exp);
 		}
 	}
@@ -484,9 +478,8 @@ public class StringUtils {
 			Expression lengthExpr  = new UnaryOperation(Operator.LENGTH, (Expression) s.PHOSPHOR_TAG.getSingleLabel());
 			Expression exp = new BinaryOperation(Operator.EQUALS, lengthExpr, new IntConstant(0));
 			if (exp.metadata == null)
-				exp.metadata = new HashSet<Pair<String,String>>();
-			if (exp.metadata instanceof HashSet)
-				((HashSet) exp.metadata).add(new Pair<>("ISEMPTY",""));
+				exp.metadata = new HashSet<StringComparisonRecord>();
+			((HashSet) exp.metadata).add(new StringComparisonRecord(StringComparisonType.ISEMPTY, ""));
 			ret.taint = new ExpressionTaint(exp);
 		}
 	}
@@ -497,4 +490,67 @@ public class StringUtils {
 		return new StringVariable("string_var_" + (stringName++));
 	}
 
+	public static class StringComparisonRecord implements Externalizable {
+		String stringCompared;
+		StringComparisonType comparisionType;
+
+		public String getStringCompared() {
+			return stringCompared;
+		}
+
+		public StringComparisonType getComparisionType() {
+			return comparisionType;
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (this == o) return true;
+			if (o == null || getClass() != o.getClass()) return false;
+			StringComparisonRecord that = (StringComparisonRecord) o;
+			return Objects.equals(stringCompared, that.stringCompared) &&
+					comparisionType == that.comparisionType;
+		}
+
+		@Override
+		public String toString() {
+			return "StringComparisonRecord{" +
+					"stringCompared='" + stringCompared + '\'' +
+					", comparisionType=" + comparisionType +
+					'}';
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(stringCompared, comparisionType);
+		}
+
+
+		public StringComparisonRecord(){
+
+		}
+
+		public StringComparisonRecord(StringComparisonType comparisionType, String stringCompared){
+			this.comparisionType = comparisionType;
+			this.stringCompared = stringCompared;
+		}
+
+		@Override
+		public void writeExternal(ObjectOutput out) throws IOException {
+			out.writeUTF(stringCompared);
+			out.writeInt(comparisionType.ordinal());
+		}
+
+		@Override
+		public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+			this.stringCompared = in.readUTF();
+			this.comparisionType = StringComparisonType.values()[in.readInt()];
+		}
+	}
+	public enum StringComparisonType{
+		ISEMPTY,
+		INDEXOF,
+		EQUALS,
+		STARTSWITH,
+		ENDWITH,
+	}
 }

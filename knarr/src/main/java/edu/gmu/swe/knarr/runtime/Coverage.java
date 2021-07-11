@@ -2,7 +2,7 @@ package edu.gmu.swe.knarr.runtime;
 
 import edu.columbia.cs.psl.phosphor.org.objectweb.asm.Type;
 
-import java.io.Serializable;
+import java.io.*;
 import java.util.BitSet;
 import java.util.LinkedList;
 import java.util.Optional;
@@ -209,15 +209,15 @@ public class Coverage implements Serializable {
 
     }
 
-    public static class BranchData implements Serializable {
+    public static class BranchData implements Externalizable {
         private static final long serialVersionUID = -2776780881587606089L;
 
-        public final int takenCode;
-        public final int notTakenCode;
-        public final int notTakenPath;
-        public final boolean breaksLoop;
-        public final boolean taken;
-        public final String source;
+        public int takenCode;
+        public int notTakenCode;
+        public int notTakenPath;
+        public boolean breaksLoop;
+        public boolean taken;
+        public String source;
 
         public BranchData(int takenCode, int notTakenCode, int notTakenPath, boolean breaksLoop, boolean taken) {
             this.takenCode = takenCode;
@@ -235,6 +235,30 @@ public class Coverage implements Serializable {
             this.breaksLoop = breaksLoop;
             this.taken = taken;
             this.source = source;
+        }
+
+        public BranchData(){
+
+        }
+
+        @Override
+        public void writeExternal(ObjectOutput out) throws IOException {
+            out.writeInt(takenCode);
+            out.writeInt(notTakenCode);
+            out.writeInt(notTakenPath);
+            out.writeBoolean(breaksLoop);
+            out.writeBoolean(taken);
+            out.writeUTF(source);
+        }
+
+        @Override
+        public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+            this.takenCode = in.readInt();
+            this.notTakenCode = in.readInt();
+            this.notTakenPath = in.readInt();
+            this.breaksLoop = in.readBoolean();
+            this.taken = in.readBoolean();
+            this.source = in.readUTF();
         }
     }
 
