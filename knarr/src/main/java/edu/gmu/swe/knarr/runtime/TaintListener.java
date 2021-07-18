@@ -104,7 +104,7 @@ public class TaintListener extends DerivedTaintListener {
 			return new ArrayVariable(ret.getLast().getName() + "_" + ret.size(), ret.getLast().getType());
 		}
 	}
-	
+
 	private Expression setArrayVar(Object arr, Expression idx, Expression val)
 	{
 		synchronized (arrayNames)
@@ -122,6 +122,28 @@ public class TaintListener extends DerivedTaintListener {
 			PathUtils.getCurPC()._addDet(Operator.EQ, store, newVar);
 			return newVar;
 		}
+	}
+
+	//To make JITing better, put the fast path for ignoring a read or write into a separate method
+	private boolean ignoredRead(LazyArrayObjTags b, Taint idxTaint, int idx){
+		boolean taintedArray = (b.taints != null && b.taints[idx] != null);
+		boolean taintedIndex = (idxTaint != null);
+		if(!taintedArray && !taintedIndex)
+			return true;
+		return (b.getLength() > IGNORE_LARGE_ARRAY_SIZE && idx > IGNORE_LARGE_ARRAY_INDEX);
+	}
+
+	private boolean ignoredWrite(LazyArrayObjTags b, Taint idxTaint, int idx, Taint t) {
+		boolean taintedArray = (b.taints != null && b.taints[idx] != null);
+		boolean taintedIndex = (idxTaint != null);
+		boolean taintedVal = (t != null);
+		if (!taintedArray && !taintedIndex && !taintedVal) {
+			// Everything concrete
+			return true;
+		}
+		if (b.getLength() > IGNORE_LARGE_ARRAY_SIZE && idx > IGNORE_LARGE_ARRAY_INDEX)
+			return true;
+		return false;
 	}
 
 	private <B extends LazyArrayObjTags> Taint genericReadArray(B b, Taint idxTaint, int idx, Constant c) {
@@ -208,9 +230,9 @@ public class TaintListener extends DerivedTaintListener {
 
 		throw new Error("Dead code");
 	}
-	
+
 	private <B extends LazyArrayObjTags> Taint genericWriteArray(B b, Taint t, Taint idxTaint, int idx, Constant c) {
-		
+
 		boolean taintedArray = (b.taints != null && b.taints[idx] != null);
 		boolean taintedIndex = (idxTaint != null);
 		boolean taintedVal   = (t != null);
@@ -306,118 +328,158 @@ public class TaintListener extends DerivedTaintListener {
 
 		throw new Error("Dead code");
 	}
-	
+
 	@Override
 	public TaintedBooleanWithObjTag arrayGet(LazyBooleanArrayObjTags b, Taint idxTaint, int idx, TaintedBooleanWithObjTag ret, ControlTaintTagStack ctrl) {
 		ret.val = b.val[idx];
-		ret.taint = genericReadArray(b, idxTaint, idx, new BoolConstant(ret.val));
+		if(ignoredRead(b, idxTaint, idx))
+		    ret.taint = null;
+		else
+			ret.taint = genericReadArray(b, idxTaint, idx, new BoolConstant(ret.val));
 //		if (idxTaint != null && idxTaint.toString().matches(PathUtils.interesting))
 //			System.out.print("");
 		return ret;
 	}
-	
+
 	@Override
 	public TaintedByteWithObjTag arrayGet(LazyByteArrayObjTags b, Taint idxTaint, int idx, TaintedByteWithObjTag ret, ControlTaintTagStack ctrl) {
 		ret.val = b.val[idx];
-		ret.taint = genericReadArray(b, idxTaint, idx, new BVConstant(ret.val, 32));
+		if(ignoredRead(b, idxTaint, idx))
+			ret.taint = null;
+		else
+			ret.taint = genericReadArray(b, idxTaint, idx, new BVConstant(ret.val, 32));
 //		if (idxTaint != null && idxTaint.toString().matches(PathUtils.interesting))
 //			System.out.print("");
 		return ret;
 	}
-	
+
 	@Override
 	public TaintedCharWithObjTag arrayGet(LazyCharArrayObjTags b, Taint idxTaint, int idx, TaintedCharWithObjTag ret, ControlTaintTagStack ctrl) {
 		ret.val = b.val[idx];
-		ret.taint = genericReadArray(b, idxTaint, idx, new BVConstant(ret.val, 32));
+		if(ignoredRead(b, idxTaint, idx))
+			ret.taint = null;
+		else
+			ret.taint = genericReadArray(b, idxTaint, idx, new BVConstant(ret.val, 32));
 //		if (idxTaint != null && idxTaint.toString().matches(PathUtils.interesting))
 //			System.out.print("");
 		return ret;
 	}
-	
+
 	@Override
 	public TaintedShortWithObjTag arrayGet(LazyShortArrayObjTags b, Taint idxTaint, int idx, TaintedShortWithObjTag ret, ControlTaintTagStack ctrl) {
 		ret.val = b.val[idx];
-		ret.taint = genericReadArray(b, idxTaint, idx, new BVConstant(ret.val, 32));
+		if(ignoredRead(b, idxTaint, idx))
+			ret.taint = null;
+		else
+			ret.taint = genericReadArray(b, idxTaint, idx, new BVConstant(ret.val, 32));
 //		if (idxTaint != null && idxTaint.toString().matches(PathUtils.interesting))
 //			System.out.print("");
 		return ret;
 	}
-	
+
 	@Override
 	public TaintedIntWithObjTag arrayGet(LazyIntArrayObjTags b, Taint idxTaint, int idx, TaintedIntWithObjTag ret, ControlTaintTagStack ctrl) {
 		ret.val = b.val[idx];
-		ret.taint = genericReadArray(b, idxTaint, idx, new BVConstant(ret.val, 32));
+		if(ignoredRead(b, idxTaint, idx))
+			ret.taint = null;
+		else
+			ret.taint = genericReadArray(b, idxTaint, idx, new BVConstant(ret.val, 32));
 //		if (idxTaint != null && idxTaint.toString().matches(PathUtils.interesting))
 //			System.out.print("");
 		return ret;
 	}
-	
+
 	@Override
 	public TaintedLongWithObjTag arrayGet(LazyLongArrayObjTags b, Taint idxTaint, int idx, TaintedLongWithObjTag ret, ControlTaintTagStack ctrl) {
 		ret.val = b.val[idx];
-		ret.taint = genericReadArray(b, idxTaint, idx, new BVConstant(ret.val, 64));
+		if(ignoredRead(b, idxTaint, idx))
+			ret.taint = null;
+		else
+			ret.taint = genericReadArray(b, idxTaint, idx, new BVConstant(ret.val, 64));
 //		if (idxTaint != null && idxTaint.toString().matches(PathUtils.interesting))
 //			System.out.print("");
 		return ret;
 	}
-	
+
 	@Override
 	public TaintedFloatWithObjTag arrayGet(LazyFloatArrayObjTags b, Taint idxTaint, int idx, TaintedFloatWithObjTag ret, ControlTaintTagStack ctrl) {
 		// Read array
 		ret.val = b.val[idx];
-		ret.taint = genericReadArray(b, idxTaint, idx, new RealConstant(ret.val));
+		if(ignoredRead(b, idxTaint, idx))
+			ret.taint = null;
+		else
+			ret.taint = genericReadArray(b, idxTaint, idx, new RealConstant(ret.val));
 
 		return ret;
 	}
-	
+
 	@Override
 	public TaintedDoubleWithObjTag arrayGet(LazyDoubleArrayObjTags b, Taint idxTaint, int idx, TaintedDoubleWithObjTag ret, ControlTaintTagStack ctrl) {
 		// Read array
 		ret.val = b.val[idx];
-		
+
 		// Adjust taint
-		ret.taint = genericReadArray(b, idxTaint, idx, new RealConstant(ret.val));
+		if(ignoredRead(b, idxTaint, idx))
+			ret.taint = null;
+		else
+			ret.taint = genericReadArray(b, idxTaint, idx, new RealConstant(ret.val));
 
 		return ret;
 	}
 
 	@Override
 	public Taint arraySet(LazyShortArrayObjTags a, Taint idxTaint, int idx, Taint t, short v, ControlTaintTagStack ctrl) {
+	    if(ignoredWrite(a, idxTaint, idx, t))
+	    	return null;
 		return genericWriteArray(a, t, idxTaint, idx, new BVConstant(v, 32));
 	}
 
 	@Override
 	public Taint arraySet(LazyIntArrayObjTags a, Taint idxTaint, int idx, Taint t, int v, ControlTaintTagStack ctrl) {
+		if(ignoredWrite(a, idxTaint, idx, t))
+			return null;
 		return genericWriteArray(a, t, idxTaint, idx, new BVConstant(v, 32));
 	}
 
 	@Override
 	public Taint arraySet(LazyByteArrayObjTags a, Taint idxTaint, int idx, Taint t, byte v, ControlTaintTagStack ctrl) {
+		if(ignoredWrite(a, idxTaint, idx, t))
+			return null;
 		return genericWriteArray(a, t, idxTaint, idx, new BVConstant(v, 32));
 	}
 
 	@Override
 	public Taint arraySet(LazyBooleanArrayObjTags a, Taint idxTaint, int idx, Taint t, boolean v, ControlTaintTagStack ctrl) {
+		if(ignoredWrite(a, idxTaint, idx, t))
+			return null;
 		return genericWriteArray(a, t, idxTaint, idx, new BoolConstant(v));
 	}
 
 	@Override
 	public Taint arraySet(LazyCharArrayObjTags a, Taint idxTaint, int idx, Taint t, char v, ControlTaintTagStack ctrl) {
+		if(ignoredWrite(a, idxTaint, idx, t))
+			return null;
 		return genericWriteArray(a, t, idxTaint, idx, new BVConstant(v, 32));
 	}
 
 	@Override
 	public Taint arraySet(LazyFloatArrayObjTags a, Taint idxTaint, int idx, Taint t, float v, ControlTaintTagStack ctrl) {
+		if(ignoredWrite(a, idxTaint, idx, t))
+			return null;
 		return genericWriteArray(a, t, idxTaint, idx, new RealConstant(v));
 	}
 
 	@Override
 	public Taint arraySet(LazyDoubleArrayObjTags a, Taint idxTaint, int idx, Taint t, double v, ControlTaintTagStack ctrl) {
+		if(ignoredWrite(a, idxTaint, idx, t))
+			return null;
 		return genericWriteArray(a, t, idxTaint, idx, new RealConstant(v));
 	}
 
 	@Override
 	public Taint arraySet(LazyLongArrayObjTags a, Taint idxTaint, int idx, Taint t, long v, ControlTaintTagStack ctrl) {
+		if(ignoredWrite(a, idxTaint, idx, t))
+			return null;
 		return genericWriteArray(a, t, idxTaint, idx, new BVConstant(v, 64));
 	}
 }
