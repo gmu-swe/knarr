@@ -131,7 +131,7 @@ public class StringUtils {
 					if (t == null) {
 						exp = new BinaryOperation(Operator.CONCAT, exp, new IntConstant(arr[i]));
 						taintCopy[i] = new ExpressionTaint(new BVVariable(var + "_" + i, 32));
-						// Not sure if I should bound the new BVVariable within ther Character range
+						// Not sure if I should bound the new BVVariable within the Character range
 					} else {
 						exp = new BinaryOperation(Operator.CONCAT, exp, (Expression) t.getSingleLabel());
 						taintCopy[i] = new ExpressionTaint(
@@ -238,7 +238,7 @@ public class StringUtils {
 //			if (start > 0)
 //				throw new UnsupportedOperationException();
 
-			ret.taint = new ExpressionTaint(new BinaryOperation(Operator.LASTINDEXOFSTRING, tPref, tS));
+			ret.taint = new ExpressionTaint(new NaryOperation(Operator.INDEXOFSTRING, tS, tPref, new IntConstant(start)));
 		}
 
 		else if(enabled && s.PHOSPHOR_TAG == null) {
@@ -475,8 +475,8 @@ public class StringUtils {
 
 	public static void isEmpty$$PHOSPHORTAGGED(TaintedBooleanWithObjTag ret, String s, TaintedBooleanWithObjTag ret2) {
 		if (enabled && s.PHOSPHOR_TAG != null && s.PHOSPHOR_TAG.getSingleLabel() != null) {
-			Expression lengthExpr  = new UnaryOperation(Operator.LENGTH, (Expression) s.PHOSPHOR_TAG.getSingleLabel());
-			Expression exp = new BinaryOperation(Operator.EQUALS, lengthExpr, new IntConstant(0));
+			//Expression lengthExpr  = new UnaryOperation(Operator.LENGTH, (Expression) s.PHOSPHOR_TAG.getSingleLabel());
+			Expression exp = new BinaryOperation(Operator.EQUALS, new StringConstant(""), (Expression) s.PHOSPHOR_TAG.getSingleLabel());
 			if (exp.metadata == null)
 				exp.metadata = new HashSet<StringComparisonRecord>();
 			((HashSet) exp.metadata).add(new StringComparisonRecord(StringComparisonType.ISEMPTY, ""));
