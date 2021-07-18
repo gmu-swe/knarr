@@ -248,7 +248,12 @@ public class Coverage implements Serializable {
             out.writeInt(notTakenPath);
             out.writeBoolean(breaksLoop);
             out.writeBoolean(taken);
-            out.writeUTF(source);
+            if(source == null)
+                out.writeBoolean(false);
+            else{
+                out.writeBoolean(true);
+                out.writeUTF(source);
+            }
         }
 
         @Override
@@ -258,7 +263,10 @@ public class Coverage implements Serializable {
             this.notTakenPath = in.readInt();
             this.breaksLoop = in.readBoolean();
             this.taken = in.readBoolean();
-            this.source = in.readUTF();
+            if(in.readBoolean())
+                this.source = in.readUTF();
+            else
+                this.source = null;
         }
     }
 
