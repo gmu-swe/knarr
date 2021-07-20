@@ -899,13 +899,9 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 
 		Label freshDflt = new Label();
 
-		// Generate coverage IDs
-        int[] covIDs = new int[labels.length];
-
-		for (int i = 0 ; i < freshLabels.length ; i++)
-			covIDs[i] = Coverage.instance.getNewLocationId();
-
 		int dfltID = Coverage.instance.getNewLocationId();
+		int switchID = Coverage.instance.getNewLocationId();
+
 
 		// Duplicate value, needed for later
 		mv.visitInsn(DUP);
@@ -918,49 +914,49 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 		for (int i = 0 ; i < freshLabels.length ; i++) {
 			mv.visitLabel(freshLabels[i]);
 			ta.acceptFn(fn);
-			// taint, value
-			mv.visitInsn(ACONST_NULL);
-			// taint, value, null
-			mv.visitInsn(SWAP);
 			// taint, null, value
 			mv.visitLdcInsn(keys[i]);
 			// taint, null, value, switch target
-			mv.visitLdcInsn(IF_ICMPEQ);
-			// TODO all-to-all coverage
-			mv.visitLdcInsn(covIDs[i]);
-			mv.visitLdcInsn(dfltID);
-			mv.visitInsn(ICONST_0);
-			mv.visitInsn(ICONST_1);
-			// taint, null, value, switch target, ==
+			mv.visitLdcInsn(i);
+
+			//TODO performance: it would be great to create these arrays in clinit and store them as a static field.
+			//Create an int[] with all of the keys
+			mv.visitLdcInsn(keys.length);
+			mv.visitIntInsn(NEWARRAY, T_INT);
+			for (int j = 0; j < keys.length; j++) {
+				mv.visitInsn(DUP);
+				mv.visitLdcInsn(j);
+				mv.visitLdcInsn(keys[j]);
+				mv.visitInsn(IASTORE);
+			}
+			mv.visitLdcInsn(switchID);
 			getSourceInfo(mv);
-			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addConstraint", "(" + Configuration.TAINT_TAG_DESC + Configuration.TAINT_TAG_DESC + "IIIIIZZ" + STRING_TYPE.getDescriptor() + ")V", false);
+			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addSwitchConstraint", "(" + Configuration.TAINT_TAG_DESC + "III[II" + STRING_TYPE.getDescriptor() + ")V", false);
 			mv.visitJumpInsn(GOTO, labels[i]);
 		}
 
 		// Default label is not equal to any of the above
 		mv.visitLabel(freshDflt);
 		ta.acceptFn(fn);
-		for (int i = 0 ; i < freshLabels.length ; i++) {
-			// taint, value, value, taint
-			mv.visitInsn(DUP2);
-			mv.visitInsn(ACONST_NULL);
-			// taint, value, taint, value, null
-			mv.visitInsn(SWAP);
-			// taint, value, taint, null, value
-			mv.visitLdcInsn(keys[i]);
-			// taint, value, taint, null, value, switch target
-			mv.visitLdcInsn(IF_ICMPEQ);
-			mv.visitLdcInsn(covIDs[i]);
-			mv.visitLdcInsn(dfltID);
-			mv.visitInsn(ICONST_0);
-			mv.visitInsn(ICONST_0);
-			// taint, value, taint, null, value, switch target, !=
-			getSourceInfo(mv);
-			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addConstraint", "(" + Configuration.TAINT_TAG_DESC + Configuration.TAINT_TAG_DESC + "IIIIIZZ" + STRING_TYPE.getDescriptor() + ")V", false);
-			// taint, value
-		}
 
-		mv.visitInsn(POP2);
+		// taint, null, value
+		mv.visitInsn(ICONST_M1);
+		// taint, null, value, switch target
+		mv.visitLdcInsn(keys.length);
+
+		//TODO performance: it would be great to create these arrays in clinit and store them as a static field.
+		//Create an int[] with all of the keys
+		mv.visitLdcInsn(keys.length);
+		mv.visitIntInsn(NEWARRAY, T_INT);
+		for (int j = 0; j < keys.length; j++) {
+			mv.visitInsn(DUP);
+			mv.visitLdcInsn(j);
+			mv.visitLdcInsn(keys[j]);
+			mv.visitInsn(IASTORE);
+		}
+		mv.visitLdcInsn(switchID);
+		getSourceInfo(mv);
+		mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addSwitchConstraint", "(" + Configuration.TAINT_TAG_DESC + "III[II" + STRING_TYPE.getDescriptor() + ")V", false);
 		mv.visitJumpInsn(GOTO, dflt);
 	}
 
@@ -977,67 +973,65 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 		Label freshDflt = new Label();
 
 		// Generate coverage IDs
-		int[] covIDs = new int[labels.length];
 
-		for (int i = 0 ; i < freshLabels.length ; i++)
-			covIDs[i] = Coverage.instance.getNewLocationId();
-
+		int switchID = Coverage.instance.getNewLocationId();
 		int dfltID = Coverage.instance.getNewLocationId();
+
 
 		// Duplicate value, needed for later
 		mv.visitInsn(DUP);
 
 		// Issue switch
 		mv.visitTableSwitchInsn(min, max, freshDflt, freshLabels);
-
 		// Each fresh label registers the value switched on and jumps to the original label
 		for (int i = 0 ; i < freshLabels.length ; i++) {
 			mv.visitLabel(freshLabels[i]);
 			ta.acceptFn(fn);
-			// taint, value
-			mv.visitInsn(ACONST_NULL);
-			// taint, value, null
-			mv.visitInsn(SWAP);
 			// taint, null, value
-			mv.visitLdcInsn(min+i);
+			mv.visitLdcInsn(min + i);
 			// taint, null, value, switch target
-			mv.visitLdcInsn(IF_ICMPEQ);
-			// TODO coverage all-to-all
-			mv.visitLdcInsn(covIDs[i]);
-			mv.visitLdcInsn(dfltID);
-			mv.visitInsn(ICONST_0);
-			mv.visitInsn(ICONST_1);
-			// taint, null, value, switch target, ==
+			mv.visitLdcInsn(i);
+
+			//TODO performance: it would be great to create these arrays in clinit and store them as a static field.
+			//Create an int[] with all of the keys
+			mv.visitLdcInsn(labels.length);
+			mv.visitIntInsn(NEWARRAY, T_INT);
+			for (int j = 0; j < labels.length; j++) {
+				mv.visitInsn(DUP);
+				mv.visitLdcInsn(j);
+				mv.visitLdcInsn(min + j);
+				mv.visitInsn(IASTORE);
+			}
+			mv.visitLdcInsn(switchID);
 			getSourceInfo(mv);
-			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addConstraint", "(" + Configuration.TAINT_TAG_DESC + Configuration.TAINT_TAG_DESC + "IIIIIZZ" + STRING_TYPE.getDescriptor() + ")V", false);
+			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addSwitchConstraint", "(" + Configuration.TAINT_TAG_DESC + "III[II" + STRING_TYPE.getDescriptor() + ")V", false);
 			mv.visitJumpInsn(GOTO, labels[i]);
 		}
 
 		// Default label is not equal to any of the above
 		mv.visitLabel(freshDflt);
 		ta.acceptFn(fn);
-		for (int i = 0 ; i < freshLabels.length ; i++) {
-			// taint, value, value, taint
-			mv.visitInsn(DUP2);
-			mv.visitInsn(ACONST_NULL);
-			// taint, value, taint, value, null
-			mv.visitInsn(SWAP);
-			// taint, value, taint, null, value
-			mv.visitLdcInsn(min+i);
-			// taint, value, taint, null, value, switch target
-			mv.visitLdcInsn(IF_ICMPEQ);
-			mv.visitLdcInsn(covIDs[i]);
-			mv.visitLdcInsn(dfltID);
-			mv.visitInsn(ICONST_0);
-			mv.visitInsn(ICONST_0);
-			// taint, value, taint, null, value, switch target, !=
-			getSourceInfo(mv);
-			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addConstraint", "(" + Configuration.TAINT_TAG_DESC + Configuration.TAINT_TAG_DESC + "IIIIIZZ" + STRING_TYPE.getDescriptor() + ")V", false);
-			// taint, value
-		}
 
-		mv.visitInsn(POP2);
+		// taint, null, value
+		mv.visitInsn(ICONST_M1);
+		// taint, null, value, switch target
+		mv.visitLdcInsn(labels.length);
+
+		//TODO performance: it would be great to create these arrays in clinit and store them as a static field.
+		//Create an int[] with all of the keys
+		mv.visitLdcInsn(labels.length);
+		mv.visitIntInsn(NEWARRAY, T_INT);
+		for (int j = 0; j < labels.length; j++) {
+			mv.visitInsn(DUP);
+			mv.visitLdcInsn(j);
+			mv.visitLdcInsn(min + j);
+			mv.visitInsn(IASTORE);
+		}
+		mv.visitLdcInsn(switchID);
+		getSourceInfo(mv);
+		mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addSwitchConstraint", "(" + Configuration.TAINT_TAG_DESC + "III[II" + STRING_TYPE.getDescriptor() + ")V", false);
 		mv.visitJumpInsn(GOTO, dflt);
+
 	}
 
 	private void getSourceInfo(MethodVisitor mv) {

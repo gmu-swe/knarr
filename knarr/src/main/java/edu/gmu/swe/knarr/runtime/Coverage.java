@@ -209,15 +209,47 @@ public class Coverage implements Serializable {
 
     }
 
-    public static class BranchData implements Externalizable {
+    public static abstract class CoverageData implements Externalizable{
+        private static final long serialVersionUID = 2555941994342681090L;
+        public boolean taken;
+        public String source;
+
+        public CoverageData(){
+
+        }
+        public CoverageData(boolean taken, String source){
+            this.taken  =taken;
+            this.source =source;
+        }
+
+        @Override
+        public void writeExternal(ObjectOutput out) throws IOException {
+            out.writeBoolean(this.taken);
+            if(this.source == null)
+                out.writeBoolean(false);
+            else{
+                out.writeBoolean(true);
+                out.writeUTF(this.source);
+            }
+        }
+
+        @Override
+        public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+            this.taken = in.readBoolean();
+            if(in.readBoolean())
+                this.source = in.readUTF();
+            else
+                this.source = null;
+        }
+    }
+
+    public static class BranchData extends CoverageData {
         private static final long serialVersionUID = -2776780881587606089L;
 
         public int takenCode;
         public int notTakenCode;
         public int notTakenPath;
         public boolean breaksLoop;
-        public boolean taken;
-        public String source;
 
         public BranchData(int takenCode, int notTakenCode, int notTakenPath, boolean breaksLoop, boolean taken) {
             this.takenCode = takenCode;
@@ -243,32 +275,59 @@ public class Coverage implements Serializable {
 
         @Override
         public void writeExternal(ObjectOutput out) throws IOException {
+            super.writeExternal(out);
             out.writeInt(takenCode);
             out.writeInt(notTakenCode);
             out.writeInt(notTakenPath);
             out.writeBoolean(breaksLoop);
-            out.writeBoolean(taken);
-            if(source == null)
-                out.writeBoolean(false);
-            else{
-                out.writeBoolean(true);
-                out.writeUTF(source);
-            }
         }
 
         @Override
         public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+            super.readExternal(in);
             this.takenCode = in.readInt();
             this.notTakenCode = in.readInt();
             this.notTakenPath = in.readInt();
             this.breaksLoop = in.readBoolean();
-            this.taken = in.readBoolean();
-            if(in.readBoolean())
-                this.source = in.readUTF();
-            else
-                this.source = null;
         }
     }
+
+    public static class SwitchData extends CoverageData {
+        private static final long serialVersionUID = -2776780881587606089L;
+
+        public int switchID;
+        public int numArms; // does NOT account for default, default case is arm == numArms
+        public int arm;
+        public SwitchData(int switchID, int numArms, int arm, boolean taken, String source){
+            this.switchID = switchID;
+            this.numArms = numArms;
+            this.arm = arm;
+            this.taken = taken;
+            this.source = source;
+        }
+
+        public SwitchData(){
+
+        }
+
+
+        @Override
+        public void writeExternal(ObjectOutput out) throws IOException {
+            super.writeExternal(out);
+            out.writeInt(switchID);
+            out.writeInt(numArms);
+            out.writeInt(arm);
+        }
+
+        @Override
+        public void readExternal(ObjectInput in) throws IOException, ClassNotFoundException {
+            super.readExternal(in);
+            this.switchID = in.readInt();
+            this.numArms = in.readInt();
+            this.arm = in.readInt();
+        }
+    }
+
 
     public static Coverage newCoverage() {
         return ("AFL".equals(System.getProperty("addCov"))) ? new AFLCoverage() : new Coverage();

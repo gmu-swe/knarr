@@ -1,35 +1,16 @@
 package edu.gmu.swe.knarr.runtime;
 
+import edu.columbia.cs.psl.phosphor.org.objectweb.asm.Opcodes;
+import edu.columbia.cs.psl.phosphor.org.objectweb.asm.util.Printer;
+import edu.columbia.cs.psl.phosphor.runtime.Taint;
+import edu.columbia.cs.psl.phosphor.struct.*;
+import za.ac.sun.cs.green.expr.*;
+import za.ac.sun.cs.green.expr.Operation.Operator;
+
 import java.lang.reflect.Array;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import za.ac.sun.cs.green.expr.BVConstant;
-import za.ac.sun.cs.green.expr.BinaryOperation;
-import za.ac.sun.cs.green.expr.Expression;
-import za.ac.sun.cs.green.expr.IntConstant;
-import za.ac.sun.cs.green.expr.IntVariable;
-import za.ac.sun.cs.green.expr.NaryOperation;
-import za.ac.sun.cs.green.expr.Operation;
-import za.ac.sun.cs.green.expr.Operation.Operator;
-import edu.columbia.cs.psl.phosphor.org.objectweb.asm.Opcodes;
-import edu.columbia.cs.psl.phosphor.org.objectweb.asm.util.Printer;
-import edu.columbia.cs.psl.phosphor.runtime.Taint;
-import edu.columbia.cs.psl.phosphor.struct.LazyArrayObjTags;
-import edu.columbia.cs.psl.phosphor.struct.TaintedBooleanWithObjTag;
-import edu.columbia.cs.psl.phosphor.struct.TaintedByteWithObjTag;
-import edu.columbia.cs.psl.phosphor.struct.TaintedCharWithObjTag;
-import edu.columbia.cs.psl.phosphor.struct.TaintedDoubleWithObjTag;
-import edu.columbia.cs.psl.phosphor.struct.TaintedFloatWithObjTag;
-import edu.columbia.cs.psl.phosphor.struct.TaintedIntWithObjTag;
-import edu.columbia.cs.psl.phosphor.struct.TaintedLongWithObjTag;
-import edu.columbia.cs.psl.phosphor.struct.TaintedPrimitiveWithObjTag;
-import edu.columbia.cs.psl.phosphor.struct.TaintedShortWithObjTag;
-import edu.columbia.cs.psl.phosphor.struct.TaintedWithObjTag;
-import za.ac.sun.cs.green.expr.RealConstant;
-import za.ac.sun.cs.green.expr.StringConstant;
-import za.ac.sun.cs.green.expr.UnaryOperation;
 
 public class PathUtils {
 	private static IntConstant O000FFFF;
@@ -37,7 +18,7 @@ public class PathUtils {
 	private static PathConditionWrapper curPC;
 	public static final boolean IGNORE_SHIFTS = true;
 	public static final String INTERNAL_NAME = "edu/gmu/swe/knarr/runtime/PathUtils";
-	
+
 //	public static String interesting = ".*autoVar_4[^0-9].*";
 
 
@@ -1059,11 +1040,11 @@ public class PathUtils {
 
 		}
 	}
-	
+
 	public static void addIincConstraint(Taint<Expression> t, int inc) {
 		if (t == null)
 			return;
-		
+
 		t.setSingleLabel(new BinaryOperation(Operator.ADD, t.getSingleLabel(), new IntConstant(inc)));
 	}
 
@@ -1111,8 +1092,42 @@ public class PathUtils {
 		}
 	}
 
-	public static void addConstraint(Expression lExp, Expression rExp, Object v1, Object v2, int opcode) {
-
+	public static void addSwitchConstraint(Taint<Expression> l, int v, int v2, int takenArm, int[] allValues, int switchID, String source){
+		if(l == null)
+			return;
+		Expression lExpr = l.getSingleLabel();
+		Expression rExpr = new IntConstant(v2);
+		//Add the constraint for what is in fact taken
+		Operation defaultCase = null;
+		for(int i = 0 ; i < allValues.length; i++){
+		    Operation thisDefault = new BinaryOperation(Operator.NE, lExpr, new IntConstant(allValues[i]));
+		    if(defaultCase == null)
+		    	defaultCase = thisDefault;
+		    else
+		    	defaultCase = new BinaryOperation(Operator.AND, defaultCase, thisDefault);
+		    if(i == takenArm){
+				Operation expr = new BinaryOperation(Operator.EQ, lExpr, rExpr);
+				getCurPC()._addDet(expr);
+				if(switchID != -1){
+					expr.metadata = new Coverage.SwitchData(switchID, allValues.length, takenArm, true, source);
+				}
+			}
+			else {
+				Operation expr = new BinaryOperation(Operator.NE, lExpr, new IntConstant(allValues[i]));
+				getCurPC()._addDet(expr);
+				if(switchID != -1){
+					expr.metadata = new Coverage.SwitchData(switchID, allValues.length, i, false, source);
+				}
+			}
+		}
+		if(takenArm == allValues.length){
+			getCurPC()._addDet(defaultCase);
+			defaultCase.metadata = new Coverage.SwitchData(switchID, allValues.length, allValues.length, true, source);
+		}else {
+			defaultCase = new UnaryOperation(Operation.Operator.NOT, defaultCase);
+			getCurPC()._addDet(defaultCase);
+			defaultCase.metadata = new Coverage.SwitchData(switchID, allValues.length, allValues.length, false, source);
+		}
 	}
 
 	public static void addConstraint(Taint<Expression> l, int v, int min, int max, int takenID, int notTakenID, boolean breaksLoop, String source) {
@@ -1204,7 +1219,7 @@ public class PathUtils {
 
 	/**
 	 * Adds a constraint that the xpression passed in an instance of a type
-	 * 
+	 *
 	 * @param exp
 	 * @param clazz
 	 * @return
@@ -1234,7 +1249,7 @@ public class PathUtils {
 	/**
 	 * Returns a new taint value that has the constraint that it's the result of
 	 * arraylength from the passed taint to clazz
-	 * 
+	 *
 	 * @param expr
 	 * @return
 	 */
@@ -1312,7 +1327,7 @@ public class PathUtils {
 	/**
 	 * Returns a new taint value that has a constraint that indiciates that it's
 	 * the result of unary op opcode on taint.
-	 * 
+	 *
 	 * @param exp
 	 * @param opcode
 	 * @return
@@ -1411,7 +1426,7 @@ public class PathUtils {
 	/**
 	 * Returns a new taint value that has a constraint that indiciates that it's
 	 * the result of binary op opcode on taint1, taint2.
-	 * 
+	 *
 	 * @param expr1
 	 * @param expr2
 	 * @param opcode
