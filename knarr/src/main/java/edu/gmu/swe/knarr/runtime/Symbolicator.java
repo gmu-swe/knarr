@@ -563,7 +563,7 @@ public class Symbolicator {
 		ret.val = in;
 		ret.taint = tagToCopy;
 		Expression exp = (Expression) ret.taint.getSingleLabel();
-		exp = new UnaryOperation(Operator.LASTINDEXOFSTRING, exp); //temp hack to make sure we never solve a constraint involving this
+		exp = new UnaryOperation(Operator.INDEXOFSTRING, exp); //temp hack to make sure we never solve a constraint involving this
 		ret.taint.setSingleLabel(exp);
 		return ret;
 	}
@@ -573,7 +573,7 @@ public class Symbolicator {
 		ret.val = in;
 		ret.taint = tagToCopy;
 		Expression exp = (Expression) ret.taint.getSingleLabel();
-		exp = new UnaryOperation(Operator.LASTINDEXOFSTRING, exp); //temp hack to make sure we never solve a constraint involving this
+		exp = new UnaryOperation(Operator.INDEXOFSTRING, exp); //temp hack to make sure we never solve a constraint involving this
 		ret.taint.setSingleLabel(exp);
 		return ret;
 	}
