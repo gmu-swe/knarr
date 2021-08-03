@@ -889,6 +889,20 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 
 	@Override
 	public void lookupSwitch(Label dflt, int[] keys, Label[] labels, MethodVisitor mv, LocalVariableManager lvs, TaintPassingMV ta) {
+		//TODO performance: it would be great to create these arrays in clinit and store them as a static field.
+		//Create an int[] with all of the keys
+		mv.visitLdcInsn(keys.length);
+		mv.visitIntInsn(NEWARRAY, T_INT);
+		for (int j = 0; j < keys.length; j++) {
+			mv.visitInsn(DUP);
+			mv.visitLdcInsn(j);
+			mv.visitLdcInsn(keys[j]);
+			mv.visitInsn(IASTORE);
+		}
+		int lvWithKeys = lvs.getTmpLV(Type.getType("[I"));
+		mv.visitVarInsn(ASTORE, lvWithKeys);
+
+
 		FrameNode fn = ta.getCurrentFrameNode();
 
 		// Generate fresh labels
@@ -919,16 +933,7 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 			// taint, null, value, switch target
 			mv.visitLdcInsn(i);
 
-			//TODO performance: it would be great to create these arrays in clinit and store them as a static field.
-			//Create an int[] with all of the keys
-			mv.visitLdcInsn(keys.length);
-			mv.visitIntInsn(NEWARRAY, T_INT);
-			for (int j = 0; j < keys.length; j++) {
-				mv.visitInsn(DUP);
-				mv.visitLdcInsn(j);
-				mv.visitLdcInsn(keys[j]);
-				mv.visitInsn(IASTORE);
-			}
+			mv.visitVarInsn(ALOAD, lvWithKeys);
 			mv.visitLdcInsn(switchID);
 			getSourceInfo(mv);
 			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addSwitchConstraint", "(" + Configuration.TAINT_TAG_DESC + "III[II" + STRING_TYPE.getDescriptor() + ")V", false);
@@ -944,16 +949,8 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 		// taint, null, value, switch target
 		mv.visitLdcInsn(keys.length);
 
-		//TODO performance: it would be great to create these arrays in clinit and store them as a static field.
-		//Create an int[] with all of the keys
-		mv.visitLdcInsn(keys.length);
-		mv.visitIntInsn(NEWARRAY, T_INT);
-		for (int j = 0; j < keys.length; j++) {
-			mv.visitInsn(DUP);
-			mv.visitLdcInsn(j);
-			mv.visitLdcInsn(keys[j]);
-			mv.visitInsn(IASTORE);
-		}
+		mv.visitVarInsn(ALOAD, lvWithKeys);
+		lvs.freeTmpLV(lvWithKeys);
 		mv.visitLdcInsn(switchID);
 		getSourceInfo(mv);
 		mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addSwitchConstraint", "(" + Configuration.TAINT_TAG_DESC + "III[II" + STRING_TYPE.getDescriptor() + ")V", false);
@@ -962,6 +959,17 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 
 	@Override
 	public void tableSwitch(int min, int max, Label dflt, Label[] labels, MethodVisitor mv, LocalVariableManager lvs, TaintPassingMV ta) {
+		//Create an int[] with all of the keys, will use later
+		mv.visitLdcInsn(labels.length);
+		mv.visitIntInsn(NEWARRAY, T_INT);
+		for (int j = 0; j < labels.length; j++) {
+			mv.visitInsn(DUP);
+			mv.visitLdcInsn(j);
+			mv.visitLdcInsn(min + j);
+			mv.visitInsn(IASTORE);
+		}
+		int lvWithKeys = lvs.getTmpLV(Type.getType("[I"));
+		mv.visitVarInsn(ASTORE, lvWithKeys);
 		FrameNode fn = ta.getCurrentFrameNode();
 
 		// Generate fresh labels
@@ -987,23 +995,18 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 		for (int i = 0 ; i < freshLabels.length ; i++) {
 			mv.visitLabel(freshLabels[i]);
 			ta.acceptFn(fn);
-			// taint, null, value
+			// taint, value
 			mv.visitLdcInsn(min + i);
-			// taint, null, value, switch target
+			//taint, value, table target
 			mv.visitLdcInsn(i);
+			//taint ,value, table target, arm
+            mv.visitVarInsn(ALOAD, lvWithKeys);
 
-			//TODO performance: it would be great to create these arrays in clinit and store them as a static field.
-			//Create an int[] with all of the keys
-			mv.visitLdcInsn(labels.length);
-			mv.visitIntInsn(NEWARRAY, T_INT);
-			for (int j = 0; j < labels.length; j++) {
-				mv.visitInsn(DUP);
-				mv.visitLdcInsn(j);
-				mv.visitLdcInsn(min + j);
-				mv.visitInsn(IASTORE);
-			}
+			// taint, value, tablet arget, arm, array of values
 			mv.visitLdcInsn(switchID);
+			// taint, value, tablet arget, arm, array of values, switch ID
 			getSourceInfo(mv);
+			// taint, value, tablet arget, arm, array of values, switch ID, string descriptor
 			mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addSwitchConstraint", "(" + Configuration.TAINT_TAG_DESC + "III[II" + STRING_TYPE.getDescriptor() + ")V", false);
 			mv.visitJumpInsn(GOTO, labels[i]);
 		}
@@ -1016,21 +1019,14 @@ public class PathConstraintTagFactory implements TaintTagFactory, Opcodes, Strin
 		mv.visitInsn(ICONST_M1);
 		// taint, null, value, switch target
 		mv.visitLdcInsn(labels.length);
+		mv.visitVarInsn(ALOAD, lvWithKeys);
 
-		//TODO performance: it would be great to create these arrays in clinit and store them as a static field.
-		//Create an int[] with all of the keys
-		mv.visitLdcInsn(labels.length);
-		mv.visitIntInsn(NEWARRAY, T_INT);
-		for (int j = 0; j < labels.length; j++) {
-			mv.visitInsn(DUP);
-			mv.visitLdcInsn(j);
-			mv.visitLdcInsn(min + j);
-			mv.visitInsn(IASTORE);
-		}
+		lvs.freeTmpLV(lvWithKeys);
 		mv.visitLdcInsn(switchID);
 		getSourceInfo(mv);
 		mv.visitMethodInsn(INVOKESTATIC, PathUtils.INTERNAL_NAME, "addSwitchConstraint", "(" + Configuration.TAINT_TAG_DESC + "III[II" + STRING_TYPE.getDescriptor() + ")V", false);
 		mv.visitJumpInsn(GOTO, dflt);
+
 
 	}
 
