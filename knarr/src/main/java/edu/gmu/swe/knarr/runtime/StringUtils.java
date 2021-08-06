@@ -83,6 +83,7 @@ public class StringUtils {
 	private static BVConstant CHAR_MIN_LOW_SURR  = new BVConstant(Character.MIN_LOW_SURROGATE, 32);
 	private static BVConstant CHAR_MIN_SUPP_CP   = new BVConstant(Character.MIN_SUPPLEMENTARY_CODE_POINT, 32);
 	private static BVConstant MAX_CHAR           = new BVConstant(Character.MAX_VALUE, 32);
+	private static IntConstant MAX_CHAR_INT;
 
 	private static Expression extractFirstCharFromCodepoint(Expression codePoint) {
 		// ((codePoint >>> 10) + (MIN_HIGH_SURROGATE - (MIN_SUPPLEMENTARY_CODE_POINT >>> 10)));
@@ -133,10 +134,24 @@ public class StringUtils {
 						taintCopy[i] = new ExpressionTaint(new BVVariable(var + "_" + i, 32));
 						// Not sure if I should bound the new BVVariable within the Character range
 					} else {
+						Expression op = (Expression) t.getSingleLabel();
+						if (op instanceof BinaryOperation) {
+							BinaryOperation binop = (BinaryOperation) op;
+							if (MAX_CHAR_INT == null)
+								MAX_CHAR_INT = new IntConstant(Character.MAX_VALUE);
+							if (binop.getOperator() == Operator.BIT_AND) {
+								Expression right = binop.getOperand(1);
+								if (MAX_CHAR_INT.equals(right) || MAX_CHAR.equals(right)) {
+								    // No point in bounding to MAX_CHAR if its already bound
+									exp = new BinaryOperation(Operator.CONCAT, exp, op);
+									taintCopy[i] = new ExpressionTaint(binop);
+									continue;
+								}
+							}
+						}
 						exp = new BinaryOperation(Operator.CONCAT, exp, (Expression) t.getSingleLabel());
 						taintCopy[i] = new ExpressionTaint(
-						        new BinaryOperation(Operator.BIT_AND, (Expression) t.getSingleLabel(), MAX_CHAR)
-						);
+								new BinaryOperation(Operator.BIT_AND, (Expression) t.getSingleLabel(), MAX_CHAR));
 					}
 				} else {
 					// Two chars for this codepoint
