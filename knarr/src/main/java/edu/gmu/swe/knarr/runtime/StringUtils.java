@@ -9,6 +9,7 @@ import java.util.Objects;
 import edu.columbia.cs.psl.phosphor.runtime.Taint;
 import edu.columbia.cs.psl.phosphor.struct.*;
 
+import edu.gmu.swe.knarr.internal.ConstraintSerializer;
 import za.ac.sun.cs.green.expr.*;
 import za.ac.sun.cs.green.expr.Operation.Operator;
 
@@ -506,8 +507,8 @@ public class StringUtils {
 	}
 
 	public static class StringComparisonRecord implements Externalizable {
-		String stringCompared;
-		StringComparisonType comparisionType;
+		public String stringCompared;
+		public StringComparisonType comparisionType;
 
 		public String getStringCompared() {
 			return stringCompared;
