@@ -1,55 +1,100 @@
 package edu.gmu.swe.knarr.internal;
 
+import edu.columbia.cs.psl.phosphor.TaintUtils;
 import edu.gmu.swe.knarr.runtime.Coverage;
 import edu.gmu.swe.knarr.runtime.StringUtils;
 import za.ac.sun.cs.green.expr.*;
 
+import java.io.*;
 import java.util.HashSet;
+import java.util.LinkedList;
 
 public class ConstraintSerializer {
-    private static final Integer NOT_REPEATED = new Integer(0);
     private final ByteArrayList buff = new ByteArrayList(100 * 1024);
-    //private final IdentityHashMap<Object, Integer> allWrittenObjects = new IdentityHashMap<>();
-    //private final ArrayList<Object> objectTable = new ArrayList<>();
+    private HashSet<Integer> backReferences = new HashSet<>();
 
-    public void write(Expression expr) {
+    public void write(Expression expr){
+        write(expr, buff);
+    }
+    public void write(LinkedList<Expression> expressions){
+        writeInt(expressions.size(), buff);
+        for(Expression exp : expressions){
+            write(exp, buff);
+        }
+        for (Expression exp : expressions) {
+            clearMarks(exp);
+        }
+    }
+
+    public void writeTo(OutputStream os) throws IOException {
+        DataOutputStream dos = new DataOutputStream(os);
+        dos.writeInt(backReferences.size());
+        for(Integer i : backReferences){
+            dos.writeInt(i);
+        }
+        dos.writeInt(size());
+        dos.write(bytes(), 0, size());
+        dos.flush();
+    }
+    private void clearMarks(Expression expr) {
+        if (expr instanceof BinaryOperation) {
+            clearMarks(((BinaryOperation) expr).left);
+            clearMarks(((BinaryOperation) expr).right);
+        } else if (expr instanceof FunctionCall) {
+            Expression[] arguments = ((FunctionCall) expr).arguments;
+            for (int i = 0; i < arguments.length; i++) {
+                clearMarks(arguments[i]);
+            }
+        } else if (expr instanceof UnaryOperation) {
+            clearMarks(((UnaryOperation) expr).operand);
+        } else if (expr instanceof NaryOperation) {
+            Expression[] operands = ((NaryOperation) expr).operands;
+            for (int i = 0; i < operands.length; i++) {
+                clearMarks(operands[i]);
+            }
+        }
+        expr.serializationMark = 0;
+    }
+
+    public void write(Expression expr, ByteArrayList out) {
         if (expr instanceof ArrayVariable) {
-            write((ArrayVariable) expr);
+            write((ArrayVariable) expr, out);
         } else if (expr instanceof BinaryOperation) {
-            write((BinaryOperation) expr);
-        } else if(expr instanceof BoolConstant){
-            write((BoolConstant) expr);
-        } else if(expr instanceof BVConstant){
-            write((BVConstant) expr);
-        } else if(expr instanceof BVVariable){
-            write((BVVariable) expr);
-        } else if(expr instanceof FunctionCall){
-            write((FunctionCall) expr);
-        } else if(expr instanceof IntConstant){
-            write((IntConstant) expr);
-        } else if(expr instanceof IntVariable){
-            write((IntVariable) expr);
-        } else if(expr instanceof NaryOperation){
-            write((NaryOperation) expr);
-        } else if(expr instanceof RealConstant){
-            write((RealConstant) expr);
-        } else if(expr instanceof RealVariable){
-            write((RealVariable) expr);
-        } else if(expr instanceof StringConstant){
-            write((StringConstant) expr);
-        } else if(expr instanceof UnaryOperation){
-            write((UnaryOperation) expr);
-        } else if(expr instanceof StringVariable){
-            write((StringVariable) expr);
-        } else{
+            write((BinaryOperation) expr, out);
+        } else if (expr instanceof BoolConstant) {
+            write((BoolConstant) expr, out);
+        } else if (expr instanceof BVConstant) {
+            write((BVConstant) expr, out);
+        } else if (expr instanceof BVVariable) {
+            write((BVVariable) expr, out);
+        } else if (expr instanceof FunctionCall) {
+            write((FunctionCall) expr, out);
+        } else if (expr instanceof IntConstant) {
+            write((IntConstant) expr, out);
+        } else if (expr instanceof IntVariable) {
+            write((IntVariable) expr, out);
+        } else if (expr instanceof NaryOperation) {
+            write((NaryOperation) expr, out);
+        } else if (expr instanceof RealConstant) {
+            write((RealConstant) expr, out);
+        } else if (expr instanceof RealVariable) {
+            write((RealVariable) expr, out);
+        } else if (expr instanceof StringConstant) {
+            write((StringConstant) expr, out);
+        } else if (expr instanceof UnaryOperation) {
+            write((UnaryOperation) expr, out);
+        } else if (expr instanceof StringVariable) {
+            write((StringVariable) expr, out);
+        } else {
             throw new IllegalArgumentException("Unsupported type: " + expr.getClass());
         }
     }
 
-    public int size(){
+    public int size() {
         return buff.size();
     }
-    public byte[] bytes(){
+
+    public byte[] bytes() {
         return buff.getBytesUnsafe();
     }
 
@@ -61,204 +106,242 @@ public class ConstraintSerializer {
      * @param expr
      * @return
      */
-    private boolean handlePreviouslyWrittenObject(Expression expr) {
-        //Integer existing = allWrittenObjects.put(expr, NOT_REPEATED);
-        //if(existing != null){
-        //    //Already was in table
-        //    int newKey;
-        //    if(existing == NOT_REPEATED)
-        //        newKey = objectTable.size();
-        //    else
-        //        newKey = existing;
-        //    objectTable.add(expr);
-        //    allWrittenObjects.put(expr, newKey);
-        //    writeTableReference(newKey);
-        //    return true;
-        //}
-        return false;
+    private boolean handlePreviouslyWrittenObject(Expression expr, ByteArrayList out) {
+        if(expr.serializationMark == 0){
+            expr.serializationMark = out.size();
+            return false;
+        }
+        this.backReferences.add(expr.serializationMark);
+        writeTableReference(expr.serializationMark, out);
+        return true;
     }
 
 
-
-    private void writeObjectHeader(byte headerType) {
-        buff.add(headerType);
+    private void writeObjectHeader(byte headerType, ByteArrayList out) {
+        out.add(headerType);
     }
 
-    private void writeTableReference(int newKey) {
-        writeObjectHeader(T_TABLEREFERENCE);
-        writeInt(newKey);
+    private void writeTableReference(int newKey, ByteArrayList out) {
+        writeObjectHeader(T_TABLEREFERENCE, out);
+        writeInt(newKey, out);
     }
 
-    public void write(ArrayVariable v) {
-        writeObjectHeader(T_ARRAYVARIABLE);
-        writeVariableFields(v);
-        String s = v.getType().getName();
-        switch (s) {
-            case "boolean":
-                buff.add((byte) 1);
-                break;
-            case "byte":
-                buff.add((byte) 2);
-                break;
-            case "short":
-            case "char":
-                buff.add((byte) 3);
-                break;
-            case "int":
-                buff.add((byte) 4);
-                break;
-            case "long":
-                buff.add((byte) 5);
-                break;
-            default:
-                buff.add((byte) 6);
+    public void write(ArrayVariable v,  ByteArrayList out) {
+        if (!handlePreviouslyWrittenObject(v, out)) {
+            writeObjectHeader(T_ARRAYVARIABLE, out);
+            writeVariableFields(v, out);
+            String s = v.getType().getName();
+            switch (s) {
+                case "boolean":
+                    out.add((byte) 1);
+                    break;
+                case "byte":
+                    out.add((byte) 2);
+                    break;
+                case "short":
+                case "char":
+                    out.add((byte) 3);
+                    break;
+                case "int":
+                    out.add((byte) 4);
+                    break;
+                case "long":
+                    out.add((byte) 5);
+                    break;
+                default:
+                    out.add((byte) 6);
+            }
         }
     }
 
-    public void write(BinaryOperation v) {
-        writeObjectHeader(T_BINARYOPERATION);
-        writeOperationFields(v);
-        write(v.left);
-        write(v.right);
-    }
-
-    public void write(BoolConstant v) {
-        writeObjectHeader(T_BOOLCONSTANT);
-        writeExpressionFields(v);
-        writeBoolean(v.value);
-    }
-
-    public void write(BVConstant v) {
-        writeObjectHeader(T_BVCONSTANT);
-        writeExpressionFields(v);
-        writeInt(v.size);
-        writeLong(v.value);
-    }
-
-    public void write(BVVariable v) {
-        writeObjectHeader(T_BVVARIABLE);
-        writeVariableFields(v);
-        writeInt(v.size);
-    }
-
-    public void write(FunctionCall v) {
-        writeObjectHeader(T_FUNCTIONCALL);
-        writeExpressionFields(v);
-        writeUTF(v.getName());
-        Expression[] arguments = v.arguments;
-        writeInt(arguments.length);
-        for(int i = 0; i < arguments.length; i++){
-            write(arguments[i]);
+    public void write(BinaryOperation v,  ByteArrayList out) {
+        if (!handlePreviouslyWrittenObject(v, out)) {
+            writeObjectHeader(T_BINARYOPERATION, out);
+            writeOperationFields(v, out);
+            write(v.left, out);
+            write(v.right, out);
         }
     }
 
-    public void write(IntVariable v){
-        writeObjectHeader(T_INTVARIABLE);
-        writeVariableFields(v);
-        writeInt(v.lowerBound);
-        writeInt(v.upperBound);
-    }
-    public void write(IntConstant v) {
-        writeObjectHeader(T_INTCONSTANT);
-        writeExpressionFields(v);
-        writeLong(v.value);
-    }
-
-    public void write(NaryOperation v) {
-        writeObjectHeader(T_NARYOPERATION);
-        writeOperationFields(v);
-        Expression[] operands = v.operands;
-        writeInt(operands.length);
-        for(int i = 0; i < operands.length; i++){
-            write(operands[i]);
+    public void write(BoolConstant v,  ByteArrayList out) {
+        if (!handlePreviouslyWrittenObject(v, out)) {
+            writeObjectHeader(T_BOOLCONSTANT, out);
+            writeExpressionFields(v, out);
+            writeBoolean(v.value, out);
         }
     }
 
-    public void write(RealConstant v) {
-        writeObjectHeader(T_REALCONSTANT);
-        writeExpressionFields(v);
-        writeDouble(v.value);
+    public void write(BVConstant v,  ByteArrayList out) {
+        if (!handlePreviouslyWrittenObject(v, out)) {
+            writeObjectHeader(T_BVCONSTANT, out);
+            writeExpressionFields(v, out);
+            writeInt(v.size, out);
+            writeLong(v.value, out);
+        }
     }
 
-    public void write(RealVariable v) {
-        writeObjectHeader(T_REALVARIABLE);
-        writeVariableFields(v);
-        writeDouble(v.lowerBound);
-        writeDouble(v.upperBound);
+    public void write(BVVariable v,  ByteArrayList out) {
+        if (!handlePreviouslyWrittenObject(v, out)) {
+            writeObjectHeader(T_BVVARIABLE, out);
+            writeVariableFields(v, out);
+            writeInt(v.size, out);
+        }
     }
 
-    public void write(StringConstant v) {
-        writeObjectHeader(T_STRINGCONSTANT);
-        writeExpressionFields(v);
-        writeUTF(v.value);
+    public void write(FunctionCall v,  ByteArrayList out) {
+        if (!handlePreviouslyWrittenObject(v, out)) {
+            writeObjectHeader(T_FUNCTIONCALL, out);
+            writeExpressionFields(v, out);
+            writeUTF(v.getName(), out);
+            Expression[] arguments = v.arguments;
+            writeInt(arguments.length, out);
+            for (int i = 0; i < arguments.length; i++) {
+                write(arguments[i], out);
+            }
+        }
     }
 
-    public void write(StringVariable v){
-        writeObjectHeader(T_STRINGVARIABLE);
-        writeVariableFields(v);
-    }
-    public void write(UnaryOperation v) {
-        writeObjectHeader(T_UNARYOPERATION);
-        writeOperationFields(v);
-        write(v.operand);
+    public void write(IntVariable v,  ByteArrayList out) {
+        if (!handlePreviouslyWrittenObject(v, out)) {
+            writeObjectHeader(T_INTVARIABLE, out);
+            writeVariableFields(v,out);
+            writeInt(v.lowerBound, out);
+            writeInt(v.upperBound, out);
+        }
     }
 
-    private void writeExpressionFields(Expression expr) {
-        if(expr.metadata == null){
-            buff.add(METADATA_IS_NULL);
-        } else if(expr.metadata instanceof HashSet){
-            buff.add(METADATA_HASHSET_STRINGCOMPARISONS);
+    public void write(IntConstant v,  ByteArrayList out) {
+        if(!handlePreviouslyWrittenObject(v, out)) {
+            writeObjectHeader(T_INTCONSTANT, out);
+            writeExpressionFields(v, out);
+            writeLong(v.value, out);
+        }
+    }
+
+    public void write(NaryOperation v,  ByteArrayList out) {
+        if(!handlePreviouslyWrittenObject(v, out)) {
+            writeObjectHeader(T_NARYOPERATION, out);
+            writeOperationFields(v, out);
+            Expression[] operands = v.operands;
+            writeInt(operands.length, out);
+            for (int i = 0; i < operands.length; i++) {
+                write(operands[i], out);
+            }
+        }
+    }
+
+    public void write(RealConstant v,  ByteArrayList out) {
+        if(!handlePreviouslyWrittenObject(v, out)) {
+            writeObjectHeader(T_REALCONSTANT, out);
+            writeExpressionFields(v, out);
+            writeDouble(v.value, out);
+        }
+    }
+
+    public void write(RealVariable v,  ByteArrayList out) {
+        if(!handlePreviouslyWrittenObject(v, out)) {
+            writeObjectHeader(T_REALVARIABLE, out);
+            writeVariableFields(v, out);
+            writeDouble(v.lowerBound, out);
+            writeDouble(v.upperBound, out);
+        }
+    }
+
+    public void write(StringConstant v,  ByteArrayList out) {
+        if(!handlePreviouslyWrittenObject(v, out)) {
+            writeObjectHeader(T_STRINGCONSTANT, out);
+            writeExpressionFields(v, out);
+            writeUTF(v.value, out);
+        }
+    }
+
+    public void write(StringVariable v,  ByteArrayList out) {
+        if(!handlePreviouslyWrittenObject(v, out)) {
+            writeObjectHeader(T_STRINGVARIABLE, out);
+            writeVariableFields(v, out);
+        }
+    }
+
+    public void write(UnaryOperation v,  ByteArrayList out) {
+        if(!handlePreviouslyWrittenObject(v, out)) {
+            writeObjectHeader(T_UNARYOPERATION, out);
+            writeOperationFields(v, out);
+            write(v.operand, out);
+        }
+    }
+
+    private void writeExpressionFields(Expression expr, ByteArrayList out) {
+        if (expr.metadata == null) {
+            out.add(METADATA_IS_NULL);
+        } else if (expr.metadata instanceof HashSet) {
+            out.add(METADATA_HASHSET_STRINGCOMPARISONS);
             HashSet<StringUtils.StringComparisonRecord> set = (HashSet) expr.metadata;
-            writeInt(set.size());
-            for(StringUtils.StringComparisonRecord record : set){ //TODO iterator performance is probably bad...
-                writeUTF(record.stringCompared);
-                buff.add((byte) record.comparisionType.ordinal());
+            writeInt(set.size(), out);
+            for (StringUtils.StringComparisonRecord record : set) { //TODO iterator performance is probably bad...
+                writeUTF(record.stringCompared, out);
+                out.add((byte) record.comparisionType.ordinal());
             }
-        } else if(expr.metadata instanceof Coverage.BranchData){
-            buff.add(METADATA_BRANCH_DATA);
+        } else if (expr.metadata instanceof Coverage.BranchData) {
+            out.add(METADATA_BRANCH_DATA);
             Coverage.BranchData b = (Coverage.BranchData) expr.metadata;
-            writeBoolean(b.taken);
-            if(b.source == null){
-                writeBoolean(false);
-            }else{
-                writeBoolean(true);
-                writeUTF(b.source);
+            writeBoolean(b.taken, out);
+            if (b.source == null) {
+                writeBoolean(false, out);
+            } else {
+                writeBoolean(true, out);
+                writeUTF(b.source, out);
             }
-            writeInt(b.takenCode);
-            writeInt(b.notTakenCode);
-            writeInt(b.notTakenPath);
-            writeBoolean(b.breaksLoop);
+            writeInt(b.takenCode, out);
+            writeInt(b.notTakenCode, out);
+            writeInt(b.notTakenPath, out);
+            writeBoolean(b.breaksLoop, out);
         } else if (expr.metadata instanceof Coverage.SwitchData) {
             Coverage.SwitchData b = (Coverage.SwitchData) expr.metadata;
-            buff.add(METADATA_SWITCH_DATA);
-            writeBoolean(b.taken);
+            out.add(METADATA_SWITCH_DATA);
+            writeBoolean(b.taken, out);
             if (b.source == null) {
-                writeBoolean(false);
+                writeBoolean(false, out);
             } else {
-                writeBoolean(true);
-                writeUTF(b.source);
+                writeBoolean(true, out);
+                writeUTF(b.source, out);
             }
-            writeInt(b.switchID);
-            writeInt(b.numArms);
-            writeInt(b.arm);
+            writeInt(b.switchID, out);
+            writeInt(b.numArms, out);
+            writeInt(b.arm, out);
 
-        }else{
+        } else {
             throw new UnsupportedOperationException("Unexpected metadata type: " + expr.metadata);
         }
     }
 
-    private void writeVariableFields(Variable variable) {
-        writeExpressionFields(variable);
-        writeUTF(variable.name);
+    private void writeVariableFields(Variable variable, ByteArrayList out) {
+        writeExpressionFields(variable, out);
+        writeUTF(variable.name, out);
     }
 
-    private void writeOperationFields(Operation operation) {
-        writeExpressionFields(operation);
-        writeShort((short) operation.operator.ordinal());
+    private void writeOperationFields(Operation operation, ByteArrayList out) {
+        writeExpressionFields(operation, out);
+        writeShort((short) operation.operator.ordinal(), out);
+        switch (operation.operator) {
+            case I2BV:
+            case SIGN_EXT:
+            case ZERO_EXT:
+                writeInt(operation.immediate1, out);
+                break;
+            case EXTRACT:
+                writeInt(operation.immediate1, out);
+                writeInt(operation.immediate2, out);
+                break;
+        }
     }
 
     public void clear() {
         buff.reset();
+        backReferences.clear();
+    }
+
+    public void clearBuffer() {
+        buff.trim(100 * 1024);
     }
 
     //Object header info
@@ -300,67 +383,68 @@ public class ConstraintSerializer {
      *  See the License for the specific language governing permissions and
      *  limitations under the License.
      */
-    public void writeBoolean(boolean val) {
-        buff.add(val ? (byte) 1 : (byte) 0);
+    public void writeBoolean(boolean val, ByteArrayList out) {
+        out.add(val ? (byte) 1 : (byte) 0);
     }
 
-    public void writeDouble(double val){
-        writeLong(Double.doubleToLongBits(val));
+    public void writeDouble(double val, ByteArrayList out) {
+        writeLong(Double.doubleToLongBits(val), out);
     }
 
-    public void writeChar(char c) {
-        buff.add((byte) (c >> 8));
-        buff.add((byte) c);
+    public void writeChar(char c, ByteArrayList out) {
+        out.add((byte) (c >> 8));
+        out.add((byte) c);
     }
 
-    public void writeInt(int val) {
-        buff.add((byte) (val >> 24));
-        buff.add((byte) (val >> 16));
-        buff.add((byte) (val >> 8));
-        buff.add((byte) (val));
+    public void writeInt(int val, ByteArrayList out) {
+        out.add((byte) (val >> 24));
+        out.add((byte) (val >> 16));
+        out.add((byte) (val >> 8));
+        out.add((byte) (val));
     }
 
-    private void writeLong(long val) {
-        buff.add((byte) (val >> 56));
-        buff.add((byte) (val >> 48));
-        buff.add((byte) (val >> 40));
-        buff.add((byte) (val >> 32));
-        buff.add((byte) (val >> 24));
-        buff.add((byte) (val >> 16));
-        buff.add((byte) (val >> 8));
-        buff.add((byte) (val));
+    private void writeLong(long val, ByteArrayList out) {
+        out.add((byte) (val >> 56));
+        out.add((byte) (val >> 48));
+        out.add((byte) (val >> 40));
+        out.add((byte) (val >> 32));
+        out.add((byte) (val >> 24));
+        out.add((byte) (val >> 16));
+        out.add((byte) (val >> 8));
+        out.add((byte) (val));
     }
 
-    public void writeShort(short val){
-        buff.add((byte) (val >> 8));
-        buff.add((byte) val);
+    public void writeShort(short val, ByteArrayList out) {
+        out.add((byte) (val >> 8));
+        out.add((byte) val);
     }
 
-    public void writeUTF(String str) {
+    public void writeUTF(String str, ByteArrayList out) {
         long bytes = countUTFBytes(str);
-        if(bytes > 65535)
+        if (bytes > 65535)
             throw new IllegalArgumentException("UTF string too long: " + bytes);
-        writeShort((short) bytes);
-        int length = str.length();
+        writeShort((short) bytes, out);
+        int length = TaintUtils.stringLength(str);
         for (int i = 0; i < length; i++) {
-            int charValue = str.charAt(i);
+            int charValue = TaintUtils.charAt(str, i);
             if (charValue > 0 && charValue <= 127) {
-                buff.add((byte) charValue);
+                out.add((byte) charValue);
             } else if (charValue <= 2047) {
-                buff.add((byte) (0xc0 | (0x1f & (charValue >> 6))));
-                buff.add((byte) (0x80 | (0x3f & charValue)));
+                out.add((byte) (0xc0 | (0x1f & (charValue >> 6))));
+                out.add((byte) (0x80 | (0x3f & charValue)));
             } else {
-                buff.add((byte) (0xe0 | (0x0f & (charValue >> 12))));
-                buff.add((byte) (0x80 | (0x3f & (charValue >> 6))));
-                buff.add((byte) (0x80 | (0x3f & charValue)));
+                out.add((byte) (0xe0 | (0x0f & (charValue >> 12))));
+                out.add((byte) (0x80 | (0x3f & (charValue >> 6))));
+                out.add((byte) (0x80 | (0x3f & charValue)));
             }
         }
 
     }
+
     private long countUTFBytes(String str) {
-        int utfCount = 0, length = str.length();
+        int utfCount = 0, length = TaintUtils.stringLength(str);
         for (int i = 0; i < length; i++) {
-            int charValue = str.charAt(i);
+            int charValue = TaintUtils.charAt(str, i);
             if (charValue > 0 && charValue <= 127) {
                 utfCount++;
             } else if (charValue <= 2047) {

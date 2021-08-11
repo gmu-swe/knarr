@@ -193,9 +193,39 @@ public class PathUtils {
 		return registerBinaryOp(l, r, op);
 	}
 
+	public static IntConstant getIntConstant(int v){
+		switch(v){
+			case Integer.MIN_VALUE:
+				return IntConstant.ICONST_MIN_INT;
+			case 0:
+				return IntConstant.ICONST_0;
+			case 1:
+				return IntConstant.ICONST_1;
+			case '0':
+				return IntConstant.ICONST_CHAR_0;
+			case '9':
+				return IntConstant.ICONST_CHAR_9;
+			case Integer.MAX_VALUE:
+				return IntConstant.ICONST_MAX_INT;
+			default:
+				return new IntConstant(v);
+		}
+	}
+	public static IntConstant getLongConstant(long v) {
+		if (v == Integer.MIN_VALUE)
+			return IntConstant.ICONST_MIN_INT;
+		if (v == 0)
+			return IntConstant.ICONST_0;
+		if (v == 1)
+			return IntConstant.ICONST_1;
+		if (v == Integer.MAX_VALUE)
+			return IntConstant.ICONST_MAX_INT;
+		return new IntConstant(v);
+	}
+
 	private static Expression getExpression(Taint<Expression> t, int v) {
 		if (t == null)
-			return new IntConstant(v);
+			return getIntConstant(v);
 		return t.getSingleLabel();
 	}
 
@@ -207,7 +237,7 @@ public class PathUtils {
 
 	private static Expression getExpression(Taint<Expression> t, long v) {
 		if (t == null)
-			return new IntConstant(v);
+			return getLongConstant(v);
 		return t.getSingleLabel();
 	}
 
@@ -1045,7 +1075,7 @@ public class PathUtils {
 		if (t == null)
 			return;
 
-		t.setSingleLabel(new BinaryOperation(Operator.ADD, t.getSingleLabel(), new IntConstant(inc)));
+		t.setSingleLabel(new BinaryOperation(Operator.ADD, t.getSingleLabel(), getIntConstant(inc)));
 	}
 
 	public static void addConstraint(Taint<Expression> t, int opcode, int takenID, int notTakenID, boolean breaksLoop, boolean taken, String source) {
@@ -1096,11 +1126,11 @@ public class PathUtils {
 		if(l == null)
 			return;
 		Expression lExpr = l.getSingleLabel();
-		Expression rExpr = new IntConstant(v2);
+		Expression rExpr = getIntConstant(v2);
 		//Add the constraint for what is in fact taken
 		Operation defaultCase = null;
 		for(int i = 0 ; i < allValues.length; i++){
-		    Operation thisDefault = new BinaryOperation(Operator.NE, lExpr, new IntConstant(allValues[i]));
+		    Operation thisDefault = new BinaryOperation(Operator.NE, lExpr, getIntConstant(allValues[i]));
 		    if(defaultCase == null)
 		    	defaultCase = thisDefault;
 		    else
@@ -1113,7 +1143,7 @@ public class PathUtils {
 				}
 			}
 			else {
-				Operation expr = new BinaryOperation(Operator.NE, lExpr, new IntConstant(allValues[i]));
+				Operation expr = new BinaryOperation(Operator.NE, lExpr, getIntConstant(allValues[i]));
 				getCurPC()._addDet(expr);
 				if(switchID != -1){
 					expr.metadata = new Coverage.SwitchData(switchID, allValues.length, i, false, source);
@@ -1134,14 +1164,14 @@ public class PathUtils {
 		if (l == null)
 			return;
 		Expression lExp = l.getSingleLabel();
-		Operation limit = new BinaryOperation(Operator.LE, lExp, new IntConstant(max));
-		limit = new BinaryOperation(Operator.AND, limit, new BinaryOperation(Operator.GE, lExp, new IntConstant(min)));
+		Operation limit = new BinaryOperation(Operator.LE, lExp, getIntConstant(max));
+		limit = new BinaryOperation(Operator.AND, limit, new BinaryOperation(Operator.GE, lExp, getIntConstant(min)));
 
 		for (int i = min ; i < max ; i++) {
 			if (i == v)
 				continue;
 
-			Expression notTaken = new BinaryOperation(Operator.NE, lExp, new IntConstant(i));
+			Expression notTaken = new BinaryOperation(Operator.NE, lExp, getIntConstant(i));
 			Expression exp = getCurPC()._addDet(Operator.AND, limit, notTaken);
 
 			if (takenID != -1) {
@@ -1472,7 +1502,20 @@ public class PathUtils {
 			break;
 		case Opcodes.IAND:
 		case Opcodes.LAND:
-			ret = new BinaryOperation(Operator.BIT_AND, expr1, expr2);
+			if(expr1 instanceof BVVariable && expr2 instanceof IntConstant && ((IntConstant) expr2).getValueLong() == 255){
+			    BVVariable v = (BVVariable) expr1;
+			    if(v.and255 == null)
+			    	v.and255 = new BinaryOperation(Operator.BIT_AND, expr1, expr2);
+			    ret = v.and255;
+			}
+			else if(expr1 instanceof StringVariable && expr2 instanceof BVConstant && ((BVConstant) expr2).value==255){
+				StringVariable v = (StringVariable) expr1;
+				if(v.andBV3265535 == null)
+					v.andBV3265535 = new BinaryOperation(Operator.BIT_AND, expr1, expr2);
+				ret = v.andBV3265535;
+			}
+			else
+				ret = new BinaryOperation(Operator.BIT_AND, expr1, expr2);
 			break;
 		case Opcodes.IOR:
 		case Opcodes.LOR:

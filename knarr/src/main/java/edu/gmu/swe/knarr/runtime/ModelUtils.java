@@ -19,8 +19,8 @@ public class ModelUtils {
 
          if (cTaint != null) {
              Operation bounds = new BinaryOperation(Operator.AND,
-                     new BinaryOperation(Operator.GE, (Expression) cTaint.getSingleLabel(), new IntConstant('0')),
-                     new BinaryOperation(Operator.LE, (Expression) cTaint.getSingleLabel(), new IntConstant('9')));
+                     new BinaryOperation(Operator.GE, (Expression) cTaint.getSingleLabel(), IntConstant.ICONST_CHAR_0),
+                     new BinaryOperation(Operator.LE, (Expression) cTaint.getSingleLabel(), IntConstant.ICONST_CHAR_9));
              PathUtils.getCurPC()._addDet(ret.val != -1 ? bounds : new UnaryOperation(Operator.NOT, bounds));
 
              ret.taint = cTaint;
