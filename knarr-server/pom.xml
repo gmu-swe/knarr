@@ -89,10 +89,11 @@
             <artifactId>choco-solver</artifactId>
             <version>3.3.0</version>
         </dependency>
+		<!-- https://mvnrepository.com/artifact/org.sosy-lab/javasmt-solver-z3 -->
         <dependency>
-            <groupId>edu.gmu.swe.z3</groupId>
-            <artifactId>z3</artifactId>
-            <version>4.8.12-SNAPSHOT</version>
+            <groupId>org.sosy-lab</groupId>
+            <artifactId>javasmt-solver-z3</artifactId>
+            <version>4.8.9-sosy1</version>
         </dependency>
     </dependencies>
     <distributionManagement>
