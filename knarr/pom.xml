@@ -1,7 +1,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>edu.gmu.swe.knarr</groupId>
+    <groupId>anon.knarr</groupId>
     <artifactId>Knarr</artifactId>
     <version>0.0.2-SNAPSHOT</version>
     <repositories>
@@ -123,12 +123,6 @@
                             <goal>shade</goal>
                         </goals>
                         <configuration>
-                            <!-- <relocations>
-                                <relocation>
-                                    <pattern>za.ac.sun.cs.green</pattern>
-                                    <shadedPattern>edu.gmu.swe.knarr.za.ac.sun.cs.green</shadedPattern>
-                                </relocation>
-                            </relocations> -->
                             <minimizeJar>false</minimizeJar>
                         </configuration>
                     </execution>
@@ -173,12 +167,10 @@
             <version>0.0.4-SNAPSHOT</version>
         </dependency>
         <dependency>
-            <groupId>edu.gmu.swe.greensolver</groupId>
+            <groupId>anon.greensolver</groupId>
             <artifactId>green</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
-        <!-- <dependency> <groupId>net.jonbell.java</groupId> <artifactId>CRIJ</artifactId> 
-            <version>0.0.1-SNAPSHOT</version> </dependency> -->
     </dependencies>
     <distributionManagement>
         <snapshotRepository>
