@@ -10,12 +10,13 @@ public final class ByteArrayList implements Externalizable {
     private static final long serialVersionUID = 7110944498336814100L;
     private int size = 0;
     private byte[] elements;
+    private final long maxSize;
 
     /**
      * Constructs a new list with an initial capacity of 10.
      */
     public ByteArrayList() {
-        this(10);
+        this(10, -1);
     }
 
     /**
@@ -24,7 +25,8 @@ public final class ByteArrayList implements Externalizable {
      * @param capacity the initial capacity of this list.
      * @throws IllegalArgumentException if capacity is less than 0
      */
-    public ByteArrayList(int capacity) {
+    public ByteArrayList(int capacity, long maxSize) {
+        this.maxSize = maxSize;
         if (capacity < 0) {
             throw new IllegalArgumentException();
         }
@@ -39,6 +41,7 @@ public final class ByteArrayList implements Externalizable {
      */
     public ByteArrayList(ByteArrayList list) {
         this.size = list.size;
+        this.maxSize = -1;
         this.elements = new byte[list.elements.length];
         System.arraycopy(list.elements, 0, elements, 0, list.elements.length);
     }
@@ -75,6 +78,9 @@ public final class ByteArrayList implements Externalizable {
         }
         if (newCapacity - (Integer.MAX_VALUE - 8) > 0) {
             newCapacity = Integer.MAX_VALUE - 8;
+        }
+        if(maxSize > 0 && newCapacity > maxSize){
+            throw new OutOfMemoryError("Unable to grow buffer. Maximum size is " + maxSize + " but needed " + newCapacity);
         }
         byte[] temp = elements;
         elements = new byte[newCapacity];

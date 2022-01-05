@@ -10,8 +10,13 @@ import java.util.HashSet;
 import java.util.LinkedList;
 
 public class ConstraintSerializer {
-    private final ByteArrayList buff = new ByteArrayList(100 * 1024);
+    private final ByteArrayList buff;
     private HashSet<Integer> backReferences = new HashSet<>();
+
+    public ConstraintSerializer(){
+        long maxRAM = Runtime.getRuntime().maxMemory();
+        buff = new ByteArrayList(100 * 1024, maxRAM/2);
+    }
 
     public void write(Expression expr){
         write(expr, buff);
