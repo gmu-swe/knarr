@@ -48,6 +48,50 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.11.0</version>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.1.2</version>
+                <configuration>
+                    <!-- Skip the dual-JDK IT in the default reactor; the
+                         concolic-e2e profile re-enables it. -->
+                    <excludes>
+                        <exclude>**/ConcolicLoopITCase.java</exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>concolic-e2e</id>
+            <activation>
+                <property>
+                    <name>crochet.dualJdk</name>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <version>3.1.2</version>
+                        <configuration>
+                            <excludes combine.self="override">
+                                <exclude>nothing-excluded.java</exclude>
+                            </excludes>
+                            <includes>
+                                <include>**/*Test.java</include>
+                                <include>**/*ITCase.java</include>
+                            </includes>
+                            <systemPropertyVariables>
+                                <crochet.dualJdk>${crochet.dualJdk}</crochet.dualJdk>
+                            </systemPropertyVariables>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>
