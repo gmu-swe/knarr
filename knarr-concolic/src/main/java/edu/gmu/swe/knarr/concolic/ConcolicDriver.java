@@ -75,6 +75,15 @@ public final class ConcolicDriver<T> {
     public ArrayList<ArrayList<SimpleEntry<String, Object>>> run(T initialInput) {
         ArrayList<ArrayList<SimpleEntry<String, Object>>> solutions = new ArrayList<>();
         SymbolicListener.setListener(new PathConstraintListener());
+        // Force-initialize the Knarr runtime's static state BEFORE taking
+        // the checkpoint. If we skip this, a class whose <clinit> runs
+        // during the first target.accept call (e.g. PathUtils, which lazy-
+        // assigns usedLabels = new HashSet<>()) gets captured by CROCHET in
+        // its pre-init state. After rollbackAll, its static fields revert
+        // to null and the next iteration NPEs in Symbolicator.reset. Touch
+        // the API surface here so the checkpoint captures a fully-
+        // initialized runtime.
+        Symbolicator.reset();
         int checkpoint = CheckpointRollbackAgent.checkpointAll();
         try {
             T input = initialInput;

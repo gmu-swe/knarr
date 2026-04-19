@@ -44,56 +44,41 @@ field. A plain JVM does not provide that. Therefore:
   instrumented JDK image** (or at minimum a Galette-instrumented JDK
   with CROCHET as a runtime-only agent).
 
-## Phase 2 — remaining work
+## Phase 2 outcome
 
-The blockers are infrastructure, not bytecode correctness:
+**Working end-to-end.** The first CROCHET-driven concolic test runs
+against a single JVM and flips the target branch. Evidence in
+`knarr-concolic/target/concolic-it-output.txt` after `mvn -pl
+knarr-concolic test -Dcrochet.dualJdk=/tmp/jdk-dual-ga-first`:
 
-1. **jlink-level composition.** Replicate Galette's jlink plugin layer
-   (`GaletteJLinkPlugin`, `PackJLinkPlugin`, `Packer`,
-   `ResourcePoolPacker`, `JLinkInvoker`, `JLinkRegistrationAgent`) so
-   that a single jlink invocation applies `CompositeTransformer.transform`
-   to every resource. CROCHET already ports the same template — the bridge
-   needs to generate the ONE plugin that calls both transformers and
-   the ONE pack step that merges both runtime surfaces into `java.base`.
-   Expect ~300-500 LOC cribbed from the two existing instrument modules.
+    CONCOLIC_REACHED_THROW x=128
 
-2. **Runtime agent attachment.** The final JDK image must boot with
-   both `-javaagent:galette-agent.jar` and
-   `-javaagent:crochet-agent.jar` (order matters: Galette first,
-   CROCHET second, so CROCHET's transformer sees Galette-instrumented
-   user-class bytes at load time — symmetric with the jlink order). The
-   `knarr-concolic` module's pom's `integration-tests` profile should
-   set both.
+The three layered experiments that got us here:
 
-3. **E2E concolic test.** With the dual JDK in hand,
-   `knarr-concolic/src/test/java/.../integration/ConcolicLoopITCase.java`
-   can:
-    - Install a `PathConstraintListener`.
-    - `checkpointAll()`.
-    - In a loop: tag input → run target → `dumpConstraints` → mutate →
-      `rollbackAll(cp)`.
-    - Assert multiple distinct paths get explored within a single JVM.
+1. **jlink-level composition.** `DualImageInstrumenter` in the bridge
+   module applies the Galette transformer then the CROCHET transformer
+   to every class in a source JDK image and re-packs into
+   `/tmp/jdk-dual-ga-first`. Both runtime surfaces ship inside
+   `java.base`.
 
-   The loop logic is already written in
-   `knarr-concolic/src/main/java/.../ConcolicDriver.java`; only the
-   harness + JDK setup is missing.
+2. **Runtime agent attachment.** The two-`-javaagent` approach proved
+   unworkable — see class javadoc on `CombinedAgent` for the concrete
+   failure modes from both orderings. The working pattern is ONE
+   combined agent jar (`Crochet-Galette-Bridge-*.jar`) whose premain
+   installs a single `ClassFileTransformer` that chains Galette then
+   CROCHET, plus a skip-list for three known bootstrap-recursion groups.
+   `premain` also pre-initializes `ThreadLocalRandom`, `LockSupport`,
+   `StringConcatFactory`, and two `MethodHandle` internals to dodge the
+   class-circularity error that CROCHET's own demos happen to avoid but
+   our narrower warm-up path doesn't.
 
-## Estimated scope
-
-- Phase 2.1 (jlink plugin + pack): ~1-2 days of focused work.
-- Phase 2.2 (dual-image smoke test: `java -version` on the combined
-  image): half a day.
-- Phase 2.3 (E2E concolic test that proves the loop): half a day once
-  2.1 + 2.2 land.
-
-Total: ~2-3 days to the first CROCHET-driven concolic test that flips
-at least one branch in a single JVM.
-
-## Why we stopped here
-
-Verifying bytecode composition answered the architectural risk question.
-Finishing the jlink layer is straightforward but lengthy mechanical
-porting from both existing instrumenters, and delivering it inside this
-session would have been half-done work. Better to land the probe (and
-thus unblock phase 2) with a green test suite than to submit a
-half-ported plugin that fails in novel ways.
+3. **E2E concolic test.** `ConcolicLoopITCase` launches
+   `knarr-server` on a plain JDK (the constraint solver cannot be
+   instrumented — see `E2EServerITCase` rationale), forks a child under
+   the dual JDK with the combined agent, and drives the `Target` via
+   `ConcolicDriver`. One extra concession was needed: `ConcolicDriver`
+   now calls `Symbolicator.reset()` before the first `checkpointAll()`
+   so that `PathUtils.usedLabels`, `PathUtils.getCurPC()`, and the
+   Symbolicator internals are all fully initialized at checkpoint time;
+   without that pre-warm, rollback reverts them to their pre-`<clinit>`
+   null state and the next iteration NPEs inside `Symbolicator.reset`.
