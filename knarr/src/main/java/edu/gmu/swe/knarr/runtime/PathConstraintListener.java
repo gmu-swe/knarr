@@ -4,8 +4,16 @@ import static edu.neu.ccs.prl.galette.internal.runtime.symbolic.SymbolicOpcodes.
 
 import edu.neu.ccs.prl.galette.internal.runtime.Tag;
 import edu.neu.ccs.prl.galette.internal.runtime.symbolic.SymbolicExecutionListener;
+import za.ac.sun.cs.green.expr.ArrayVariable;
+import za.ac.sun.cs.green.expr.BVConstant;
+import za.ac.sun.cs.green.expr.BinaryOperation;
+import za.ac.sun.cs.green.expr.BoolConstant;
+import za.ac.sun.cs.green.expr.Constant;
 import za.ac.sun.cs.green.expr.Expression;
+import za.ac.sun.cs.green.expr.NaryOperation;
+import za.ac.sun.cs.green.expr.Operation;
 import za.ac.sun.cs.green.expr.Operation.Operator;
+import za.ac.sun.cs.green.expr.RealConstant;
 
 /**
  * Knarr's {@link SymbolicExecutionListener} implementation. Translates SPI
@@ -205,39 +213,204 @@ public final class PathConstraintListener implements SymbolicExecutionListener {
     }
 
     @Override
-    public void onIinc(int varIndex, int increment, Tag tag) {
-        // Galette tags are immutable; the original Knarr mutated the tag's
-        // single Expression label in-place to (label + increment). With an
-        // immutable tag we cannot rewrite the variable's tag from inside
-        // this void callback. See report: known semantic gap; subsequent
-        // arithmetic on the variable will rebuild correctly via onIntArith
-        // (the constant increment will be folded in there).
+    public Tag onIinc(int varIndex, int increment, Tag tag) {
+        // Build a new Expression = (label + increment) and return it as
+        // the variable's new tag. Preserves the original Knarr behaviour
+        // now that the SPI allows a Tag return.
+        Expression e = ExpressionBuilder.exprForInt(tag, 0);
+        Expression incremented =
+                new BinaryOperation(Operator.ADD, e, ExpressionBuilder.intConstant(increment));
+        return Tag.of(incremented);
     }
 
     // ---------- Arrays ----------
 
+    /** Thresholds for skipping array constraint emission. Matched to the
+     *  original {@code TaintListener} defaults. */
+    public static int IGNORE_CONCRETE_ARRAY_INITIAL_CONTENTS = 1000;
+    public static int IGNORE_LARGE_ARRAY_SIZE = 20000;
+    public static int IGNORE_LARGE_ARRAY_INDEX = 500;
+
+    /** Tracks the sequence of symbolic {@link ArrayVariable}s representing
+     *  each runtime array's history. The last element in each list is the
+     *  current version. */
+    private static final java.util.IdentityHashMap<Object, java.util.LinkedList<ArrayVariable>>
+            arrayVersions = new java.util.IdentityHashMap<>();
+
+    public static void resetArrays() {
+        synchronized (arrayVersions) {
+            arrayVersions.clear();
+        }
+    }
+
+    private static java.util.LinkedList<ArrayVariable> getOrInitArray(Object arr) {
+        java.util.LinkedList<ArrayVariable> ret = arrayVersions.get(arr);
+        if (ret != null) {
+            return ret;
+        }
+        Class<?> componentType = arr.getClass().getComponentType();
+        Class<?> symbolicType = componentType.isPrimitive() ? componentType : Object.class;
+        java.util.LinkedList<ArrayVariable> ll = new java.util.LinkedList<>();
+        ArrayVariable var = new ArrayVariable("const_array_" + arrayVersions.size(), symbolicType);
+        ll.add(var);
+        arrayVersions.put(arr, ll);
+
+        // Tell the solver about the initial contents of small concrete arrays.
+        int len = java.lang.reflect.Array.getLength(arr);
+        if (len < IGNORE_CONCRETE_ARRAY_INITIAL_CONTENTS) {
+            ArrayVariable arrVar = new ArrayVariable(var.getName() + "_" + ll.size(), symbolicType);
+            for (int i = 0; i < len; i++) {
+                Operation select = new BinaryOperation(
+                        Operator.SELECT, arrVar, new BVConstant(i, 32));
+                Constant val = concreteCellAsConstant(arr, componentType, i);
+                if (val != null) {
+                    PathUtils.getCurPC()._addDet(Operator.EQ, select, val);
+                }
+            }
+        }
+        return ll;
+    }
+
+    private static Expression currentArrayVar(Object arr) {
+        synchronized (arrayVersions) {
+            java.util.LinkedList<ArrayVariable> ll = getOrInitArray(arr);
+            ArrayVariable base = ll.getLast();
+            return new ArrayVariable(base.getName() + "_" + ll.size(), base.getType());
+        }
+    }
+
+    private static void recordArrayStore(Object arr, Expression idx, Expression val) {
+        synchronized (arrayVersions) {
+            java.util.LinkedList<ArrayVariable> ll = getOrInitArray(arr);
+            ArrayVariable base = ll.getLast();
+            ArrayVariable oldVar = new ArrayVariable(base.getName() + "_" + ll.size(), base.getType());
+            ArrayVariable newVar =
+                    new ArrayVariable(base.getName() + "_" + (ll.size() + 1), base.getType());
+            ll.addLast(base);
+            Operation store = new NaryOperation(Operator.STORE, oldVar, idx, val);
+            PathUtils.getCurPC()._addDet(Operator.EQ, store, newVar);
+        }
+    }
+
+    private static Constant concreteCellAsConstant(Object arr, Class<?> component, int i) {
+        if (component == boolean.class) {
+            return new BoolConstant(((boolean[]) arr)[i]);
+        } else if (component == byte.class) {
+            return new BVConstant(((byte[]) arr)[i], 32);
+        } else if (component == char.class) {
+            return new BVConstant(((char[]) arr)[i], 32);
+        } else if (component == short.class) {
+            return new BVConstant(((short[]) arr)[i], 32);
+        } else if (component == int.class) {
+            return new BVConstant(((int[]) arr)[i], 32);
+        } else if (component == long.class) {
+            return new BVConstant(((long[]) arr)[i], 64);
+        } else if (component == float.class) {
+            return new RealConstant(((float[]) arr)[i]);
+        } else if (component == double.class) {
+            return new RealConstant(((double[]) arr)[i]);
+        }
+        // Object arrays: no usable concrete encoding; leave unconstrained.
+        return null;
+    }
+
     @Override
     public Tag onArrayLoad(int opcode, Object array, int index, Tag arrayTag, Tag indexTag, Tag elemTag) {
-        // For Phase 2 MVP we keep array semantics simple: pass through the
-        // element tag. The full ArrayVariable / SELECT/STORE machinery in
-        // the original TaintListener depended on Phosphor's per-slot lazy
-        // taint storage that Galette manages differently (via
-        // ArrayTagStore). Adding symbolic select/store support over the SPI
-        // is a Phase 3 task.
-        if (Tag.isEmpty(elemTag)) {
-            return null;
+        if (array == null) {
+            return elemTag;
         }
-        return elemTag;
+        boolean taintedIndex = !Tag.isEmpty(indexTag);
+        boolean taintedCell = !Tag.isEmpty(elemTag);
+        int len = java.lang.reflect.Array.getLength(array);
+        if (len > IGNORE_LARGE_ARRAY_SIZE && index > IGNORE_LARGE_ARRAY_INDEX) {
+            return elemTag;
+        }
+        if (!taintedIndex && !taintedCell) {
+            return elemTag;
+        }
+
+        BVConstant lenConst = new BVConstant(len, 32);
+
+        if (taintedIndex && !taintedCell) {
+            Expression idxExpr = extractLabel(indexTag);
+            Expression arrVar = currentArrayVar(array);
+            Operation select = new BinaryOperation(Operator.SELECT, arrVar, idxExpr);
+            // Anchor the concrete read to the SELECT.
+            Constant cellConst = concreteCellAsConstant(
+                    array, array.getClass().getComponentType(), index);
+            if (cellConst != null) {
+                PathUtils.getCurPC()._addDet(Operator.EQ, cellConst, select);
+            }
+            // In-bounds.
+            PathUtils.getCurPC()._addDet(Operator.LT, idxExpr, lenConst);
+            PathUtils.getCurPC()._addDet(Operator.GE, idxExpr, PathUtils.BV0_32);
+            return Tag.of(select);
+        } else if (taintedCell && !taintedIndex) {
+            return elemTag;
+        } else {
+            // Both symbolic: record select = cell's current symbolic tag.
+            Expression idxExpr = extractLabel(indexTag);
+            Expression arrVar = currentArrayVar(array);
+            Operation select = new BinaryOperation(Operator.SELECT, arrVar, idxExpr);
+            PathUtils.getCurPC()._addDet(Operator.EQ, extractLabel(elemTag), select);
+            PathUtils.getCurPC()._addDet(Operator.LT, idxExpr, lenConst);
+            PathUtils.getCurPC()._addDet(Operator.GE, idxExpr, PathUtils.BV0_32);
+            return elemTag;
+        }
     }
 
     @Override
     public Tag onArrayStore(int opcode, Object array, int index, Tag arrayTag, Tag indexTag, Tag valueTag) {
-        // Same caveat as onArrayLoad; for now the value tag flows into
-        // Galette's shadow store unchanged.
+        if (array == null) {
+            return valueTag;
+        }
+        boolean taintedIndex = !Tag.isEmpty(indexTag);
+        boolean taintedVal = !Tag.isEmpty(valueTag);
+        int len = java.lang.reflect.Array.getLength(array);
+        if (len > IGNORE_LARGE_ARRAY_SIZE && index > IGNORE_LARGE_ARRAY_INDEX) {
+            return valueTag;
+        }
+        if (!taintedIndex && !taintedVal) {
+            return valueTag;
+        }
+        BVConstant lenConst = new BVConstant(len, 32);
+
+        if (taintedIndex) {
+            Expression idxExpr = extractLabel(indexTag);
+            // If the value is concrete, we don't have the NEW value in this
+            // SPI callback (the actual store happens after the hook). Use
+            // the current cell's value as a best-effort anchor; when the
+            // value is symbolic, use its expression.
+            Expression valExpr;
+            if (taintedVal) {
+                valExpr = extractLabel(valueTag);
+            } else {
+                Constant c = concreteCellAsConstant(
+                        array, array.getClass().getComponentType(), index);
+                if (c == null) {
+                    // Object arrays and other unsupported types: skip.
+                    return valueTag;
+                }
+                valExpr = c;
+            }
+            recordArrayStore(array, idxExpr, valExpr);
+            PathUtils.getCurPC()._addDet(Operator.LT, idxExpr, lenConst);
+            PathUtils.getCurPC()._addDet(Operator.GE, idxExpr, PathUtils.BV0_32);
+        } else if (taintedVal) {
+            // Concrete index, symbolic value — record in the array's history.
+            Expression valExpr = extractLabel(valueTag);
+            recordArrayStore(array, new BVConstant(index, 32), valExpr);
+        }
         return valueTag;
     }
 
     // ---------- Helpers ----------
+
+    /** Pulls the single Green {@link Expression} label out of a non-empty Tag. */
+    private static Expression extractLabel(Tag t) {
+        return (Expression) Tag.getLabels(t)[0];
+    }
+
 
     /** True iff the single-operand integer branch is taken at runtime. */
     private static boolean evalUnaryBranch(int opcode, int v) {

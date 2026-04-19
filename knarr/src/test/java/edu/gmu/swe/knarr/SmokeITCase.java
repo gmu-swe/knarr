@@ -82,4 +82,51 @@ public class SmokeITCase {
         Assertions.assertTrue(exprStr.contains("a"), "expected 'a' in " + exprStr);
         Assertions.assertTrue(exprStr.contains("b"), "expected 'b' in " + exprStr);
     }
+
+    @Test
+    void iincKeepsSymbolicExpression() {
+        int i = Symbolicator.symbolic("iinc_i", 10);
+        i += 3; // IINC
+        Expression expr = Symbolicator.getExpression(i);
+        Assertions.assertNotNull(expr, "IINC should preserve symbolic tag");
+        Assertions.assertTrue(expr.toString().contains("iinc_i"));
+    }
+
+    @Test
+    void arrayLoadWithSymbolicIndexRecordsSelectConstraint() {
+        int[] arr = {10, 20, 30, 40};
+        int idx = Symbolicator.symbolic("idx", 2);
+        int v = arr[idx];
+        // v should be tagged — its tag is the SELECT expression.
+        Expression vExpr = Symbolicator.getExpression(v);
+        Assertions.assertNotNull(vExpr, "tagged-index array load should produce a symbolic element");
+        // Path condition should contain constraints (bounds + cell anchor).
+        Assertions.assertNotNull(PathUtils.getCurPC().constraints);
+    }
+
+    @Test
+    void arrayStoreWithSymbolicValueRecordsStoreConstraint() {
+        int[] arr = {0, 0, 0, 0};
+        int v = Symbolicator.symbolic("stored_v", 42);
+        arr[1] = v;
+        // Subsequent load should re-enter the SELECT/STORE chain.
+        int readBack = arr[1];
+        Expression readExpr = Symbolicator.getExpression(readBack);
+        Assertions.assertNotNull(readExpr, "after symbolic store the cell should be symbolic");
+    }
+
+    @Test
+    void symbolicStringPropagatesThroughCharAt() {
+        String s = Symbolicator.symbolic("msg", "hi");
+        // charAt routes through a JDK method that reads the backing array,
+        // so the returned char should carry the per-character BVVariable.
+        char c0 = s.charAt(0);
+        char c1 = s.charAt(1);
+        Expression e0 = Symbolicator.getExpression(c0);
+        Expression e1 = Symbolicator.getExpression(c1);
+        Assertions.assertNotNull(e0, "char at 0 should be symbolic");
+        Assertions.assertNotNull(e1, "char at 1 should be symbolic");
+        Assertions.assertTrue(e0.toString().contains("msg_c0"), "expected msg_c0 label in " + e0);
+        Assertions.assertTrue(e1.toString().contains("msg_c1"), "expected msg_c1 label in " + e1);
+    }
 }

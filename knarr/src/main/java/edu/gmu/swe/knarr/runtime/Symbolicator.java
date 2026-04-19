@@ -24,6 +24,7 @@ import za.ac.sun.cs.green.expr.IntVariable;
 import za.ac.sun.cs.green.expr.Operation;
 import za.ac.sun.cs.green.expr.Operation.Operator;
 import za.ac.sun.cs.green.expr.RealVariable;
+import za.ac.sun.cs.green.expr.StringConstant;
 import za.ac.sun.cs.green.expr.StringVariable;
 import za.ac.sun.cs.green.expr.UnaryOperation;
 
@@ -131,6 +132,7 @@ public class Symbolicator {
         Coverage.count = 0;
         symbolicLabels.clear();
         lblCounters.clear();
+        PathConstraintListener.resetArrays();
     }
 
     public static void solve() {}
@@ -240,15 +242,69 @@ public class Symbolicator {
 
     public static String symbolic(String label, String v) {
         if (v == null) return null;
-        // Tag the String reference with a StringVariable. (Per-character
-        // taints that the original code stored in valuePHOSPHOR_TAG.taints
-        // are out of scope for the SPI port; see report.)
-        Expression var = new StringVariable(label);
-        symbolicLabels.put(var, label);
         if (mySoln != null && !mySoln.isUnconstrained && mySoln.varMapping.get(label) instanceof String) {
             v = (String) mySoln.varMapping.get(label);
         }
-        return Tainter.setTag(v, Tag.of(var));
+        // Force a fresh, non-interned String so in-place element tagging is
+        // isolated from any cached/interned instance.
+        v = new String(v);
+
+        // Build a CONCAT expression covering every character and tag each
+        // backing-array element with its own BVVariable so that a subsequent
+        // s.charAt(i)/byte-array read will observe the symbolic content.
+        Expression composite = new StringConstant("");
+        try {
+            java.lang.reflect.Field valueField = String.class.getDeclaredField("value");
+            valueField.setAccessible(true);
+            Object value = valueField.get(v);
+            if (value instanceof byte[]) {
+                // JDK 9+ compact strings. `coder` = 0 LATIN1, 1 UTF16.
+                java.lang.reflect.Field coderField = String.class.getDeclaredField("coder");
+                coderField.setAccessible(true);
+                byte coder = coderField.getByte(v);
+                byte[] arr = (byte[]) value;
+                int chars = coder == 0 ? arr.length : arr.length / 2;
+                for (int i = 0; i < chars; i++) {
+                    Expression c = registerCharVar(label, i);
+                    composite = new BinaryOperation(Operator.CONCAT, composite, c);
+                    int byteIdx = coder == 0 ? i : i * 2;
+                    arr[byteIdx] = Tainter.setTag(arr[byteIdx], Tag.of(c));
+                }
+            } else if (value instanceof char[]) {
+                char[] arr = (char[]) value;
+                for (int i = 0; i < arr.length; i++) {
+                    Expression c = registerCharVar(label, i);
+                    composite = new BinaryOperation(Operator.CONCAT, composite, c);
+                    arr[i] = Tainter.setTag(arr[i], Tag.of(c));
+                }
+            }
+        } catch (ReflectiveOperationException e) {
+            // JVM denied reflection into String internals (no --add-opens).
+            // Fall back to tagging only the reference with a StringVariable.
+            Expression fallback = new StringVariable(label);
+            symbolicLabels.put(fallback, label);
+            return Tainter.setTag(v, Tag.of(fallback));
+        }
+
+        symbolicLabels.put(composite, label);
+        return Tainter.setTag(v, Tag.of(composite));
+    }
+
+    /**
+     * Creates and registers a BVVariable for the {@code i}-th character of a
+     * symbolic String, and records the constraint that the variable fits in
+     * one byte (high bits = 0).
+     */
+    private static Expression registerCharVar(String label, int i) {
+        String name = label + "_c" + i;
+        Expression c = new BVVariable(name, 32);
+        symbolicLabels.put(c, name);
+        PathUtils.getCurPC()
+                ._addDet(
+                        Operator.EQ,
+                        new BinaryOperation(Operator.BIT_AND, new BVVariable(name, 32), FFFFFF00_32),
+                        Operation.ZERO);
+        return c;
     }
 
     public static byte[] symbolic(String label, byte[] v) {

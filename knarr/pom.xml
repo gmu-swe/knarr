@@ -123,6 +123,7 @@
                                 -Xbootclasspath/a:${galette.agentJar}
                                 -javaagent:${galette.agentJar}
                                 --add-exports java.base/jdk.internal.misc=ALL-UNNAMED
+                                --add-opens java.base/java.lang=ALL-UNNAMED
                             </argLine>
                             <reuseForks>false</reuseForks>
                         </configuration>
