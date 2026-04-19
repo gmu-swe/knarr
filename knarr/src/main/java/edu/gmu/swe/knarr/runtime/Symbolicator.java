@@ -344,10 +344,19 @@ public class Symbolicator {
 
     public static byte[] symbolic(String label, byte[] v) {
         if (v == null) return null;
-        // Tag each element with its own per-element BV variable so that
-        // subsequent reads pick up symbolic content.
+        // Tag each element with its own per-element BV variable. Width is
+        // 32 to match Green's Z3JavaTranslator, which maps {@code byte[]}'s
+        // range sort to {@code BitVec(32)} (see
+        // {@code Z3JavaTranslator.postVisit(ArrayVariable)} case "byte").
+        // Using width 8 here gave "domain sort (_ BitVec 8) and parameter
+        // sort (_ BitVec 32) do not match" on every mkStore. Java widens
+        // {@code byte} to {@code int} at every use site anyway, so BV(32)
+        // is also the natural width for arithmetic constraints. The
+        // solver may return a value outside [-128, 127]; callers call
+        // {@code Number.byteValue()} to coerce when feeding it back to a
+        // {@code byte[]} input.
         for (int i = 0; i < v.length; i++) {
-            Expression elemVar = new BVVariable(label + "_b" + i, 8);
+            Expression elemVar = new BVVariable(label + "_b" + i, 32);
             symbolicLabels.put(elemVar, label + "_b" + i);
             v[i] = Tainter.setTag(v[i], Tag.of(elemVar));
         }

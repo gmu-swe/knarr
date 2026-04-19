@@ -249,7 +249,19 @@ public class ConstraintServerHandler extends Thread {
 				
 				if (solve) {
 					solution = new ArrayList<>();
-					solve(req, true, solution, new HashSet<String>());
+					try {
+						solve(req, true, solution, new HashSet<String>());
+					} catch (Throwable solveError) {
+						// Green's Z3 translator still has rough edges
+						// on mixed sorts (ClassCastException, Z3Exception).
+						// A thrown solve must not break the client socket
+						// — the client treats an empty solution as "solver
+						// couldn't help, keep structurally mutating", which
+						// is the honest state. Log for diagnosis.
+						System.err.println("solve failed: " + solveError);
+						solveError.printStackTrace();
+						solution.clear();
+					}
 				} else {
 					solution = new ArrayList<>();
 				}
