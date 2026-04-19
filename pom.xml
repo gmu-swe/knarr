@@ -9,6 +9,7 @@
         <module>knarr-server</module>
         <module>knarr</module>
         <module>knarr-concolic</module>
+        <module>crochet-galette-bridge</module>
     </modules>
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
