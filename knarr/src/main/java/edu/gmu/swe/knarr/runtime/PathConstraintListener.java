@@ -14,6 +14,8 @@ import za.ac.sun.cs.green.expr.NaryOperation;
 import za.ac.sun.cs.green.expr.Operation;
 import za.ac.sun.cs.green.expr.Operation.Operator;
 import za.ac.sun.cs.green.expr.RealConstant;
+import za.ac.sun.cs.green.expr.StringConstant;
+import za.ac.sun.cs.green.expr.UnaryOperation;
 
 /**
  * Knarr's {@link SymbolicExecutionListener} implementation. Translates SPI
@@ -21,6 +23,26 @@ import za.ac.sun.cs.green.expr.RealConstant;
  * {@link PathUtils#getCurPC()}.
  */
 public final class PathConstraintListener implements SymbolicExecutionListener {
+
+    /**
+     * Per-thread reentrance guard. While {@code true}, the listener silently
+     * falls back to default behavior — used to avoid infinite recursion when
+     * building Green {@link Expression} objects triggers String operations
+     * that themselves fire String masks (e.g., {@link Expression#toString}).
+     */
+    private static final ThreadLocal<Boolean> inHook = ThreadLocal.withInitial(() -> Boolean.FALSE);
+
+    private static boolean enter() {
+        if (inHook.get()) {
+            return false;
+        }
+        inHook.set(Boolean.TRUE);
+        return true;
+    }
+
+    private static void leave() {
+        inHook.set(Boolean.FALSE);
+    }
 
     // ---------- Arithmetic / unary / convert (return derived tag) ----------
 
@@ -402,6 +424,189 @@ public final class PathConstraintListener implements SymbolicExecutionListener {
             recordArrayStore(array, new BVConstant(index, 32), valExpr);
         }
         return valueTag;
+    }
+
+    // ---------- Strings ----------
+
+    @Override
+    public Tag onStringEquals(
+            boolean concreteResult, String receiver, Object other,
+            Tag receiverTag, Tag otherTag,
+            Tag[] receiverCharTags, Tag[] otherCharTags) {
+        if (!enter()) return Tag.union(receiverTag, otherTag);
+        try {
+            Expression lhs = stringExpression(receiver, receiverTag, receiverCharTags);
+            Expression rhs = (other instanceof String)
+                    ? stringExpression((String) other, otherTag, otherCharTags)
+                    : null;
+            if (lhs == null || rhs == null) {
+                return Tag.union(receiverTag, otherTag);
+            }
+            Expression eq = new BinaryOperation(Operator.EQUALS, lhs, rhs);
+            recordPredicate(eq, concreteResult);
+            return Tag.of(eq);
+        } finally {
+            leave();
+        }
+    }
+
+    @Override
+    public Tag onStringStartsWith(
+            boolean concreteResult, String receiver, String prefix, int offset,
+            Tag receiverTag, Tag prefixTag, Tag offsetTag,
+            Tag[] receiverCharTags, Tag[] prefixCharTags) {
+        if (!enter()) return Tag.union(Tag.union(receiverTag, prefixTag), offsetTag);
+        try {
+            Expression lhs = stringExpression(receiver, receiverTag, receiverCharTags);
+            Expression rhs = stringExpression(prefix, prefixTag, prefixCharTags);
+            if (lhs == null || rhs == null) {
+                return Tag.union(Tag.union(receiverTag, prefixTag), offsetTag);
+            }
+            Expression pred = new BinaryOperation(Operator.STARTSWITH, lhs, rhs);
+            recordPredicate(pred, concreteResult);
+            return Tag.of(pred);
+        } finally {
+            leave();
+        }
+    }
+
+    @Override
+    public Tag onStringEndsWith(
+            boolean concreteResult, String receiver, String suffix,
+            Tag receiverTag, Tag suffixTag,
+            Tag[] receiverCharTags, Tag[] suffixCharTags) {
+        if (!enter()) return Tag.union(receiverTag, suffixTag);
+        try {
+            Expression lhs = stringExpression(receiver, receiverTag, receiverCharTags);
+            Expression rhs = stringExpression(suffix, suffixTag, suffixCharTags);
+            if (lhs == null || rhs == null) {
+                return Tag.union(receiverTag, suffixTag);
+            }
+            Expression pred = new BinaryOperation(Operator.ENDSWITH, lhs, rhs);
+            recordPredicate(pred, concreteResult);
+            return Tag.of(pred);
+        } finally {
+            leave();
+        }
+    }
+
+    @Override
+    public Tag onStringContains(
+            boolean concreteResult, String receiver, CharSequence seq,
+            Tag receiverTag, Tag seqTag, Tag[] receiverCharTags) {
+        if (!enter()) return Tag.union(receiverTag, seqTag);
+        try {
+            Expression lhs = stringExpression(receiver, receiverTag, receiverCharTags);
+            Expression rhs = (seq instanceof String)
+                    ? stringExpression((String) seq, seqTag, null)
+                    : new StringConstant(seq == null ? "" : seq.toString());
+            if (lhs == null) {
+                return Tag.union(receiverTag, seqTag);
+            }
+            Expression pred = new BinaryOperation(Operator.CONTAINS, lhs, rhs);
+            recordPredicate(pred, concreteResult);
+            return Tag.of(pred);
+        } finally {
+            leave();
+        }
+    }
+
+    @Override
+    public Tag onStringIndexOf(
+            int concreteResult, String receiver, String needle,
+            Tag receiverTag, Tag needleTag,
+            Tag[] receiverCharTags, Tag[] needleCharTags) {
+        if (!enter()) return Tag.union(receiverTag, needleTag);
+        try {
+            Expression lhs = stringExpression(receiver, receiverTag, receiverCharTags);
+            Expression rhs = stringExpression(needle, needleTag, needleCharTags);
+            if (lhs == null || rhs == null) {
+                return Tag.union(receiverTag, needleTag);
+            }
+            Expression expr = new NaryOperation(
+                    Operator.INDEXOFSTRING, lhs, rhs, ExpressionBuilder.intConstant(0));
+            PathUtils.getCurPC()._addDet(
+                    Operator.EQ, expr, ExpressionBuilder.intConstant(concreteResult));
+            return Tag.of(expr);
+        } finally {
+            leave();
+        }
+    }
+
+    @Override
+    public Tag onStringLength(
+            int concreteResult, String receiver, Tag receiverTag, Tag[] receiverCharTags) {
+        if (!enter()) return receiverTag;
+        try {
+            Expression s = stringExpression(receiver, receiverTag, receiverCharTags);
+            if (s == null) {
+                return receiverTag;
+            }
+            Expression len = new UnaryOperation(Operator.LENGTH, s);
+            PathUtils.getCurPC()._addDet(
+                    Operator.EQ, len, ExpressionBuilder.intConstant(concreteResult));
+            return Tag.of(len);
+        } finally {
+            leave();
+        }
+    }
+
+    @Override
+    public Tag onStringCharAt(
+            char concreteResult, String receiver, int index,
+            Tag receiverTag, Tag indexTag, Tag[] receiverCharTags) {
+        if (!enter()) return Tag.union(receiverTag, indexTag);
+        try {
+            if (receiverCharTags != null
+                    && Tag.isEmpty(indexTag)
+                    && index >= 0
+                    && index < receiverCharTags.length) {
+                return receiverCharTags[index];
+            }
+            Expression s = stringExpression(receiver, receiverTag, receiverCharTags);
+            Expression idx = Tag.isEmpty(indexTag)
+                    ? ExpressionBuilder.intConstant(index)
+                    : extractLabel(indexTag);
+            if (s == null) {
+                return Tag.union(receiverTag, indexTag);
+            }
+            Expression ch = new BinaryOperation(Operator.CHARAT, s, idx);
+            PathUtils.getCurPC()._addDet(
+                    Operator.EQ, ch, ExpressionBuilder.intConstant(concreteResult));
+            return Tag.of(ch);
+        } finally {
+            leave();
+        }
+    }
+
+    /**
+     * Builds an Expression representing a String. Priority:
+     * 1. If the ref tag has a pre-built Expression (e.g., the CONCAT built
+     *    by {@link Symbolicator#symbolic(String, String)}), reuse it.
+     * 2. Otherwise, use a StringConstant of the concrete content.
+     *
+     * <p>Per-char CONCAT re-building is avoided per call to keep the
+     * expression tree shallow — the ref tag's pre-built expression already
+     * carries the full symbolic content.
+     */
+    private static Expression stringExpression(String s, Tag refTag, Tag[] charTags) {
+        if (s == null) {
+            return null;
+        }
+        if (!Tag.isEmpty(refTag)) {
+            Object label = Tag.getLabels(refTag)[0];
+            if (label instanceof Expression) {
+                return (Expression) label;
+            }
+        }
+        return new StringConstant(s);
+    }
+
+    private static void recordPredicate(Expression pred, boolean taken) {
+        Expression toRecord = taken ? pred : new UnaryOperation(Operator.NOT, pred);
+        if (toRecord instanceof Operation) {
+            PathUtils.getCurPC()._addDet((Operation) toRecord);
+        }
     }
 
     // ---------- Helpers ----------

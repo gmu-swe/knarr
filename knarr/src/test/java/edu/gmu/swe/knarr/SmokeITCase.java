@@ -129,4 +129,47 @@ public class SmokeITCase {
         Assertions.assertTrue(e0.toString().contains("msg_c0"), "expected msg_c0 label in " + e0);
         Assertions.assertTrue(e1.toString().contains("msg_c1"), "expected msg_c1 label in " + e1);
     }
+
+    @Test
+    void stringEqualsRecordsPredicateConstraint() {
+        String s = Symbolicator.symbolic("eq_s", "hi");
+        boolean r = s.equals("hi");
+        Assertions.assertTrue(r);
+        Expression pc = PathUtils.getCurPC().constraints;
+        Assertions.assertNotNull(pc, "String.equals on tagged String should record a constraint");
+        Assertions.assertTrue(pc.toString().contains("EQUALS"),
+                "expected EQUALS in PC: " + pc);
+    }
+
+    @Test
+    void stringStartsWithRecordsPredicate() {
+        String s = Symbolicator.symbolic("prefix_s", "helloworld");
+        boolean r = s.startsWith("hello");
+        Assertions.assertTrue(r);
+        Expression pc = PathUtils.getCurPC().constraints;
+        Assertions.assertNotNull(pc);
+        Assertions.assertTrue(pc.toString().contains("STARTSWITH"),
+                "expected STARTSWITH in PC: " + pc);
+    }
+
+    @Test
+    void stringLengthReturnsSymbolicInt() {
+        String s = Symbolicator.symbolic("len_s", "abc");
+        int len = s.length();
+        Assertions.assertEquals(3, len);
+        // Length expression should be attached to the int.
+        Expression e = Symbolicator.getExpression(len);
+        Assertions.assertNotNull(e, "s.length() should carry a symbolic tag");
+        Assertions.assertTrue(e.toString().contains("LENGTH"),
+                "expected LENGTH in expression: " + e);
+    }
+
+    @Test
+    void untaggedStringDoesNotFireMask() {
+        // No symbolic tagging — String.equals with tagged=false on both
+        // sides should not add any constraint.
+        boolean r = "concrete".equals("concrete");
+        Assertions.assertTrue(r);
+        Assertions.assertNull(PathUtils.getCurPC().constraints);
+    }
 }
