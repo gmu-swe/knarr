@@ -124,6 +124,7 @@
                                 -javaagent:${galette.agentJar}
                                 --add-exports java.base/jdk.internal.misc=ALL-UNNAMED
                                 --add-opens java.base/java.lang=ALL-UNNAMED
+                                --add-opens java.base/edu.neu.ccs.prl.galette.internal.transform=ALL-UNNAMED
                             </argLine>
                             <reuseForks>false</reuseForks>
                             <systemPropertyVariables>

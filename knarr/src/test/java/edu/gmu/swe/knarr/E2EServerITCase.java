@@ -8,6 +8,7 @@ import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,22 +21,13 @@ import org.junit.jupiter.api.Test;
  * TCP to a knarr-server subprocess that solves with Z3 and returns a model.
  *
  * <p>The server runs on a plain JDK (not instrumented) to avoid the known
- * Galette ↔ java.util.logging conflict that prevents Z3 from initializing
- * inside an instrumented JVM.
- *
- * <p><em>Currently disabled:</em> the client's {@code Symbolicator.dumpConstraints}
- * write triggers a broken-pipe on the subprocess-based server for reasons
- * not yet narrowed down (probably an Object stream handshake timing issue
- * between the Galette-instrumented client JVM and the plain server JVM).
- * The individual halves are validated: knarr-server's {@link
- * edu.gmu.swe.knarr.server.Z3SolveTest} proves Green→Z3 solves correctly;
- * the {@link SmokeITCase} tests prove the symbolic listener records the
- * right constraints. The missing piece is the serialization bridge, which
- * is a single-method write/read.
+ * Galette / java.util.logging conflict that prevents Z3 from initializing
+ * inside an instrumented JVM. {@link edu.gmu.swe.knarr.runtime.Symbolicator}
+ * compensates for the Galette/plain-peer mismatch by disabling Galette's
+ * serialization tag-propagation mask for the duration of the round-trip;
+ * without that the instrumented client silently appends extra tag-wrapper
+ * objects to the Object stream, corrupting the peer's read.
  */
-@org.junit.jupiter.api.Disabled(
-        "broken-pipe on subprocess server; see class Javadoc. Halves covered by "
-                + "Z3SolveTest and SmokeITCase.")
 public class E2EServerITCase {
 
     private static Process server;
@@ -92,6 +84,16 @@ public class E2EServerITCase {
     @BeforeEach
     void installListener() {
         SymbolicListener.setListener(new PathConstraintListener());
+    }
+
+    @AfterEach
+    void removeListener() {
+        // Leaving the PathConstraintListener registered during JVM shutdown
+        // causes the Galette-instrumented JDK to invoke onArrayLoad on
+        // arrays touched by shutdown hooks, after the Symbolicator state has
+        // been torn down. This has been observed to crash the JVM natively
+        // in Tag.isEmpty at shutdown.
+        SymbolicListener.setListener(null);
     }
 
     @Test

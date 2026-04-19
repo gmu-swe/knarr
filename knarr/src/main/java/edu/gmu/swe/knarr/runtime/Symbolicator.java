@@ -80,6 +80,17 @@ public class Symbolicator {
         if (PathUtils.getCurPC().constraints == null)
             return null;
 
+        // Galette's SerializationMasks inject extra out.writeObject(tagWrapper)
+        // calls after every primitive-wrapper / array is serialized. A plain
+        // (uninstrumented) peer reading the stream does not know to consume
+        // those wrappers, so any handshake involving objects or arrays becomes
+        // stream-corrupted. Disable the mask body for the duration of the
+        // client->server round-trip. The flag is re-checked on every call, so
+        // restoring it afterwards is not strictly required — we restore it
+        // only to avoid surprising any other serialization the caller JVM
+        // might perform. See edu.neu.ccs.prl.galette.internal.transform
+        // .Configuration#PROPAGATE_THROUGH_SERIALIZATION.
+        boolean prevPropagate = setSerializationPropagation(false);
         try (ObjectOutputStream oos = new ObjectOutputStream(getSocket().getOutputStream())) {
             ObjectInputStream ois = new ObjectInputStream(getSocket().getInputStream());
             oos.writeObject(PathUtils.getCurPC().constraints);
@@ -90,6 +101,7 @@ public class Symbolicator {
             // Coverage, if any
             Coverage.instance.thisCount = Coverage.count;
             oos.writeObject(Coverage.instance);
+            oos.flush();
 
             ArrayList<SimpleEntry<String, Object>> solution =
                     (ArrayList<SimpleEntry<String, Object>>) ois.readObject();
@@ -117,8 +129,31 @@ public class Symbolicator {
             return solution;
         } catch (IOException | ClassNotFoundException | StackOverflowError e) {
             e.printStackTrace();
+        } finally {
+            setSerializationPropagation(prevPropagate);
         }
         return null;
+    }
+
+    /**
+     * Toggle Galette's PROPAGATE_THROUGH_SERIALIZATION flag at runtime.
+     * Returns the previous value. If Galette's {@code Configuration} class is
+     * not on the classpath (non-instrumented JVM), this is a no-op and
+     * returns {@code false}.
+     */
+    private static boolean setSerializationPropagation(boolean value) {
+        try {
+            Class<?> cfg = Class.forName(
+                    "edu.neu.ccs.prl.galette.internal.transform.Configuration");
+            java.lang.reflect.Field f = cfg.getDeclaredField("PROPAGATE_THROUGH_SERIALIZATION");
+            f.setAccessible(true);
+            boolean prev = f.getBoolean(null);
+            f.setBoolean(null, value);
+            return prev;
+        } catch (ClassNotFoundException | NoSuchFieldException
+                 | IllegalAccessException e) {
+            return false;
+        }
     }
 
     public static void reset() {
