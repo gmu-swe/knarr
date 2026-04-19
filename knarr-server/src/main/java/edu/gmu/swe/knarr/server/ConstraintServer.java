@@ -16,7 +16,7 @@ public class ConstraintServer {
 
     	 ServerSocket listener = new ServerSocket(9090);
     	 System.out.println(ConstraintServerHandler.inZ3);
-    	 while (true) {
+    	 while (!listener.isClosed()) {
     		 try {
     			 new ConstraintServerHandler(listener.accept()).start();
     		 }catch(SocketException e)
@@ -24,9 +24,10 @@ public class ConstraintServer {
     			 //nop
     		 }
     		 catch (Throwable e) {
-    			 System.err.println("Fatal exception in handler!!!");
-    			 e.printStackTrace();
-    			 listener.close();
+    			 // A single handler's failure must not kill the listener —
+    			 // e.g., a health-check probe that opens then closes a socket
+    			 // triggers EOFException when the handler tries to read.
+    			 System.err.println("Handler error: " + e);
     		 }
     	 }
     }
