@@ -3,7 +3,6 @@ package edu.gmu.swe.knarr.server.concolic;
 import edu.gmu.swe.knarr.server.Canonizer;
 import edu.gmu.swe.knarr.server.ConstraintServerHandler;
 import edu.gmu.swe.knarr.server.concolic.picker.*;
-import sun.awt.image.ImageWatched;
 
 import java.io.BufferedReader;
 import java.io.File;
