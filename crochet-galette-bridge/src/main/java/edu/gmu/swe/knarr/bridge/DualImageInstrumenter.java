@@ -51,7 +51,11 @@ import org.objectweb.asm.tree.ModuleExportNode;
  *       {@link CrochetTransformer#transform(byte[], boolean)} in place.
  *       Galette runtime classes (already packed into {@code java.base})
  *       are skipped — CROCHET's own {@code shouldSkip} list handles the
- *       JDK package prefixes.</li>
+ *       JDK package prefixes. After CROCHET, {@link SkippedSurfaceStub}
+ *       adds a no-op {@code $$crochetAccess()V} to any class CROCHET
+ *       skips but that callers still emit an unguarded
+ *       {@code INVOKEVIRTUAL} against ({@code String} + the boxed
+ *       primitive types).</li>
  *   <li>Copy the CROCHET runtime classes from the supplied
  *       {@code crochet-agent} jar (filtered to the same set the official
  *       CROCHET pack-step produces) into the exploded {@code java.base}
@@ -219,6 +223,16 @@ public final class DualImageInstrumenter {
                         // image still builds.
                         failures.put(file.toString(), t);
                         out = null;
+                    }
+                    // CROCHET skips String + the boxed primitive types, but
+                    // their instance fields are still wrapped by callers'
+                    // FieldAccessWrapper emits — so the JVM linker needs a
+                    // $$crochetAccess stub on the skipped owner. See
+                    // SkippedSurfaceStub for rationale.
+                    byte[] base = out != null ? out : bytes;
+                    byte[] stubbed = SkippedSurfaceStub.addStubIfMissing(base);
+                    if (stubbed != base) {
+                        out = stubbed;
                     }
                     if (out != null) {
                         Files.write(file, out);

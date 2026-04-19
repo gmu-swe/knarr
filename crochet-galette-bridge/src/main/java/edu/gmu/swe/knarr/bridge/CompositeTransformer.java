@@ -33,10 +33,13 @@ public final class CompositeTransformer {
         byte[] galetteBytes = galette.transform(classFileBuffer, isHostedAnonymous);
         byte[] forCrochet = galetteBytes == null ? classFileBuffer : galetteBytes;
         byte[] crochetBytes = crochet.transform(forCrochet, isHostedAnonymous);
-        if (crochetBytes != null) {
-            return crochetBytes;
+        byte[] afterCrochet = crochetBytes != null ? crochetBytes : galetteBytes;
+        byte[] base = afterCrochet != null ? afterCrochet : classFileBuffer;
+        byte[] stubbed = SkippedSurfaceStub.addStubIfMissing(base);
+        if (stubbed != base) {
+            return stubbed;
         }
-        return galetteBytes;
+        return afterCrochet;
     }
 
     /**
@@ -47,9 +50,12 @@ public final class CompositeTransformer {
         byte[] galetteBytes = galette.transform(classFileBuffer, isHostedAnonymous);
         byte[] forCrochet = galetteBytes == null ? classFileBuffer : galetteBytes;
         byte[] crochetBytes = crochet.transform(forCrochet, isHostedAnonymous, loader);
-        if (crochetBytes != null) {
-            return crochetBytes;
+        byte[] afterCrochet = crochetBytes != null ? crochetBytes : galetteBytes;
+        byte[] base = afterCrochet != null ? afterCrochet : classFileBuffer;
+        byte[] stubbed = SkippedSurfaceStub.addStubIfMissing(base);
+        if (stubbed != base) {
+            return stubbed;
         }
-        return galetteBytes;
+        return afterCrochet;
     }
 }

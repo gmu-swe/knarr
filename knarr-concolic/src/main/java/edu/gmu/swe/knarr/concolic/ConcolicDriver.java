@@ -97,11 +97,20 @@ public final class ConcolicDriver<T> {
                     // concolic progress.
                 }
                 ArrayList<SimpleEntry<String, Object>> soln = Symbolicator.dumpConstraints(null);
-                if (soln == null || soln.isEmpty()) {
-                    break;
+                // A null / empty solution means the solver either errored
+                // out on the current path condition (e.g. Green's Z3
+                // translator chokes on a sort mismatch — see byte-array
+                // pilots) or it simply returned no model. We still let
+                // the mutator run with an empty solution so the loop
+                // keeps exploring via its own fallback mutation. Breaking
+                // early here is the OLD behaviour that masked instrument-
+                // ation wins as "no progress".
+                if (soln != null && !soln.isEmpty()) {
+                    solutions.add(soln);
                 }
-                solutions.add(soln);
-                T next = mutator.fromSolution(input, soln);
+                ArrayList<SimpleEntry<String, Object>> mutatorSoln = soln != null
+                        ? soln : new ArrayList<>();
+                T next = mutator.fromSolution(input, mutatorSoln);
                 if (next == null || next.equals(input)) {
                     break;
                 }

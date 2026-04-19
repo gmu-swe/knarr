@@ -39,6 +39,20 @@
             <version>5.10.1</version>
             <scope>test</scope>
         </dependency>
+        <!-- Pilot 1: commons-compress TarArchiveInputStream header parsing. -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-compress</artifactId>
+            <version>1.26.2</version>
+            <scope>test</scope>
+        </dependency>
+        <!-- Pilot 2: Ant ProjectHelper parsing (JQF-comparable target). -->
+        <dependency>
+            <groupId>org.apache.ant</groupId>
+            <artifactId>ant</artifactId>
+            <version>1.10.14</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
