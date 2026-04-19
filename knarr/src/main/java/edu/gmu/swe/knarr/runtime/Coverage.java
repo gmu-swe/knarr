@@ -1,7 +1,5 @@
 package edu.gmu.swe.knarr.runtime;
 
-import edu.columbia.cs.psl.phosphor.org.objectweb.asm.Type;
-
 import java.io.*;
 import java.util.BitSet;
 import java.util.LinkedList;
@@ -15,8 +13,8 @@ public class Coverage implements Serializable {
     public final int[] codeCoverage = new int[SIZE];
     public final int[] pathCoverage = new int[SIZE];
 
-    public static final String INTERNAL_NAME = Type.getType(Coverage.class).getInternalName();
-    public static final String DESCRIPTOR = Type.getType(Coverage.class).getDescriptor();
+    public static final String INTERNAL_NAME = "edu/gmu/swe/knarr/runtime/Coverage";
+    public static final String DESCRIPTOR = "Ledu/gmu/swe/knarr/runtime/Coverage;";
 
     public static transient Coverage instance = new Coverage();
 

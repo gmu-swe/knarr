@@ -12,21 +12,13 @@
         </repository>
     </repositories>
     <build>
-        <resources>
-            <resource>
-                <directory>resources</directory>
-                <includes>
-                    <include>phosphor-mv</include>
-                </includes>
-            </resource>
-        </resources>
         <plugins>
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.1</version>
+                <version>3.11.0</version>
                 <configuration>
-                    <source>1.7</source>
-                    <target>1.7</target>
+                    <source>17</source>
+                    <target>17</target>
                 </configuration>
             </plugin>
             <plugin>
@@ -77,7 +69,7 @@
         <dependency>
             <groupId>edu.gmu.swe.knarr</groupId>
             <artifactId>Knarr</artifactId>
-            <version>0.0.2-SNAPSHOT</version>
+            <version>0.0.3-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>edu.gmu.swe.greensolver</groupId>

@@ -1,8 +1,6 @@
 package edu.gmu.swe.knarr.internal;
 
-import edu.columbia.cs.psl.phosphor.TaintUtils;
 import edu.gmu.swe.knarr.runtime.Coverage;
-import edu.gmu.swe.knarr.runtime.StringUtils;
 import za.ac.sun.cs.green.expr.*;
 
 import java.io.*;
@@ -278,14 +276,6 @@ public class ConstraintSerializer {
     private void writeExpressionFields(Expression expr, ByteArrayList out) {
         if (expr.metadata == null) {
             out.add(METADATA_IS_NULL);
-        } else if (expr.metadata instanceof HashSet) {
-            out.add(METADATA_HASHSET_STRINGCOMPARISONS);
-            HashSet<StringUtils.StringComparisonRecord> set = (HashSet) expr.metadata;
-            writeInt(set.size(), out);
-            for (StringUtils.StringComparisonRecord record : set) { //TODO iterator performance is probably bad...
-                writeUTF(record.stringCompared, out);
-                out.add((byte) record.comparisionType.ordinal());
-            }
         } else if (expr.metadata instanceof Coverage.BranchData) {
             out.add(METADATA_BRANCH_DATA);
             Coverage.BranchData b = (Coverage.BranchData) expr.metadata;
@@ -429,9 +419,9 @@ public class ConstraintSerializer {
         if (bytes > 65535)
             throw new IllegalArgumentException("UTF string too long: " + bytes);
         writeShort((short) bytes, out);
-        int length = TaintUtils.stringLength(str);
+        int length = str.length();
         for (int i = 0; i < length; i++) {
-            int charValue = TaintUtils.charAt(str, i);
+            int charValue = str.charAt(i);
             if (charValue > 0 && charValue <= 127) {
                 out.add((byte) charValue);
             } else if (charValue <= 2047) {
@@ -447,9 +437,9 @@ public class ConstraintSerializer {
     }
 
     private long countUTFBytes(String str) {
-        int utfCount = 0, length = TaintUtils.stringLength(str);
+        int utfCount = 0, length = str.length();
         for (int i = 0; i < length; i++) {
-            int charValue = TaintUtils.charAt(str, i);
+            int charValue = str.charAt(i);
             if (charValue > 0 && charValue <= 127) {
                 utfCount++;
             } else if (charValue <= 2047) {
