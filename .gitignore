@@ -1,0 +1,21 @@
+# Build outputs
+target/
+*.class
+*.jar.lastUpdated
+
+# Vendored upstream projects (tracked as separate git repos)
+/galette/
+/crochet/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# JVM crashes
+hs_err_pid*.log
+core.*
+
+# Surefire/failsafe
+surefire-reports/
+failsafe-reports/
