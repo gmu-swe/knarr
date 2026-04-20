@@ -88,7 +88,7 @@ public class PathUtils {
         }
 
         Expression toAdd = taken ? cmp : new UnaryOperation(Operator.NOT, cmp);
-        getCurPC()._addDet((Operation) toAdd);
+        getCurPC()._addBranchDet(toAdd);
     }
 
     /**
@@ -127,7 +127,7 @@ public class PathUtils {
         }
 
         Expression toAdd = taken ? cmp : new UnaryOperation(Operator.NOT, cmp);
-        getCurPC()._addDet((Operation) toAdd);
+        getCurPC()._addBranchDet(toAdd);
     }
 
     /**
@@ -147,7 +147,7 @@ public class PathUtils {
         for (int i = min; i < max; i++) {
             if (i == v) continue;
             Expression notTaken = new BinaryOperation(Operator.NE, lExp, ExpressionBuilder.intConstant(i));
-            getCurPC()._addDet(Operator.AND, limit, notTaken);
+            getCurPC()._addBranchDet(Operator.AND, limit, notTaken);
         }
     }
 
@@ -169,19 +169,19 @@ public class PathUtils {
 
             if (i == takenArm) {
                 Operation expr = new BinaryOperation(Operator.EQ, lExp, ExpressionBuilder.intConstant(keys[i]));
-                getCurPC()._addDet(expr);
+                getCurPC()._addBranchDet(expr);
             } else {
                 Operation expr = new BinaryOperation(Operator.NE, lExp, ExpressionBuilder.intConstant(keys[i]));
-                getCurPC()._addDet(expr);
+                getCurPC()._addBranchDet(expr);
             }
         }
         if (takenArm == keys.length) {
             if (defaultCase != null) {
-                getCurPC()._addDet(defaultCase);
+                getCurPC()._addBranchDet(defaultCase);
             }
         } else if (defaultCase != null) {
             Operation neg = new UnaryOperation(Operator.NOT, defaultCase);
-            getCurPC()._addDet(neg);
+            getCurPC()._addBranchDet(neg);
         }
     }
 }

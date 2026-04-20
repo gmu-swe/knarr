@@ -20,7 +20,61 @@ get useful solver guidance, and what the real blockers are.
   returns an empty solution so the client socket stays alive and the
   pilot's structural fallback mutator keeps exploring.
 
-## Measurement: solver-guided vs. structural / random (3-mutator sweep)
+## Measurement: proper concolic (4-mutator sweep, post-8db5d65 + concolic driver)
+
+Ran each pilot 10 iterations × 4 mutators on `/tmp/jdk-dual-ga-first`.
+The `concolic` mutator implements classic branch negation: maintain a
+separate ordered list of recorded predicate constraints, pick a branch
+index `i` round-robin, and send `anchors ∧ b1 ∧ ... ∧ b(i-1) ∧ ¬bi`
+to the solver for a model. Falls back to structural flip on UNSAT or
+empty model.
+
+| Pilot | Mutator | Outcomes | Branches |
+|---|---|---:|---:|
+| Tar | struct | 3 | 1691 |
+| Tar | random | 2 | 1549 |
+| Tar | solver | 1 | 1377 |
+| Tar | **concolic** | **3** | **1731** |
+| Ant | struct | 3 | 256 |
+| Ant | random | 3 | 258 |
+| Ant | **solver** | **4** | **318** |
+| Ant | concolic | 3 | 256 |
+
+**Tar: concolic wins.** The per-iter log shows a successful flip on
+iter 0, then UNSAT on every subsequent negated prefix. The one
+successful flip is enough to break out of the `ENTRY_READ bucket=0`
+plateau that plain solver stayed locked in (1377 branches) — concolic
+records 1731, edging past the best baseline (struct's 1691).
+
+**Ant: concolic skips every iter with `reason=no_branches`.** Even
+though IF_ICMPXX / LCMP paths in `PathConstraintListener` route to
+`_addBranchDet`, the Ant parser's XML reads happen through a chain
+(xerces SAX → `DocumentScannerImpl` → char-array ops) where the byte
+tags don't survive to the comparison branches. By the time a branch
+fires, it's comparing an un-tagged int, so nothing lands in the
+branch list. Net: concolic falls back to structural flip every iter
+and matches struct exactly (256 / 3). Solver-guided "re-satisfy"
+stays the winner on Ant because the full constraint tree (including
+anchors and derived equalities) still feeds meaningful model
+diversity downstream.
+
+**Takeaways:**
+
+1. Different parsers favor different concolic strategies —
+   solver-guided "re-satisfy" wins where outcome categories are
+   brittle to seed bytes (Ant's XML); classic branch-negation wins
+   where the constraint tree is dominated by a single gate and the
+   parser plateaus inside it (Tar's ustar header).
+2. The main lever for improving concolic on Ant is **broader branch
+   recording** — the classifier that decides "this is a predicate,
+   not an anchor" currently misses branches where tags were dropped
+   upstream. A next step: trace where byte tags get lost through
+   xerces.
+3. Even with only 1 successful flip per session, classic concolic
+   beats both "never flip" (struct) and "always re-satisfy" (solver)
+   on a gate-dominated target like Tar. Worth keeping in the toolbox.
+
+## Measurement: solver-guided vs. structural / random (3-mutator sweep, pre-concolic)
 
 Ran each pilot 10 iterations × 3 mutators on `/tmp/jdk-dual-ga-first`:
 

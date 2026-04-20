@@ -46,7 +46,7 @@ public final class PilotRunner {
         String run(byte[] tagged);
     }
 
-    public enum Mutator { STRUCT, RANDOM, SOLVER }
+    public enum Mutator { STRUCT, RANDOM, SOLVER, CONCOLIC }
 
     private final String tagLabel;
     private final String linePrefix; // "TAR" or "ANT"
@@ -54,6 +54,11 @@ public final class PilotRunner {
     private final int iterations;
     private final Mutator mutator;
     private final byte[] seed;
+
+    /** Indices of branches already flipped in this session (avoid repeats). */
+    private final java.util.LinkedHashSet<Integer> flippedBranches = new java.util.LinkedHashSet<>();
+    /** Next branch index the concolic driver will attempt. Round-robin. */
+    private int nextConcolicTarget = 0;
 
     public PilotRunner(String linePrefix, String tagLabel, byte[] seed,
                        IterationBody body, int iterations, Mutator mutator) {
@@ -116,6 +121,11 @@ public final class PilotRunner {
                 byte[] next;
                 if (mutator == Mutator.SOLVER) {
                     next = solverMutate(buf, i);
+                    if (next == null || sameBytes(next, buf)) {
+                        next = structMutate(buf, i);
+                    }
+                } else if (mutator == Mutator.CONCOLIC) {
+                    next = concolicMutate(buf, i);
                     if (next == null || sameBytes(next, buf)) {
                         next = structMutate(buf, i);
                     }
@@ -225,6 +235,89 @@ public final class PilotRunner {
             byte v = (byte) ((s >>> 25) & 0xff);
             out[pos] = v;
         }
+        return out;
+    }
+
+    /**
+     * Concolic (branch-negating) mutator. Picks the next un-flipped branch
+     * index from the accumulated path condition, asks the solver for an
+     * input that satisfies the flipped tree {@code anchors ∧ b0 ∧ ... ∧
+     * b(i-1) ∧ NOT(bi)}, and applies the model bytes to the next input.
+     *
+     * <p>Falls back to null on UNSAT / empty model (caller then uses
+     * structural mutation as a failsafe). Round-robins through branch
+     * indices that haven't been flipped yet, so successive iters try
+     * successive branches rather than hammering the same one.
+     */
+    private byte[] concolicMutate(byte[] buf, int iter) {
+        int branchCount = PathUtils.getCurPC().branchCount();
+        if (branchCount == 0) {
+            System.out.println(linePrefix + "_CONCOLIC_SKIP iter=" + iter + " reason=no_branches");
+            return null;
+        }
+        // Pick the next unflipped branch index. Start from nextConcolicTarget
+        // and walk forward (wrapping) until we find one not yet flipped.
+        int chosen = -1;
+        for (int k = 0; k < branchCount; k++) {
+            int cand = (nextConcolicTarget + k) % branchCount;
+            if (!flippedBranches.contains(cand)) {
+                chosen = cand;
+                break;
+            }
+        }
+        if (chosen < 0) {
+            // All branches have been flipped at least once this session;
+            // loop back to index 0 and flip again.
+            flippedBranches.clear();
+            chosen = 0;
+        }
+        flippedBranches.add(chosen);
+        nextConcolicTarget = (chosen + 1) % branchCount;
+
+        System.out.println(linePrefix + "_CONCOLIC_FLIP iter=" + iter
+                + " branch_idx=" + chosen
+                + " branch_total=" + branchCount);
+
+        ArrayList<SimpleEntry<String, Object>> soln;
+        try {
+            soln = Symbolicator.dumpConstraintsForFlip(chosen);
+        } catch (Throwable t) {
+            System.out.println(linePrefix + "_CONCOLIC_EX iter=" + iter
+                    + " idx=" + chosen + " ex=" + t.getClass().getSimpleName());
+            return null;
+        }
+        if (soln == null || soln.isEmpty()) {
+            System.out.println(linePrefix + "_CONCOLIC_UNSAT iter=" + iter + " idx=" + chosen);
+            return null;
+        }
+        byte[] out = buf.clone();
+        String prefix = tagLabel + "_b";
+        int applied = 0;
+        for (SimpleEntry<String, Object> e : soln) {
+            String k = e.getKey();
+            if (!k.startsWith(prefix)) continue;
+            String idxStr = k.substring(prefix.length());
+            int idx;
+            try {
+                idx = Integer.parseInt(idxStr);
+            } catch (NumberFormatException nfe) {
+                continue;
+            }
+            if (idx < 0 || idx >= out.length) continue;
+            Object v = e.getValue();
+            if (v instanceof Integer) {
+                out[idx] = ((Integer) v).byteValue();
+                applied++;
+            } else if (v instanceof Number) {
+                out[idx] = ((Number) v).byteValue();
+                applied++;
+            }
+        }
+        System.out.println(linePrefix + "_CONCOLIC_APPLIED iter=" + iter
+                + " idx=" + chosen
+                + " soln_size=" + soln.size()
+                + " bytes_applied=" + applied);
+        if (applied == 0) return null;
         return out;
     }
 

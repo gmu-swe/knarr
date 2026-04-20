@@ -605,7 +605,7 @@ public final class PathConstraintListener implements SymbolicExecutionListener {
     private static void recordPredicate(Expression pred, boolean taken) {
         Expression toRecord = taken ? pred : new UnaryOperation(Operator.NOT, pred);
         if (toRecord instanceof Operation) {
-            PathUtils.getCurPC()._addDet((Operation) toRecord);
+            PathUtils.getCurPC()._addBranchDet(toRecord);
         }
     }
 
@@ -662,21 +662,21 @@ public final class PathConstraintListener implements SymbolicExecutionListener {
         // between {@code l} and {@code r} is {@code l < r} (Operator.LT).
         // The else branch is {@code v1 > v2}, recorded as {@code l > r} (GT).
         if (eq) {
-            PathUtils.getCurPC()._addDet(Operator.EQ, l, r);
+            PathUtils.getCurPC()._addBranchDet(Operator.EQ, l, r);
         } else if (lt) {
-            PathUtils.getCurPC()._addDet(Operator.LT, l, r);
+            PathUtils.getCurPC()._addBranchDet(Operator.LT, l, r);
         } else {
-            PathUtils.getCurPC()._addDet(Operator.GT, l, r);
+            PathUtils.getCurPC()._addBranchDet(Operator.GT, l, r);
         }
     }
 
     private static void recordRealCmp(Expression l, Expression r, double v1, double v2) {
         if (v1 == v2) {
-            PathUtils.getCurPC()._addDet(Operator.EQ, l, r);
+            PathUtils.getCurPC()._addBranchDet(Operator.EQ, l, r);
         } else if (v1 < v2) {
-            PathUtils.getCurPC()._addDet(Operator.LT, l, r);
+            PathUtils.getCurPC()._addBranchDet(Operator.LT, l, r);
         } else {
-            PathUtils.getCurPC()._addDet(Operator.GT, l, r);
+            PathUtils.getCurPC()._addBranchDet(Operator.GT, l, r);
         }
     }
 

@@ -24,7 +24,7 @@ public class TarPilotITCase {
 
         try (PilotHarness.Server ignored =
                      PilotHarness.startServer(Paths.get("target"))) {
-            for (String mutator : List.of("struct", "random", "solver")) {
+            for (String mutator : List.of("struct", "random", "solver", "concolic")) {
                 // Tar's 1365-constraint path condition + the solver
                 // round-trip runs ~45-60s per iter; 10 iterations × solver
                 // fits comfortably in 900s.
@@ -49,7 +49,7 @@ public class TarPilotITCase {
                 // deeper WITHIN the same coarse outcome bucket, so it can
                 // legitimately sit at uniqueOutcomes=1 even while pushing
                 // branch count 5× higher than struct.
-                int minOutcomes = "solver".equals(mutator) ? 1 : 2;
+                int minOutcomes = ("solver".equals(mutator) || "concolic".equals(mutator)) ? 1 : 2;
                 Assertions.assertTrue(r.uniqueOutcomes >= minOutcomes,
                         "pilot (" + mutator + ") reached only " + r.uniqueOutcomes
                                 + " distinct outcome(s); output:\n" + out);

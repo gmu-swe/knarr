@@ -74,11 +74,32 @@ public class Symbolicator {
         return dumpConstraints(null);
     }
 
-    @SuppressWarnings("unchecked")
     public static synchronized ArrayList<SimpleEntry<String, Object>> dumpConstraints(String name) {
         collectArrayLenConstraints();
         if (PathUtils.getCurPC().constraints == null)
             return null;
+        return solveAndReset(PathUtils.getCurPC().constraints, name);
+    }
+
+    /**
+     * Build a flipped-branch constraint tree and round-trip it through the
+     * solver. Unlike {@link #dumpConstraints(String)}, this does NOT
+     * reset the PC — the caller's concrete execution has already landed
+     * and the PC is cleared as part of the usual reset flow on the next
+     * iteration. Returns null if the branch index is out of range, the
+     * solver fails, or the flipped constraint is UNSAT.
+     */
+    public static synchronized ArrayList<SimpleEntry<String, Object>> dumpConstraintsForFlip(int branchIndex) {
+        collectArrayLenConstraints();
+        Expression flipped = PathUtils.getCurPC().buildFlippedConstraints(branchIndex);
+        if (flipped == null) return null;
+        // Reset after the round-trip so the next iter starts clean.
+        return solveAndReset(flipped, null);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static ArrayList<SimpleEntry<String, Object>> solveAndReset(Expression req, String name) {
+        if (req == null) return null;
 
         // Galette's SerializationMasks inject extra out.writeObject(tagWrapper)
         // calls after every primitive-wrapper / array is serialized. A plain
@@ -93,7 +114,7 @@ public class Symbolicator {
         boolean prevPropagate = setSerializationPropagation(false);
         try (ObjectOutputStream oos = new ObjectOutputStream(getSocket().getOutputStream())) {
             ObjectInputStream ois = new ObjectInputStream(getSocket().getInputStream());
-            oos.writeObject(PathUtils.getCurPC().constraints);
+            oos.writeObject(req);
             // Solve constraints?
             oos.writeBoolean(true);
             // Dump constraints to file?
@@ -159,6 +180,7 @@ public class Symbolicator {
     public static void reset() {
         PathUtils.getCurPC().constraints = null;
         PathUtils.getCurPC().size = 0;
+        PathUtils.getCurPC().clearBranches();
         serverConnection = null;
         firstLabel = null;
         PathUtils.usedLabels.clear();
