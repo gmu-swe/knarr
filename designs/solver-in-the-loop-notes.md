@@ -20,6 +20,42 @@ get useful solver guidance, and what the real blockers are.
   returns an empty solution so the client socket stays alive and the
   pilot's structural fallback mutator keeps exploring.
 
+## First CVE-hunt run: CommonsText / Text4Shell at 1.12 (post-b529398)
+
+Ran `CommonsTextPilotITCase` with `commons-text:1.12.0` (the
+Text4Shell-patched release, with `script`/`url`/`dns` lookups removed
+in 1.10). Target: `StringSubstitutor.createInterpolator().replace(...)`.
+Seed: `Hello ${sys:user.name} world`.
+
+| Mutator | Outcomes | Branches |
+|---|---:|---:|
+| struct | 1 | 2721 |
+| random | 1 | 2687 |
+| solver | 1 | 2721 |
+| concolic | 1 | 2721 |
+| guided | — | — (parent-wait hang) |
+
+**Finding: the 1.12 defensive path is robust to 10-iter concolic
+mutation.** Every mutator converged on a single outcome bucket
+(`REPLACED`) with essentially identical branch counts. Byte-level
+mutations of `${sys:user.name}` produce either still-valid lookups
+(different sys property, resolves) or unknown lookups (the interpolator
+leaves `${...}` untouched in the output), both of which bucket as
+`REPLACED`. Neither structural nor solver-guided mutation finds a path
+out of the defensive handling at this iteration budget. Useful "CVE
+defence confirmed" signal for the patched version; for active CVE
+reproduction, pin `commons-text:1.9.0` in a separate ITCase where the
+`script:` lookup is still wired.
+
+**Operational note: the `guided` mutator hangs the parent mvn on
+small-surface targets** (same `waitFor` not observing child kill
+pattern we saw on `llm-guided`). The hang is not hermetic across
+commons-text vs Ant targets, so it's not `claude` CLI specific; it's
+something about the guided mutator's interaction with the dual-JDK
+child's constraint tree that reliably produces a stuck process. For
+the 10-iter budget, struct/random/solver/concolic still produce the
+useful data — guided's contribution is marginal on this surface.
+
 ## LLM-guided scaffold — wiring attempt (post-73e3466)
 
 Wrote `~/bin/claude-rank-concolic.sh` that shells out to `claude --print`
