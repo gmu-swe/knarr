@@ -120,6 +120,22 @@ public class PathConditionWrapper implements Serializable {
 	}
 
 	/**
+	 * Legacy three-arg form retained for source compatibility. The
+	 * {@code site} and {@code taken} arguments are ignored — the
+	 * heuristic mutators derive fingerprints from the branch expression
+	 * itself, not from per-call metadata (see
+	 * {@code PilotRunner.guidedSiteKey}).
+	 */
+	public synchronized void _addBranchDet(Expression branch, String site, boolean taken) {
+		_addBranchDet(branch);
+	}
+
+	public synchronized Expression _addBranchDet(Operator op, Expression l, Expression r,
+	                                              String site, boolean taken) {
+		return _addBranchDet(op, l, r);
+	}
+
+	/**
 	 * Collects all AND-spine leaves that are NOT in {@link #branchConstraints}
 	 * — i.e. the anchor constraints (bounds, concrete-cell equalities,
 	 * sign-extension OR masks, array-store history, string-length anchors,

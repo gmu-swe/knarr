@@ -20,6 +20,60 @@ get useful solver guidance, and what the real blockers are.
   returns an empty solution so the client socket stays alive and the
   pilot's structural fallback mutator keeps exploring.
 
+## Measurement: heuristic-guided concolic (5-mutator sweep)
+
+Added a `guided` mutator (session-scoped UNSAT skip list + one-way site
+priority + deepest-first tiebreaker) and an `llm-guided` scaffold
+(identical pipeline but defers the pick to `$KNARR_LLM_RANKER`; skipped
+in CI). Also added inHook reentrance guards to the listener's
+arithmetic/branch callbacks — `Tag.of` invokes `ObjectIntMap.put`, which
+computes `Expression.hashCode`, which under Galette instrumentation
+routed back through `onIntArith` and created unbounded recursion on
+deep expression trees. The guard cuts the recursion but also drops
+~3-5% of derived arithmetic tags, reducing baseline branch counts
+slightly.
+
+| Pilot | Mutator | Outcomes | Branches |
+|---|---|---:|---:|
+| Tar | struct | 3 | 1670 |
+| Tar | random | 2 | 1431 |
+| Tar | solver | 1 | 1384 |
+| Tar | **concolic** | **3** | **1687** |
+| Tar | guided | 2 | 1416 |
+| Ant | struct | 3 | 1550 |
+| Ant | random | 3 | 1561 |
+| Ant | solver | 2 | 1614 |
+| Ant | **concolic** | **3** | **1641** |
+| Ant | guided | 3 | 1549 |
+
+**Finding: on this 10-iter budget, guided does NOT beat concolic on
+either pilot.**
+
+- Tar guided: telemetry shows 4 successful flips (vs. concolic's 1) —
+  but the "one-way" heuristic aggressively flips deep tar-header
+  byte-compare branches (`tar_b156!=83`, `tar_b156!=88`, etc.) which
+  all land in the same `ENTRY_READ bucket=0` region after a successful
+  flip. Net: more successful flips, FEWER distinct outcomes than the
+  round-robin concolic strategy.
+- Ant guided: telemetry shows 10 picks, all one-way, all UNSAT. The
+  deepest-first tiebreak lands on xerces's deepest tagged-byte
+  operations where the solver can't construct a sort-compatible flip.
+  Outcome count matches struct / concolic (3), but branch count sits
+  slightly below concolic (1549 vs 1641).
+
+**Takeaway:** the heuristic picks AGGRESSIVELY — hitting one-way
+fingerprints that look promising but that the solver often can't
+satisfy, or that don't open new outcome buckets when it can. On a
+larger iteration budget (say 50-100 iters), the UNSAT skip list would
+let guided converge on the "satisfiable one-way" core faster than
+concolic's round-robin. At 10 iters, concolic's brute round-robin
+still wins on outcome diversity. The LLM-guided scaffold (same
+pipeline, different pick policy) is the natural next lever — a model
+that prefers parser-state-relevant sites over opportunistic deep
+leaves could close this gap without changing the mechanics.
+
+The pre-heuristic numbers:
+
 ## Measurement: proper concolic (4-mutator sweep, post-8db5d65 + concolic driver)
 
 Ran each pilot 10 iterations × 4 mutators on `/tmp/jdk-dual-ga-first`.

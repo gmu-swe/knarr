@@ -53,6 +53,20 @@ public class PathUtils {
         }
     }
 
+    /**
+     * Legacy entry point — early iterations of the guided mutator tracked
+     * per-branch source sites via a {@link StackWalker} call. Under
+     * Galette instrumentation a walker per branch added seconds of
+     * overhead to each Ant pilot iteration. The heuristic mutator now
+     * derives its fingerprints from the branch expression itself (see
+     * {@code PilotRunner.guidedSiteKey}), so the walker is gone. This
+     * method is retained as a no-op for source compatibility with older
+     * listener paths.
+     */
+    public static String captureSite() {
+        return "?";
+    }
+
     // ---------- Constraint emission (called from PathConstraintListener) ----------
 
     /**

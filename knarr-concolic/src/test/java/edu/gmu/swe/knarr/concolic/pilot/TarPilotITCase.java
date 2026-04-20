@@ -24,7 +24,17 @@ public class TarPilotITCase {
 
         try (PilotHarness.Server ignored =
                      PilotHarness.startServer(Paths.get("target"))) {
-            for (String mutator : List.of("struct", "random", "solver", "concolic")) {
+            // Mutators run in order: baselines → concolic → guided → optional llm-guided.
+            // llm-guided is the same pipeline as guided but defers the branch
+            // pick to $KNARR_LLM_RANKER; we skip it in CI unless that env var
+            // is set, so the default fast path runs 5 columns.
+            List<String> mutators = new java.util.ArrayList<>(
+                    List.of("struct", "random", "solver", "concolic", "guided"));
+            if (System.getenv("KNARR_LLM_RANKER") != null
+                    && !System.getenv("KNARR_LLM_RANKER").isEmpty()) {
+                mutators.add("llm-guided");
+            }
+            for (String mutator : mutators) {
                 // Tar's 1365-constraint path condition + the solver
                 // round-trip runs ~45-60s per iter; 10 iterations × solver
                 // fits comfortably in 900s.
@@ -49,7 +59,8 @@ public class TarPilotITCase {
                 // deeper WITHIN the same coarse outcome bucket, so it can
                 // legitimately sit at uniqueOutcomes=1 even while pushing
                 // branch count 5× higher than struct.
-                int minOutcomes = ("solver".equals(mutator) || "concolic".equals(mutator)) ? 1 : 2;
+                int minOutcomes = ("solver".equals(mutator) || "concolic".equals(mutator)
+                        || "guided".equals(mutator) || "llm-guided".equals(mutator)) ? 1 : 2;
                 Assertions.assertTrue(r.uniqueOutcomes >= minOutcomes,
                         "pilot (" + mutator + ") reached only " + r.uniqueOutcomes
                                 + " distinct outcome(s); output:\n" + out);
@@ -75,5 +86,11 @@ public class TarPilotITCase {
                 "expected both mutators to record > 0 branches; got "
                         + "solver=" + solverBranches + " struct=" + structBranches
                         + ". Table:\n" + results);
+        // Guided mutator must produce non-zero branches — ordering against
+        // concolic is noise on Tar (the gate-dominated parser keeps one flip
+        // and plateaus), so we only assert progress was made.
+        int guidedBranches = results.get("guided").uniqueBranches;
+        Assertions.assertTrue(guidedBranches > 0,
+                "guided mutator recorded 0 branches. Table:\n" + results);
     }
 }

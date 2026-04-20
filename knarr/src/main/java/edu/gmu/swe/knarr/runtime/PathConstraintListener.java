@@ -48,27 +48,46 @@ public final class PathConstraintListener implements SymbolicExecutionListener {
 
     @Override
     public Tag onIntArith(int opcode, int v1, int v2, Tag t1, Tag t2) {
-        // v1 is the lower stack slot (left), v2 is the upper (right). The
-        // SPI hands them in stack order: value1, value2 with value2 on top.
-        Expression l = ExpressionBuilder.exprForInt(t1, v1);
-        Expression r = ExpressionBuilder.exprForInt(t2, v2);
+        // Reentrance guard: Tag.of invokes an internal ObjectIntMap.put,
+        // which computes the new tag's hashCode. On Galette-instrumented
+        // runtimes that hashCode computation itself goes through
+        // instrumented arithmetic (e.g., {@code 31 * 37 * ...}) and
+        // routes back here, creating unbounded recursion on deep
+        // expression trees. See the JDK jstack in
+        // designs/solver-in-the-loop-notes.md. The inHook guard turns
+        // the recursive call into a no-op that just returns the input
+        // union, keeping the outer Tag.of progressing.
+        if (!enter()) return Tag.union(t1, t2);
+        try {
+            // v1 is the lower stack slot (left), v2 is the upper (right). The
+            // SPI hands them in stack order: value1, value2 with value2 on top.
+            Expression l = ExpressionBuilder.exprForInt(t1, v1);
+            Expression r = ExpressionBuilder.exprForInt(t2, v2);
 
-        // Short-circuit for ADD/SUB with neutral 0 — preserve the surviving
-        // operand's tag rather than wrapping.
-        if (opcode == IADD) {
-            if (Tag.isEmpty(t1) && v1 == 0) return t2;
-            if (Tag.isEmpty(t2) && v2 == 0) return t1;
+            // Short-circuit for ADD/SUB with neutral 0 — preserve the surviving
+            // operand's tag rather than wrapping.
+            if (opcode == IADD) {
+                if (Tag.isEmpty(t1) && v1 == 0) return t2;
+                if (Tag.isEmpty(t2) && v2 == 0) return t1;
+            }
+
+            Expression result = ExpressionBuilder.intBinary(opcode, l, r);
+            return result == null ? Tag.union(t1, t2) : Tag.of(result);
+        } finally {
+            leave();
         }
-
-        Expression result = ExpressionBuilder.intBinary(opcode, l, r);
-        return result == null ? Tag.union(t1, t2) : Tag.of(result);
     }
 
     @Override
     public Tag onIntUnary(int opcode, int value, Tag tag) {
-        Expression e = ExpressionBuilder.exprForInt(tag, value);
-        Expression result = ExpressionBuilder.intUnary(opcode, e);
-        return result == null ? tag : Tag.of(result);
+        if (!enter()) return tag;
+        try {
+            Expression e = ExpressionBuilder.exprForInt(tag, value);
+            Expression result = ExpressionBuilder.intUnary(opcode, e);
+            return result == null ? tag : Tag.of(result);
+        } finally {
+            leave();
+        }
     }
 
     @Override
@@ -103,10 +122,15 @@ public final class PathConstraintListener implements SymbolicExecutionListener {
 
     @Override
     public Tag onLongArith(int opcode, long v1, long v2, Tag t1, Tag t2) {
-        Expression l = ExpressionBuilder.exprForLong(t1, v1);
-        Expression r = ExpressionBuilder.exprForLong(t2, v2);
-        Expression result = ExpressionBuilder.longBinary(opcode, l, r);
-        return result == null ? Tag.union(t1, t2) : Tag.of(result);
+        if (!enter()) return Tag.union(t1, t2);
+        try {
+            Expression l = ExpressionBuilder.exprForLong(t1, v1);
+            Expression r = ExpressionBuilder.exprForLong(t2, v2);
+            Expression result = ExpressionBuilder.longBinary(opcode, l, r);
+            return result == null ? Tag.union(t1, t2) : Tag.of(result);
+        } finally {
+            leave();
+        }
     }
 
     @Override
@@ -121,10 +145,15 @@ public final class PathConstraintListener implements SymbolicExecutionListener {
     public Tag onLongCmp(long v1, long v2, Tag t1, Tag t2) {
         // Original behaviour: emit an EQ/GT/LT path constraint and propagate
         // no result tag.
-        Expression l = ExpressionBuilder.exprForLong(t1, v1);
-        Expression r = ExpressionBuilder.exprForLong(t2, v2);
-        recordIntCmp(l, r, v1 == v2, v1 < v2);
-        return null;
+        if (!enter()) return null;
+        try {
+            Expression l = ExpressionBuilder.exprForLong(t1, v1);
+            Expression r = ExpressionBuilder.exprForLong(t2, v2);
+            recordIntCmp(l, r, v1 == v2, v1 < v2);
+            return null;
+        } finally {
+            leave();
+        }
     }
 
     @Override
@@ -159,9 +188,14 @@ public final class PathConstraintListener implements SymbolicExecutionListener {
 
     @Override
     public Tag onIntWiden(int opcode, int value, Tag tag) {
-        Expression e = ExpressionBuilder.exprForInt(tag, value);
-        Expression result = ExpressionBuilder.convert(opcode, e);
-        return result == null ? tag : Tag.of(result);
+        if (!enter()) return tag;
+        try {
+            Expression e = ExpressionBuilder.exprForInt(tag, value);
+            Expression result = ExpressionBuilder.convert(opcode, e);
+            return result == null ? tag : Tag.of(result);
+        } finally {
+            leave();
+        }
     }
 
     @Override
@@ -189,17 +223,30 @@ public final class PathConstraintListener implements SymbolicExecutionListener {
 
     @Override
     public void onIntBranch(int opcode, int value, Tag tag) {
-        Expression e = ExpressionBuilder.exprForInt(tag, value);
-        boolean taken = evalUnaryBranch(opcode, value);
-        PathUtils.addConstraint(e, opcode, taken);
+        if (!enter()) return;
+        try {
+            Expression e = ExpressionBuilder.exprForInt(tag, value);
+            boolean taken = evalUnaryBranch(opcode, value);
+            PathUtils.addConstraint(e, opcode, taken);
+        } finally {
+            leave();
+        }
     }
 
     @Override
     public void onIntCmpBranch(int opcode, int v1, int v2, Tag t1, Tag t2) {
-        Expression l = ExpressionBuilder.exprForInt(t1, v1);
-        Expression r = ExpressionBuilder.exprForInt(t2, v2);
-        boolean taken = evalCmpBranch(opcode, v1, v2);
-        PathUtils.addCmpConstraint(opcode, l, r, taken);
+        // See inHook commentary on {@link #onIntArith}. The branch-
+        // emission path also builds new Expressions; drop the reentrant
+        // call to break recursion from hashCode-of-deep-tree.
+        if (!enter()) return;
+        try {
+            Expression l = ExpressionBuilder.exprForInt(t1, v1);
+            Expression r = ExpressionBuilder.exprForInt(t2, v2);
+            boolean taken = evalCmpBranch(opcode, v1, v2);
+            PathUtils.addCmpConstraint(opcode, l, r, taken);
+        } finally {
+            leave();
+        }
     }
 
     @Override
@@ -239,10 +286,15 @@ public final class PathConstraintListener implements SymbolicExecutionListener {
         // Build a new Expression = (label + increment) and return it as
         // the variable's new tag. Preserves the original Knarr behaviour
         // now that the SPI allows a Tag return.
-        Expression e = ExpressionBuilder.exprForInt(tag, 0);
-        Expression incremented =
-                new BinaryOperation(Operator.ADD, e, ExpressionBuilder.intConstant(increment));
-        return Tag.of(incremented);
+        if (!enter()) return tag;
+        try {
+            Expression e = ExpressionBuilder.exprForInt(tag, 0);
+            Expression incremented =
+                    new BinaryOperation(Operator.ADD, e, ExpressionBuilder.intConstant(increment));
+            return Tag.of(incremented);
+        } finally {
+            leave();
+        }
     }
 
     // ---------- Arrays ----------
