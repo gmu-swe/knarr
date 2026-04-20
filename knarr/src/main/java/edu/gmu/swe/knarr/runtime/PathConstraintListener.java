@@ -658,12 +658,15 @@ public final class PathConstraintListener implements SymbolicExecutionListener {
     }
 
     private static void recordIntCmp(Expression l, Expression r, boolean eq, boolean lt) {
+        // {@code lt} means "v1 < v2" concretely, i.e. the symbolic relation
+        // between {@code l} and {@code r} is {@code l < r} (Operator.LT).
+        // The else branch is {@code v1 > v2}, recorded as {@code l > r} (GT).
         if (eq) {
             PathUtils.getCurPC()._addDet(Operator.EQ, l, r);
         } else if (lt) {
-            PathUtils.getCurPC()._addDet(Operator.GT, l, r);
-        } else {
             PathUtils.getCurPC()._addDet(Operator.LT, l, r);
+        } else {
+            PathUtils.getCurPC()._addDet(Operator.GT, l, r);
         }
     }
 
@@ -671,9 +674,9 @@ public final class PathConstraintListener implements SymbolicExecutionListener {
         if (v1 == v2) {
             PathUtils.getCurPC()._addDet(Operator.EQ, l, r);
         } else if (v1 < v2) {
-            PathUtils.getCurPC()._addDet(Operator.GT, l, r);
-        } else {
             PathUtils.getCurPC()._addDet(Operator.LT, l, r);
+        } else {
+            PathUtils.getCurPC()._addDet(Operator.GT, l, r);
         }
     }
 

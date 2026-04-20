@@ -20,7 +20,24 @@ get useful solver guidance, and what the real blockers are.
   returns an empty solution so the client socket stays alive and the
   pilot's structural fallback mutator keeps exploring.
 
-## What doesn't yet work — the Tar-parser UNSAT
+## Update: Tar-parser UNSAT resolved (post 62b9f23)
+
+Root cause: `PathConstraintListener.recordIntCmp` had its `GT`/`LT`
+operators swapped. When the concrete LCMP/DCMPL/FCMPL outcome was
+`v1 < v2`, the listener recorded `GT(l, r)` (i.e. `l > r`) — the
+opposite of the symbolic relation. Long-comparing the unsigned tar
+checksum (815) against `parseOctal` of the zero-filled checksum field
+(0) emitted `LT(sum, 0)` instead of `GT(sum, 0)`, which — combined
+with the positive bytewise sum implied by `0xFF & tar_bN ≥ 0` over
+every header byte — was unsatisfiable. Same bug existed in the mirror
+`recordRealCmp` (double/float paths), fixed identically. Verified via
+an unsat-core bisector: with the swap fixed, the raw 1364-constraint
+tar parse constraints are SAT and TarZ3Verify3 returns a 1037-entry
+model. Both pilots still pass.
+
+## Original investigation notes
+
+
 
 The commons-compress tar-header parse produces ~340 path-condition
 constraints on a single `getNextEntry()` call. Z3 reports **UNSAT** on
