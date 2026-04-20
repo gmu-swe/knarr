@@ -146,4 +146,79 @@ public final class PilotHarness {
     public static void snapshot(String name, String output) throws IOException {
         Files.writeString(Paths.get("target", name), output);
     }
+
+    /** Ensure {@code target/} exists before writing anything into it. */
+    public static void ensureTargetDir() throws IOException {
+        Files.createDirectories(Paths.get("target"));
+    }
+
+    /** Summary of one pilot fork's output. */
+    public static final class RunResult {
+        public boolean started;
+        public boolean finished;
+        public int iters;
+        public int uniqueOutcomes;
+        public int uniqueBranches;
+        @Override
+        public String toString() {
+            return "{iters=" + iters
+                    + " unique_outcomes=" + uniqueOutcomes
+                    + " unique_branches=" + uniqueBranches + "}";
+        }
+    }
+
+    /** Parse the per-pilot output protocol into a {@link RunResult}. */
+    public static RunResult parseRun(String linePrefix, String output) {
+        RunResult r = new RunResult();
+        r.started = output.contains(linePrefix + "_PILOT_STARTED");
+        int itersSeen = 0;
+        int totalBranches = 0;
+        java.util.Set<String> outcomes = new java.util.LinkedHashSet<>();
+        for (String line : output.split("\n")) {
+            if (line.startsWith(linePrefix + "_BRANCHES_HIT")) {
+                itersSeen++;
+                // total=<N>
+                int idx = line.indexOf("total=");
+                if (idx >= 0) {
+                    int end = line.indexOf(' ', idx);
+                    if (end < 0) end = line.length();
+                    try {
+                        totalBranches = Math.max(totalBranches,
+                                Integer.parseInt(line.substring(idx + 6, end)));
+                    } catch (NumberFormatException ignored) {}
+                }
+            } else if (line.startsWith(linePrefix + "_OUTCOME ")) {
+                outcomes.add(line.substring((linePrefix + "_OUTCOME ").length()).trim());
+            } else if (line.startsWith(linePrefix + "_PILOT_FINISHED")) {
+                r.finished = true;
+                // Reconcile with the summary line (authoritative).
+                int b = line.indexOf("branches=");
+                if (b >= 0) {
+                    int end = line.indexOf(' ', b);
+                    if (end < 0) end = line.length();
+                    try {
+                        totalBranches = Integer.parseInt(line.substring(b + 9, end));
+                    } catch (NumberFormatException ignored) {}
+                }
+            }
+        }
+        r.iters = itersSeen;
+        r.uniqueOutcomes = outcomes.size();
+        r.uniqueBranches = totalBranches;
+        return r;
+    }
+
+    /** Write a human-readable results table for the "three mutators" comparison. */
+    public static void writeTable(String name, java.util.Map<String, RunResult> results) throws IOException {
+        StringBuilder sb = new StringBuilder();
+        sb.append(String.format("%-8s %6s %18s %18s%n",
+                "mutator", "iters", "unique_outcomes", "unique_branches"));
+        for (java.util.Map.Entry<String, RunResult> e : results.entrySet()) {
+            RunResult r = e.getValue();
+            sb.append(String.format("%-8s %6d %18d %18d%n",
+                    e.getKey(), r.iters, r.uniqueOutcomes, r.uniqueBranches));
+        }
+        Files.writeString(Paths.get("target", name), sb.toString());
+        System.out.println(sb);
+    }
 }

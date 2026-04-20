@@ -20,6 +20,38 @@ get useful solver guidance, and what the real blockers are.
   returns an empty solution so the client socket stays alive and the
   pilot's structural fallback mutator keeps exploring.
 
+## Measurement: solver-guided vs. structural / random (3-mutator sweep)
+
+Ran each pilot 10 iterations × 3 mutators on `/tmp/jdk-dual-ga-first`:
+
+| Pilot | Mutator | Outcomes | Branches |
+|---|---|---:|---:|
+| Tar | struct | 3 | 1692 |
+| Tar | random | 2 | 1856 |
+| Tar | solver | 1 | 1406 |
+| Ant | struct | 3 | 256 |
+| Ant | random | 4 | 264 |
+| Ant | solver | 4 | 318 |
+
+**Reading:** on Ant the solver behaves as expected — more distinct
+branch coverage AND more outcome categories than either baseline. On
+Tar the naive "feed the solver's satisfying model back as the next
+input" strategy drives the parser *deeper into the same outcome
+bucket* (every iter lands in `ENTRY_READ bucket=0` with ~1100 branch
+events per iter) rather than *flipping to a new outcome*. Net: tar
+coverage sits near the struct baseline, not above it.
+
+**What this tells us:** Ant's XML parser has more distinct parse
+outcomes reachable by single-byte mutations (well-formed → `Invalid
+byte N` → `Element type "_"` → `Content is not`), so any satisfying
+model that differs from the seed tends to land in a new bucket. The
+tar header has a narrow validity gate (magic at offset 257, null-
+terminated name at offset 0) so most satisfying models re-land in
+`bucket=0`. To break through on tar we'd need the mutator to *negate*
+a branch condition rather than *re-satisfy* the existing path — a
+real concolic step rather than just "re-solve current PC". Parked
+for a follow-up session.
+
 ## Update: Tar-parser UNSAT resolved (post 62b9f23)
 
 Root cause: `PathConstraintListener.recordIntCmp` had its `GT`/`LT`
