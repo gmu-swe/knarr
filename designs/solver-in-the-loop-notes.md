@@ -20,6 +20,79 @@ get useful solver guidance, and what the real blockers are.
   returns an empty solution so the client socket stays alive and the
   pilot's structural fallback mutator keeps exploring.
 
+## Seven-pilot sequential batch (post-69db0ad)
+
+Ran every pilot ITCase back-to-back via `/tmp/run-all-pilots.sh` with a
+37-minute hard cap per pilot. Total batch runtime: ~2h37m. Per-pilot
+final numbers from the captured snapshots:
+
+| Pilot | Mutator | Outcomes | Branches | Notes |
+|---|---|---:|---:|---|
+| Tar | struct | 3 | 1670 | |
+| Tar | random | 1 | 1439 | assertion tripped, halted |
+| Ant | struct | 3 | 1550 | |
+| Ant | random | 3 | 1566 | |
+| Ant | solver | 3 | 1549 | |
+| Ant | **concolic** | **3** | **1641** | winner |
+| Ant | guided | — | — | 37m cap |
+| Zip | struct | 2 | 2467 | ENTRY_READ + `ZipException` buckets |
+| Zip | random | — | — | 300s per-mutator cap too tight |
+| Jackson | struct | 2 | 166 | |
+| Jackson | random | — | — | 300s cap |
+| CommonsText | struct | 1 | 2721 | |
+| CommonsText | random | 1 | 2675 | |
+| CommonsText | solver | 1 | 2721 | |
+| CommonsText | concolic | 1 | 2721 | |
+| CommonsText | guided | — | — | 37m cap |
+| Gzip | struct | 2 | 153 | |
+| Gzip | random | 2 | 158 | |
+| Gzip | solver | 2 | 143 | |
+| Gzip | **concolic** | **2** | **159** | winner |
+| Gzip | guided | 2 | 153 | |
+| Regex | struct | 2 | 1142 | |
+| Regex | **random** | **2** | **1157** | winner |
+| Regex | solver | 2 | 1142 | |
+| Regex | concolic | 2 | 1142 | |
+| Regex | guided | — | — | 37m cap |
+
+**Only Gzip survived the full 5-mutator protocol** — its parser is
+thin (sub-200-branch working set) so per-iter wall time is low enough
+that the guided mutator doesn't hit the systemic hang it exhibits on
+xerces / commons-text / regex. Gzip is also the sole pilot where
+concolic's win on branches (159 > 153) is statistically tidy.
+
+**Systemic `guided`-mutator hang** reliably trips on pilots where the
+parser's xerces-style branch surface pushes Galette into high-volume
+constraint-record territory. Needs Knarr-side investigation — probably
+a reentrance or locking issue in the guided mutator's flip-rebuild
+path. All other mutators complete on those same targets.
+
+**Per-mutator timeout mismatches:** Zip and Jackson random both hit
+the 300s non-solver cap — their first iter's parse is slow enough
+that 10 iters × (~35s parse + serializer round-trip) overshoots. Easy
+fix: uniform 600s for struct/random too.
+
+**CVE-hunt read:**
+- Tar struct at 3 outcomes confirms the tar parser hits 3 distinct
+  error classes on byte mutations.
+- Zip struct hits `ZipException` — meaningful DoS/robustness signal
+  with just 10 iters of structural mutation. Worth deeper
+  investigation.
+- Jackson's 166-branch ceiling on struct is telling: with
+  `enableDefaultTyping()` every byte mutation tends to drop into one
+  of two states early (parse-success or immediate-fail) without
+  exploring nested polymorphic class-name gates. Would need a
+  longer-iter budget or a more-aware mutator (one that respects JSON
+  grammar) to actually drive into gadget-chain territory.
+- CommonsText 1.12 is indistinguishable across mutators — the
+  defensive fix is robust to this concolic approach at 10 iters.
+- Regex's "random wins by 15 branches" is noise; the ReDoS signal
+  we actually want would require wall-clock instrumentation (slow
+  match = catastrophic backtracking) which the current outcome
+  bucketing doesn't capture.
+- Gzip produces crisp 2-outcome diversity and clean concolic win —
+  makes it the best sanity-check pilot for the harness itself.
+
 ## First CVE-hunt run: CommonsText / Text4Shell at 1.12 (post-b529398)
 
 Ran `CommonsTextPilotITCase` with `commons-text:1.12.0` (the
