@@ -20,6 +20,39 @@ get useful solver guidance, and what the real blockers are.
   returns an empty solution so the client socket stays alive and the
   pilot's structural fallback mutator keeps exploring.
 
+## LLM-guided scaffold — wiring attempt (post-73e3466)
+
+Wrote `~/bin/claude-rank-concolic.sh` that shells out to `claude --print`
+for each iter's branch pick. Smoke-tested standalone: sample JSON
+payload in, well-formed `{"idx": 42, "reason": "..."}` out.
+
+Ran the 6-mutator Ant pilot suite end-to-end with `KNARR_LLM_RANKER`
+set and 1800s-per-mutator cap. Baselines finished cleanly:
+
+| Pilot | Mutator | Outcomes | Branches |
+|---|---|---:|---:|
+| Ant | struct | 3 | 1549 |
+| Ant | random | **4** | **1728** |
+| Ant | solver | 3 | 1550 |
+| Ant | concolic | 3 | 1641 |
+| Ant | guided | 3 | 1549 |
+| Ant | llm-guided | — | — (timeout) |
+
+`llm-guided` hit the 30m cap without completing a single iter, and the
+parent's `waitFor` didn't observe the forced kill — orphaning the
+child process. The suspected cause is that invoking the `claude` CLI
+as a subprocess from within a host Claude Code session creates a
+bidirectional stdin/stdout lock that the ranker script can't get out
+of. Running under a non-Claude-Code host (a plain shell, or the
+`ANTHROPIC_API_KEY`-based non-interactive path) is the likely fix.
+
+**Actionable follow-up:** either (a) modify the ranker script to use
+`anthropic` Python SDK directly with `ANTHROPIC_API_KEY` instead of
+the `claude` CLI, or (b) exec under `env -i PATH=... bash` to strip
+the Claude Code environment before the CLI spawns. Not urgent — the
+heuristic-guided mutator (`guided`) is the same pipeline minus the
+subprocess call and has already been measured.
+
 ## Measurement: heuristic-guided concolic (5-mutator sweep)
 
 Added a `guided` mutator (session-scoped UNSAT skip list + one-way site

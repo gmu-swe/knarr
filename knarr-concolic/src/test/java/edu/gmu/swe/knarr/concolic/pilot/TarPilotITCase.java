@@ -36,11 +36,14 @@ public class TarPilotITCase {
             }
             for (String mutator : mutators) {
                 // Tar's 1365-constraint path condition + the solver
-                // round-trip runs ~45-60s per iter; 10 iterations × solver
-                // fits comfortably in 900s.
+                // round-trip runs ~45-60s per iter; solver-family
+                // mutators get 1800s to absorb GC flakiness + the
+                // ~6s-per-iter claude subprocess when llm-guided runs.
+                int timeout = (mutator.equals("concolic") || mutator.equals("guided")
+                        || mutator.equals("llm-guided")) ? 1800 : 900;
                 String out = PilotHarness.runTargetUnderDualJdk(
                         TarPilotTarget.class.getName(),
-                        900,
+                        timeout,
                         List.of("--mutator=" + mutator));
                 PilotHarness.snapshot("tar-pilot-" + mutator + "-output.txt", out);
                 PilotHarness.RunResult r = PilotHarness.parseRun("TAR", out);

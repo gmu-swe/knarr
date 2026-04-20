@@ -31,8 +31,12 @@ public class AntPilotITCase {
                 // Concolic / guided / llm-guided add a solver round-trip per
                 // iter on top of the flipped-PC serialization; give them the
                 // same headroom as the Tar pilot to avoid flakes.
+                // 1800s (30m) for solver-family mutators: the guided
+                // mutator flakes past 900s when xerces-under-Galette
+                // has a slow-GC iter. llm-guided additionally pays
+                // a ~6s claude subprocess call per iter.
                 int timeout = (mutator.equals("concolic") || mutator.equals("guided")
-                        || mutator.equals("llm-guided")) ? 900 : 300;
+                        || mutator.equals("llm-guided")) ? 1800 : 300;
                 String out = PilotHarness.runTargetUnderDualJdk(
                         AntPilotTarget.class.getName(),
                         timeout,
