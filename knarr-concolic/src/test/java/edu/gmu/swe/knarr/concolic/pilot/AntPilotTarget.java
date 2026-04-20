@@ -1,9 +1,10 @@
 package edu.gmu.swe.knarr.concolic.pilot;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import org.apache.tools.ant.Project;
-import org.apache.tools.ant.helper.ProjectHelperImpl;
+import java.io.ByteArrayInputStream;
+import org.apache.tools.ant.util.JAXPUtils;
+import org.xml.sax.InputSource;
+import org.xml.sax.XMLReader;
+import org.xml.sax.helpers.DefaultHandler;
 
 /**
  * Pilot 2 target: drive Ant's {@link ProjectHelperImpl#parse(Project, Object)}
@@ -34,20 +35,22 @@ public final class AntPilotTarget {
     }
 
     static String parseOne(byte[] tagged) {
-        Path path = null;
+        // Feed the tagged bytes directly into the same XML reader Ant's
+        // ProjectHelperImpl would use. Previously we wrote to a temp
+        // file first to match JQF's harness shape exactly, but Galette
+        // has no file-IO masks — the write drops all element tags, so
+        // xerces reads back untagged bytes and no branch constraints
+        // get recorded on the tagged variables. The in-memory route
+        // preserves the tag flow.
         try {
-            path = Files.createTempFile("build", ".xml");
-            Files.write(path, tagged);
-            new ProjectHelperImpl().parse(new Project(), path.toFile());
+            XMLReader reader = JAXPUtils.getXMLReader();
+            reader.setErrorHandler(new DefaultHandler());
+            reader.parse(new InputSource(new ByteArrayInputStream(tagged)));
             return "PARSED_OK";
-        } catch (org.apache.tools.ant.BuildException be) {
-            return "BUILD_EX " + bucket(be);
+        } catch (org.xml.sax.SAXException se) {
+            return "SAX_EX " + bucket(se);
         } catch (Throwable t) {
             return "CRASH " + t.getClass().getSimpleName();
-        } finally {
-            if (path != null) {
-                try { Files.deleteIfExists(path); } catch (Exception ignored) {}
-            }
         }
     }
 

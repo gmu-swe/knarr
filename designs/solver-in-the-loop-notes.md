@@ -35,10 +35,10 @@ empty model.
 | Tar | random | 2 | 1549 |
 | Tar | solver | 1 | 1377 |
 | Tar | **concolic** | **3** | **1731** |
-| Ant | struct | 3 | 256 |
-| Ant | random | 3 | 258 |
-| Ant | **solver** | **4** | **318** |
-| Ant | concolic | 3 | 256 |
+| Ant (via temp file, tag-dropping) | struct | 3 | 256 |
+| Ant (via temp file, tag-dropping) | random | 3 | 258 |
+| Ant (via temp file, tag-dropping) | solver | 4 | 318 |
+| Ant (via temp file, tag-dropping) | concolic | 3 | 256 |
 
 **Tar: concolic wins.** The per-iter log shows a successful flip on
 iter 0, then UNSAT on every subsequent negated prefix. The one
@@ -57,6 +57,45 @@ and matches struct exactly (256 / 3). Solver-guided "re-satisfy"
 stays the winner on Ant because the full constraint tree (including
 anchors and derived equalities) still feeds meaningful model
 diversity downstream.
+
+## Ant fix: direct SAX entry unblocks tag flow (post-9f5d788)
+
+Before this fix, `AntPilotTarget.parseOne` wrote tagged bytes to a
+temp file via `Files.write` and then called `ProjectHelperImpl.parse`
+with the File argument. Galette has no file-IO masks — a brief audit
+of `galette-agent/.../mask/` confirms only `SystemMasks.arraycopy` is
+registered, no `FileOutputStream` / `FileChannel` / `Files.write`
+handlers — so every tag was dropped at the write boundary and xerces
+later read back untagged OS bytes. Net effect: 256 branches per
+iter, concolic with `reason=no_branches` every call.
+
+Switching `parseOne` to drive `JAXPUtils.getXMLReader()` directly on
+a `ByteArrayInputStream(tagged)` keeps the flow purely in-heap and
+exercises the same xerces SAX path Ant uses internally:
+
+| Pilot | Mutator | Outcomes | Branches |
+|---|---|---:|---:|
+| Ant (direct SAX) | struct | 3 | 1597 |
+| Ant (direct SAX) | random | 5 | **2207** |
+| Ant (direct SAX) | solver | 3 | 1594 |
+| Ant (direct SAX) | **concolic** | **4** | 1692 |
+
+Branch counts rose ~6× across every mutator (xerces is branchy once
+tags reach it). On this surface random happens to win on raw branch
+coverage because any corruption of a well-formed XML pushes xerces
+into a new error path. Concolic wins on **outcome diversity** over
+struct (4 vs 3) — the branch-negation strategy finds a distinct
+parse-failure class that the structural mutation misses. Solver
+("re-satisfy") sits essentially tied with struct; it no longer wins
+on Ant now that the bulk of the branch sites are inside xerces
+where the solver's model doesn't help as much as it did on the
+(pre-fix) shallower constraint tree.
+
+**Cost:** the pilot no longer mirrors JQF's `ProjectBuilderTest`
+shape exactly (we don't go through `ProjectHelperImpl`), but the
+XML parsing branches — which is what the concolic loop drives on —
+are identical. The outcome labels shift from `BUILD_EX ...` to
+`SAX_EX ...`; both bucket similarly.
 
 **Takeaways:**
 
