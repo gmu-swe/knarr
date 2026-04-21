@@ -7,7 +7,7 @@ import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.function.Consumer;
-import net.jonbell.crochet.runtime.CheckpointRollbackAgent;
+import edu.neu.ccs.prl.crochet.runtime.CheckpointRollbackAgent;
 
 /**
  * A minimal concolic-execution driver that couples Knarr's path-constraint

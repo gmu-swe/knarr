@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
-import net.jonbell.crochet.runtime.CheckpointRollbackAgent;
+import edu.neu.ccs.prl.crochet.runtime.CheckpointRollbackAgent;
 import za.ac.sun.cs.green.expr.BinaryOperation;
 import za.ac.sun.cs.green.expr.Expression;
 import za.ac.sun.cs.green.expr.Operation.Operator;

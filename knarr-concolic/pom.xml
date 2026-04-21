@@ -13,7 +13,7 @@
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <galette.version>1.0.0-SNAPSHOT</galette.version>
-        <crochet.version>1.0.0-SNAPSHOT</crochet.version>
+        <crochet.version>2.0.0-SNAPSHOT</crochet.version>
         <knarr.version>0.0.3-SNAPSHOT</knarr.version>
     </properties>
 
@@ -24,7 +24,7 @@
             <version>${knarr.version}</version>
         </dependency>
         <dependency>
-            <groupId>net.jonbell.crochet</groupId>
+            <groupId>edu.neu.ccs.prl.crochet</groupId>
             <artifactId>crochet-agent</artifactId>
             <version>${crochet.version}</version>
         </dependency>

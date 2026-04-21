@@ -1,7 +1,7 @@
 package edu.gmu.swe.knarr.bridge;
 
 import edu.neu.ccs.prl.galette.internal.transform.GaletteTransformer;
-import net.jonbell.crochet.transform.CrochetTransformer;
+import edu.neu.ccs.prl.crochet.transform.CrochetTransformer;
 
 /**
  * Composes Galette's and CROCHET's class-file transformers into a single
