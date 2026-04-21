@@ -69,6 +69,7 @@ public final class DeserPilotTarget {
     private static final Set<String> ALLOWLIST = new HashSet<>(Arrays.asList(
             "java.util.HashMap",
             "java.util.HashMap$Node",
+            "java.util.TreeMap",
             "java.util.ArrayList",
             "java.lang.String",
             "java.lang.Integer",
@@ -193,9 +194,25 @@ public final class DeserPilotTarget {
      * baseline against which mutation perturbs into DESER_EX / CLASS_SEEN.
      */
     static byte[] buildSeedA() throws java.io.IOException {
-        HashMap<String, String> m = new HashMap<>();
-        m.put("k1", "v1");
-        m.put("k2", "v2");
+        // Richer seed: a java.util.TreeMap with String keys and
+        // ArrayList<byte[]> values, nested one Object[] deep. Gives the
+        // stream multiple distinct class descriptors (TreeMap, its
+        // serial fields' Comparable reference marker, ArrayList,
+        // [B array type, Object[], String) so mutation has more
+        // class-reference bytes to perturb than a flat HashMap does.
+        // All types are still on the FilteringOIS allowlist so the
+        // inert seed round-trips cleanly.
+        java.util.TreeMap<String, Object> m = new java.util.TreeMap<>();
+        ArrayList<Object> bucket1 = new ArrayList<>();
+        bucket1.add(new byte[]{1, 2, 3});
+        bucket1.add("nested-string");
+        bucket1.add(Integer.valueOf(42));
+        m.put("alpha", bucket1);
+        ArrayList<Object> bucket2 = new ArrayList<>();
+        bucket2.add(new byte[]{4, 5, 6, 7, 8});
+        bucket2.add(Long.valueOf(0xBADC0FFEEL));
+        m.put("beta", bucket2);
+        m.put("gamma", new Object[]{"nested", Integer.valueOf(-1)});
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try (ObjectOutputStream oos = new ObjectOutputStream(baos)) {
             oos.writeObject(m);

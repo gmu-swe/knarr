@@ -62,10 +62,42 @@ This is itself a defense-relevant finding: **the serial format's
 header and length-prefix structure is brittle enough that random /
 concolic / guided mutation fails well before getting near class-name
 resolution.** A real attacker has to start from a valid-structure
-seed, not mutate outward from a benign one. Natural follow-up:
-run DeserPilot with a richer seed — serialize a `TreeMap<String, List<byte[]>>`
-or similar — to see if that richer structure gives concolic more
-places to land in the class-reference region.
+seed, not mutate outward from a benign one.
+
+### DeserPilot v3: richer seed confirms the finding
+
+Swapped the seed to a 422-byte `TreeMap<String, Object>` containing
+nested `ArrayList`s with `byte[]`, `String`, `Integer`, `Long`, and
+an `Object[]` — 4× the class-descriptor surface of the old
+`HashMap<String,String>` seed:
+
+| Mutator | Outcomes | Branches |
+|---|---:|---:|
+| struct | 2 | 2091 |
+| random | 3 | 2102 |
+| solver | 2 | 2517 |
+| concolic | 2 | 2493 |
+| **guided** | **3** | **2837** |
+
+Branch count rose 13% (2532 → 2837 for guided) with the richer seed,
+but the **outcome set is unchanged** — still no `CLASS_SEEN` events.
+Every mutator fragments into `BAD_HEADER` / `PARSED_OK` /
+`StreamCorruptedException` / `UTFDataFormatException`. Even a
+stream with TreeMap + ArrayList + byte[] + Object[] + several
+String-class descriptor regions is too structurally tight for 10
+iters of byte mutation to reach a class-name substring matching
+`Transformer` / `InvocationHandler` / `Commons`.
+
+**Confirmed defensive research finding:** mutation-from-benign-seed
+fuzzing at any iter count within a CI budget **cannot reach
+deserialization gadget-class territory**. Real CVEs of the
+ObjectInputStream family are not discovered by mutation fuzzers —
+they're constructed by researchers who start from full-gadget
+payloads and minimize. Our pilot measures exactly how far the
+mutation surface pushes before structural collapse; the answer is
+"nowhere near Transformer". This is the kind of signal worth
+capturing in a paper on *why* deserialization fuzzing hasn't
+worked, not *that* the pilot infrastructure works.
 
 ## Seven-pilot sequential batch (post-69db0ad)
 
