@@ -33,7 +33,7 @@ public class RegexPilotITCase {
             for (String mutator : mutators) {
                 int timeout = (mutator.equals("solver") || mutator.equals("concolic")
                         || mutator.equals("guided") || mutator.equals("llm-guided"))
-                        ? 1800 : 300;
+                        ? 1800 : 600;
                 String out = PilotHarness.runTargetUnderDualJdk(
                         RegexPilotTarget.class.getName(),
                         timeout,

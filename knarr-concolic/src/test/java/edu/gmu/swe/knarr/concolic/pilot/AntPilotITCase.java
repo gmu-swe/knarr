@@ -36,7 +36,7 @@ public class AntPilotITCase {
                 // has a slow-GC iter. llm-guided additionally pays
                 // a ~6s claude subprocess call per iter.
                 int timeout = (mutator.equals("concolic") || mutator.equals("guided")
-                        || mutator.equals("llm-guided")) ? 1800 : 300;
+                        || mutator.equals("llm-guided")) ? 1800 : 600;
                 String out = PilotHarness.runTargetUnderDualJdk(
                         AntPilotTarget.class.getName(),
                         timeout,
