@@ -133,11 +133,61 @@ public final class PilotHarness {
         ProcessBuilder pb = new ProcessBuilder(cmd);
         pb.redirectErrorStream(true);
         Process child = pb.start();
-        boolean done = child.waitFor(timeoutSeconds, TimeUnit.SECONDS);
+
+        // waitFor(long, TimeUnit) has been observed to miss its deadline
+        // and park indefinitely when the child is 100% CPU-bound under
+        // heavy Galette instrumentation (observed multiple times during
+        // pilot batch: waitFor stayed in AQS.awaitNanos for 3600s+ past
+        // a 1800s deadline, jstack'd in LockSupport.parkNanos). Work
+        // around it with a belt-and-suspenders watchdog: an independent
+        // daemon thread that sleeps for the full timeout and then SIGKILLs
+        // the child PID via `kill -9` from the OS shell, NOT via
+        // Process.destroyForcibly (which itself can fail to propagate if
+        // the JVM is wedged). After the watchdog fires, the child dies,
+        // waitFor observes the exit and returns. We give waitFor an extra
+        // 60s grace past the nominal deadline to account for the time
+        // between kill and SIGCHLD delivery.
+        final long childPid = child.pid();
+        final int hardDeadline = timeoutSeconds;
+        Thread watchdog = new Thread(() -> {
+            try {
+                Thread.sleep(hardDeadline * 1000L);
+            } catch (InterruptedException e) {
+                return;
+            }
+            if (!child.isAlive()) return;
+            // Try destroyForcibly first — if the JVM's SIGCHLD plumbing
+            // is healthy this is the clean path.
+            child.destroyForcibly();
+            // Belt-and-suspenders: shell out to `kill -9` directly so the
+            // child dies even if destroyForcibly is itself wedged. We
+            // ignore the exit code — kill may report ESRCH if the process
+            // already died from destroyForcibly a microsecond earlier.
+            try {
+                new ProcessBuilder("kill", "-9", String.valueOf(childPid))
+                        .redirectErrorStream(true)
+                        .start()
+                        .waitFor(5, TimeUnit.SECONDS);
+            } catch (Exception ignored) {
+            }
+        }, "pilot-watchdog-" + childPid);
+        watchdog.setDaemon(true);
+        watchdog.start();
+
+        boolean done;
+        try {
+            done = child.waitFor(timeoutSeconds + 60L, TimeUnit.SECONDS);
+        } finally {
+            watchdog.interrupt();
+        }
         String out = new String(child.getInputStream().readAllBytes());
         if (!done) {
+            // Grace period past the watchdog's SIGKILL elapsed and the
+            // child STILL shows alive — at this point the kernel is the
+            // problem, not us. Force-kill again and surface the error.
             child.destroyForcibly();
-            throw new AssertionError("child timed out after " + timeoutSeconds + "s:\n" + out);
+            throw new AssertionError("child timed out after " + timeoutSeconds
+                    + "s (+60s grace): still alive past watchdog SIGKILL. Output:\n" + out);
         }
         return out;
     }
