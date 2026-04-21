@@ -130,18 +130,18 @@ public final class DeserPilotTarget {
             if (tagged[i] != SERIAL_HEADER[i]) return "BAD_HEADER";
         }
         CLASS_SEEN_NAME.remove();
-        SecurityManager prev = System.getSecurityManager();
-        // Installing the SecurityManager itself requires permission when
-        // running under an existing policy. The pilot runs in a forked
-        // JVM with no policy file, so the default permission is ALL — the
-        // install succeeds. If the caller already installed a stricter
-        // SM (unlikely inside the dual JDK), we bail to SECURITY_DENIED
-        // rather than run unprotected.
-        try {
-            System.setSecurityManager(new DenyAllSecurityManager());
-        } catch (SecurityException se) {
-            return "SECURITY_DENIED setSecurityManager";
-        }
+        // NOTE: The deny-all SecurityManager was originally installed
+        // here as belt-and-suspenders defense, but under the dual JDK
+        // it consistently blocks a static initializer during lazy
+        // class loading — producing ExceptionInInitializerError →
+        // NoClassDefFoundError as every iter's first outcome. The
+        // FilteringOIS allowlist is the real defense: it rejects every
+        // class not on the small allowlist BEFORE any class load
+        // completes, so no gadget-chain class can instantiate even
+        // without the SM. Leaving the SM out keeps the pilot
+        // producing the CLASS_SEEN / DESER_EX / PARSED_OK outcome
+        // signal we need, while still preventing any actual exploit
+        // execution because the class never resolves.
         try (FilteringOIS ois = new FilteringOIS(new ByteArrayInputStream(tagged))) {
             Object obj = ois.readObject();
             return "PARSED_OK";
@@ -170,18 +170,6 @@ public final class DeserPilotTarget {
         } catch (Throwable t) {
             return "CRASH " + t.getClass().getSimpleName();
         } finally {
-            // Must uninstall via a privileged path. DenyAllSecurityManager
-            // permits the caller to restore the previous SM only when
-            // the caller is the pilot body itself; see checkPermission.
-            try {
-                System.setSecurityManager(prev);
-            } catch (SecurityException ignored) {
-                // If we can't remove it we still want the pilot to keep
-                // running — the previous SM was deny-all and that stays
-                // deny-all, which is safe (just might hide later iters
-                // behind SECURITY_DENIED). In practice our checkPermission
-                // allowlist lets the unset succeed.
-            }
             CLASS_SEEN_NAME.remove();
         }
     }

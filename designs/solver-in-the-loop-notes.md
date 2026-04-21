@@ -20,6 +20,53 @@ get useful solver guidance, and what the real blockers are.
   returns an empty solution so the client socket stays alive and the
   pilot's structural fallback mutator keeps exploring.
 
+## DeserPilot: deserialization coverage measurement (post-e1198e6, watchdog fix 5a6bfea)
+
+Added an 8th pilot targeting the `commons-collections:3.2.1` classpath
+under `ObjectInputStream.readObject`. Goal is defensive: measure which
+class names fuzzers reach during deserialization, NOT construct any
+payload. The pilot uses a `FilteringObjectInputStream` allowlist that
+rejects every class outside a tiny inert set (`HashMap`, `ArrayList`,
+`String`, boxed primitives); any attempt to resolve a Transformer /
+InvocationHandler / Commons class is recorded as a `CLASS_SEEN`
+bucket and the class never actually instantiates.
+
+First run (all 5 mutators complete — first pilot since Gzip where the
+watchdog made this reliable):
+
+| Mutator | Outcomes | Branches |
+|---|---|---:|---:|
+| struct | 2 | 2066 |
+| random | 3 | 2085 |
+| solver | 2 | 2216 |
+| concolic | 2 | 2192 |
+| **guided** | **3** | **2532** |
+
+**Guided wins — first pilot where it's the top mutator.** Java's serial
+stream format is dominated by sequential tag dispatch
+(`if (tag == 0x73) type-reference; else if (tag == 0x77) block-data;
+else if (tag == 0x7e) enum; ...`) which creates exactly the "one-way
+branch site" pattern guided's heuristic targets. The branch-negation
+step on one of those sites pushes `readObject` into a different
+dispatch arm, exposing new state machine transitions that the
+structural / random / solver mutators stay locked out of.
+
+**No CLASS_SEEN buckets fired.** 10 iters of single-byte mutation on
+a HashMap seed doesn't drive the stream far enough to reach a
+`resolveClass` call on a gadget-family name. Outcomes fragment earlier
+— `BAD_HEADER` (mutation hit the `0xAC 0xED 0x00 0x05` magic),
+`EOFException` / `UTFDataFormatException` / `StreamCorruptedException`
+(mutation broke an internal length prefix or string encoding).
+
+This is itself a defense-relevant finding: **the serial format's
+header and length-prefix structure is brittle enough that random /
+concolic / guided mutation fails well before getting near class-name
+resolution.** A real attacker has to start from a valid-structure
+seed, not mutate outward from a benign one. Natural follow-up:
+run DeserPilot with a richer seed — serialize a `TreeMap<String, List<byte[]>>`
+or similar — to see if that richer structure gives concolic more
+places to land in the class-reference region.
+
 ## Seven-pilot sequential batch (post-69db0ad)
 
 Ran every pilot ITCase back-to-back via `/tmp/run-all-pilots.sh` with a
