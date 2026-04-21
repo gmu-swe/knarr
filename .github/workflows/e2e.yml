@@ -11,8 +11,7 @@ env:
 jobs:
   e2e:
     name: End-to-end (Galette + CROCHET + Z3)
-    runs-on:
-      group: ripley-cloud-linux-x64
+    runs-on: ripley-cloud-linux-x64
     steps:
       - uses: actions/checkout@v4
 
