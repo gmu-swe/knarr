@@ -67,6 +67,19 @@
             <version>1.12.0</version>
             <scope>test</scope>
         </dependency>
+        <!-- Pilot 8 (DeserPilot): commons-collections 3.2.1 — populates the
+             classpath with the classic Java deserialization gadget-chain
+             class names (TransformedMap, InvokerTransformer, ...) so we
+             can measure how deep concolic byte mutation can push the JDK
+             ObjectInputStream class-resolver into the gadget namespace.
+             The pilot's ClassFilter + SecurityManager guarantee NONE of
+             these classes is actually instantiated. -->
+        <dependency>
+            <groupId>commons-collections</groupId>
+            <artifactId>commons-collections</artifactId>
+            <version>3.2.1</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
