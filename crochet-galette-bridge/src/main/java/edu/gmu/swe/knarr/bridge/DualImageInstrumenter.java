@@ -20,7 +20,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import edu.neu.ccs.prl.galette.internal.transform.GaletteTransformer;
-import edu.neu.ccs.prl.crochet.transform.CrochetTransformer;
+import net.jonbell.crochet.transform.CrochetTransformer;
 
 import org.objectweb.asm.Attribute;
 import org.objectweb.asm.ClassReader;
@@ -80,9 +80,9 @@ public final class DualImageInstrumenter {
     private static boolean shouldPackCrochet(String resourceName) {
         return resourceName.startsWith(CrochetTransformer.RUNTIME_PACKAGE_PREFIX)
                 || resourceName.startsWith(CrochetTransformer.TRANSFORM_PACKAGE_PREFIX)
-                || resourceName.startsWith("edu/neu/ccs/prl/crochet/annotation/")
-                || resourceName.startsWith("edu/neu/ccs/prl/crochet/patch/")
-                || resourceName.startsWith("edu/neu/ccs/prl/crochet/agent/shaded/");
+                || resourceName.startsWith("net/jonbell/crochet/annotation/")
+                || resourceName.startsWith("net/jonbell/crochet/patch/")
+                || resourceName.startsWith("net/jonbell/crochet/agent/shaded/");
     }
 
     private DualImageInstrumenter() {

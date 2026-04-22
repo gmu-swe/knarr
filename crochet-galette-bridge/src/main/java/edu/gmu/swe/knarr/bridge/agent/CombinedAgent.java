@@ -9,8 +9,8 @@ import java.io.File;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
 import java.security.ProtectionDomain;
-import edu.neu.ccs.prl.crochet.runtime.ArrayRegistry;
-import edu.neu.ccs.prl.crochet.runtime.CheckpointRollbackAgent;
+import net.jonbell.crochet.runtime.ArrayRegistry;
+import net.jonbell.crochet.runtime.CheckpointRollbackAgent;
 
 /**
  * Single java-agent whose {@code premain} installs one {@link
@@ -65,7 +65,7 @@ public final class CombinedAgent {
         TransformationCache cache = cachePath == null ? null : new TransformationCache(new File(cachePath));
         GaletteTransformer.setCache(cache);
 
-        // CROCHET-side init. Mirrors edu.neu.ccs.prl.crochet.agent.CrochetAgent.
+        // CROCHET-side init. Mirrors net.jonbell.crochet.agent.CrochetAgent.
         try {
             CheckpointRollbackAgent.setInstrumentation(inst);
         } catch (Throwable ignored) {
@@ -149,7 +149,7 @@ public final class CombinedAgent {
             // CROCHET and Galette runtime packages — already handled by each
             // transformer's own exclusion list, but listed here for
             // defence-in-depth when the two share the same class loader.
-            if (name.startsWith("edu/neu/ccs/prl/crochet/")
+            if (name.startsWith("net/jonbell/crochet/")
                     || name.startsWith("edu/neu/ccs/prl/galette/")) {
                 return true;
             }

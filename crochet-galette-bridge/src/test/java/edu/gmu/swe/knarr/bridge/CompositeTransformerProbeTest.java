@@ -66,7 +66,7 @@ public class CompositeTransformerProbeTest {
     @Test
     void crochetAloneYieldsVerifiableClass() throws Exception {
         byte[] raw = readFixture("edu/gmu/swe/knarr/bridge/fixture/SimpleCounter.class");
-        byte[] c = new edu.neu.ccs.prl.crochet.transform.CrochetTransformer()
+        byte[] c = new net.jonbell.crochet.transform.CrochetTransformer()
                 .transform(raw, false);
         Assertions.assertNotNull(c);
         LoaderOverride cl = new LoaderOverride(getClass().getClassLoader());

@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
  *
  * <p>The driver's {@code run()} method calls into Galette's
  * {@link edu.neu.ccs.prl.galette.internal.runtime.symbolic.SymbolicListener}
- * and CROCHET's {@link edu.neu.ccs.prl.crochet.runtime.CheckpointRollbackAgent},
+ * and CROCHET's {@link net.jonbell.crochet.runtime.CheckpointRollbackAgent},
  * both of which require a Galette/CROCHET-instrumented JVM to actually
  * function. This class exercises only the cold paths so the test fits the
  * normal Surefire (plain JDK) runner — the hot path is covered by the E2E
