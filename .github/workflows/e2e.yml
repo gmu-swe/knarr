@@ -14,49 +14,28 @@ jobs:
     runs-on: ripley-cloud-linux-x64
     steps:
       - uses: actions/checkout@v4
-
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '21'
-
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
-
       - name: Cache ~/.m2
         uses: actions/cache@v4
         with:
           path: ~/.m2/repository
           key: m2-e2e-${{ hashFiles('**/pom.xml') }}
           restore-keys: m2-e2e-
-
-      - name: Install Galette to ~/.m2
-        working-directory: galette
-        run: mvn -B -DskipTests install
-
-      - name: Install CROCHET to ~/.m2 (JDK 21)
-        run: JAVA_HOME="${JAVA_HOME_21_X64}" mvn -B -f crochet/pom.xml -DskipTests install
-
       - name: Bootstrap green-solver + Z3 bindings
         run: bash .github/scripts/bootstrap-local-deps.sh
-
       - name: Build all modules
         run: mvn -B install -DskipTests -DskipITs
-
       - name: knarr-server Z3 unit tests
         run: mvn -B -pl knarr-server test
-
       - name: Knarr IT suite (Galette-instrumented JDK + Z3)
         run: mvn -B -pl knarr -am verify
-
       - name: Bridge unit tests
         run: mvn -B -pl crochet-galette-bridge test
-
       - name: Concolic driver structure tests
         run: mvn -B -pl knarr-concolic test
-
       - uses: actions/upload-artifact@v4
         if: failure()
         with:

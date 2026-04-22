@@ -101,7 +101,7 @@ public class ConcolicLoopITCase {
         // their runtime classes are visible to instrumented code.
         Path m2 = Paths.get(System.getProperty("user.home"), ".m2", "repository");
         Path galetteAgent = m2.resolve(
-                "edu/neu/ccs/prl/galette/galette-agent/1.0.0-SNAPSHOT/galette-agent-1.0.0-SNAPSHOT.jar");
+                "edu/neu/ccs/prl/galette/galette-agent/1.1.0-SNAPSHOT/galette-agent-1.1.0-SNAPSHOT.jar");
         Path crochetAgent = m2.resolve(
                 "edu/neu/ccs/prl/crochet/crochet-agent/2.0.0-SNAPSHOT/crochet-agent-2.0.0-SNAPSHOT.jar");
         Path bridgeAgent = m2.resolve(
