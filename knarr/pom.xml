@@ -141,7 +141,7 @@
                             </argLine>
                             <reuseForks>false</reuseForks>
                             <systemPropertyVariables>
-                                <e2e.plainJavaHome>/usr/lib/jvm/java-17-openjdk-amd64</e2e.plainJavaHome>
+                                <e2e.plainJavaHome>${java.home}</e2e.plainJavaHome>
                                 <e2e.serverJar>${project.basedir}/../knarr-server/target/Knarr-Server-0.0.2-SNAPSHOT.jar</e2e.serverJar>
                                 <e2e.z3LibDir>${project.basedir}/../z3-4.8.9-x64-ubuntu-16.04/bin</e2e.z3LibDir>
                             </systemPropertyVariables>
