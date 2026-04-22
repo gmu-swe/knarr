@@ -51,7 +51,7 @@ install_green_solver() {
     fi
     local workdir
     workdir="$(mktemp -d)"
-    trap 'rm -rf "${workdir}"' EXIT
+    trap 'rm -rf "${workdir:-}"' EXIT
     git clone --depth=1 https://github.com/gmu-swe/green-solver.git "${workdir}/green-solver"
     local gdir="${workdir}/green-solver/green"
 
